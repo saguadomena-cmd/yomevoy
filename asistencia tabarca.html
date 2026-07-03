@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Asistencia — Isla Tabarca 04/07/2026</title>
+<style>
+  :root{
+    --navy:#0D4A6B; --yellow:#F5B800; --verde:#2F9E6E; --verde-s:#E4F6EE;
+    --rojo:#E8323C; --rojo-s:#FCE7E3; --azul:#1A6E9E; --azul-s:#E4F0F9;
+    --naranja:#E67E22; --naranja-s:#FEF0E3;
+    --morado:#6C3483; --morado-s:#F0E6F6;
+    --fondo:#EFF4F8; --superficie:#fff; --texto:#142634; --suave:#5C7488;
+    --linea:#D7E2EA; --radio:12px; --sombra:0 4px 16px -4px rgba(11,53,80,0.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+  /* HEADER */
+  .header{background:var(--navy);color:#fff;padding:14px 16px;}
+  .header h1{font-size:17px;font-weight:700;}
+  .header .sub{font-size:11px;color:#BBD6E8;margin-top:2px;}
+  .badge{background:var(--yellow);color:var(--navy);font-weight:700;font-size:11px;padding:4px 10px;border-radius:100px;display:inline-block;margin-top:6px;}
+
+  /* STATS */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--navy);border-top:1px solid rgba(255,255,255,0.1);padding:10px 16px 14px;}
+  .stat{text-align:center;}
+  .stat .n{font-size:20px;font-weight:700;color:var(--yellow);}
+  .stat .l{font-size:9px;color:#BBD6E8;margin-top:1px;text-transform:uppercase;letter-spacing:0.3px;}
+
+  /* BUSCADOR */
+  .busca-wrap{padding:14px 16px;background:var(--superficie);border-bottom:1px solid var(--linea);}
+  .busca-inner{position:relative;}
+  .busca-inner input{
+    width:100%;padding:13px 16px 13px 44px;
+    border:2px solid var(--linea);border-radius:12px;
+    font-size:16px;font-family:inherit;color:var(--texto);
+    background:#fff;transition:.15s;
+  }
+  .busca-inner input:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px rgba(26,110,158,0.12);}
+  .busca-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;}
+  .busca-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--linea);border:none;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center;}
+  .busca-hint{font-size:11.5px;color:var(--suave);margin-top:8px;text-align:center;}
+
+  /* ALERTA DE ASIENTO — aparece al buscar */
+  .alerta-asiento{
+    margin:0 16px;padding:14px 16px;border-radius:12px;
+    display:none;margin-bottom:12px;
+  }
+  .alerta-asiento.solo{background:var(--naranja-s);border:2px solid var(--naranja);}
+  .alerta-asiento.impar{background:var(--morado-s);border:2px solid var(--morado);}
+  .alerta-asiento.par{background:var(--verde-s);border:2px solid var(--verde);}
+  .alerta-asiento .ico{font-size:24px;margin-bottom:4px;}
+  .alerta-asiento .titulo{font-weight:700;font-size:14px;margin-bottom:3px;}
+  .alerta-asiento .desc{font-size:12.5px;line-height:1.4;}
+
+  /* LISTA */
+  .lista{padding:0 16px 100px;}
+  .viajero-card{
+    background:var(--superficie);border-radius:12px;
+    box-shadow:var(--sombra);margin-bottom:10px;
+    overflow:hidden;border:2px solid transparent;
+    transition:.15s;
+  }
+  .viajero-card.embarcado{border-color:var(--verde);background:var(--verde-s);}
+  .viajero-card.solo-card{border-left:5px solid var(--naranja);}
+  .viajero-card.impar-card{border-left:5px solid var(--morado);}
+  .viajero-card.encontrado{border-color:var(--azul);box-shadow:0 0 0 3px rgba(26,110,158,0.2);}
+
+  .card-top{display:flex;align-items:center;gap:12px;padding:13px 14px;}
+  .check-btn{
+    width:36px;height:36px;border-radius:50%;flex-shrink:0;
+    border:2.5px solid var(--linea);background:#fff;
+    cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;
+    transition:.15s;
+  }
+  .check-btn.marcado{background:var(--verde);border-color:var(--verde);color:#fff;}
+  .card-info{flex:1;min-width:0;}
+  .card-nombre{font-weight:700;font-size:14px;color:var(--navy);line-height:1.2;}
+  .card-grupo{font-size:11.5px;color:var(--suave);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
+  .chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;}
+  .chip-plazas{background:var(--azul-s);color:var(--azul);}
+  .chip-solo{background:var(--naranja-s);color:var(--naranja);}
+  .chip-impar{background:var(--morado-s);color:var(--morado);}
+  .chip-ok{background:var(--verde-s);color:var(--verde);}
+  .chip-debe{background:var(--rojo-s);color:var(--rojo);}
+  .chip-parcial{background:#FFF3DE;color:#8A5A00;}
+
+  .card-pago{text-align:right;flex-shrink:0;}
+  .pago-senal{font-size:11px;color:var(--suave);}
+  .pago-pend{font-size:13px;font-weight:700;}
+  .pago-pend.ok{color:var(--verde);}
+  .pago-pend.debe{color:var(--rojo);}
+
+  /* LEYENDA */
+  .leyenda{padding:8px 16px 4px;display:flex;gap:12px;flex-wrap:wrap;}
+  .ley-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--suave);}
+  .ley-dot{width:10px;height:3px;border-radius:2px;flex-shrink:0;}
+
+  /* FAB contador */
+  .fab-info{
+    position:fixed;bottom:16px;right:16px;
+    background:var(--navy);color:#fff;
+    padding:10px 16px;border-radius:100px;
+    font-size:13px;font-weight:700;
+    box-shadow:0 4px 16px rgba(11,53,80,0.35);
+    pointer-events:none;
+  }
+
+  /* TOAST */
+  .toast{
+    position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(10px);
+    background:var(--navy);color:#fff;padding:11px 18px;border-radius:10px;
+    font-size:13px;font-weight:600;box-shadow:var(--sombra);
+    opacity:0;transition:all .25s;z-index:999;white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--suave);}
+  .empty .ico{font-size:32px;margin-bottom:8px;}
+
+  .seccion-titulo{font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.5px;color:var(--suave);padding:8px 0 6px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+      <h1>🚌 Yo Me Voy Excursiones</h1>
+      <div class="sub">Control de embarque</div>
+      <span class="badge">ISLA TABARCA — 04/07/2026 · Plaza Elíptica</span>
+    </div>
+  </div>
+  <div class="stats" id="stats" style="margin:12px -16px -14px;"></div>
+</div>
+
+<!-- BUSCADOR -->
+<div class="busca-wrap">
+  <div class="busca-inner">
+    <span class="busca-ico">🔍</span>
+    <input type="text" id="buscador" placeholder="Buscar viajero..." oninput="buscar(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="busca-clear" id="btn-clear" onclick="limpiarBusca()">✕</button>
+  </div>
+  <div class="busca-hint" id="busca-hint">Escribe un nombre para localizar al viajero y ver su asiento</div>
+</div>
+
+<!-- ALERTA DE ASIENTO -->
+<div style="padding:10px 16px 0;" id="alerta-wrap"></div>
+
+<!-- LEYENDA -->
+<div class="leyenda">
+  <div class="ley-item"><div class="ley-dot" style="background:var(--naranja)"></div>Viaja solo</div>
+  <div class="ley-item"><div class="ley-dot" style="background:var(--morado)"></div>Grupo impar</div>
+  <div class="ley-item"><div class="ley-dot" style="background:var(--verde)"></div>Embarcado</div>
+</div>
+
+<!-- LISTA -->
+<div class="lista" id="lista"></div>
+
+<div class="fab-info" id="fab">0 / 74 embarcados</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = "ymv_tabarca_04072026_v2";
+
+const RAW = [
+  ["ANGIE MARTINEZ",6,180,150],
+  ["ANNY DISPLEY MORENO Y SUSANA",2,60,50],
+  ["ASHLEY ZULEMA CIRILO",2,60,50],
+  ["BRAYAN",1,30,25],
+  ["DANIA YAMIILET DIAZ",2,60,50],
+  ["DYLAN CHIGUANO Y GLORIA",2,60,50],
+  ["ELENA MOLINA RAMIREZ",2,60,50],
+  ["ESPERANZA CARVIE",1,30,25],
+  ["GLORIA VILLALBA",3,90,75],
+  ["IRIS JOHANNA ROSA, DARIELA ROSA Y ANGEL ZAMBRANO",3,100,65],
+  ["ISABEL RODRIGUEZ",2,30,80],
+  ["JESUS DAVID LUCA",1,30,25],
+  ["JOHN",16,375,405],
+  ["KARINA (FERSHO)",1,0,0],
+  ["KENIA LISETH",2,60,50],
+  ["LADY MOLINA, JEFERSON BERTHOL, MARIANA COLOGI Y DAI",4,120,100],
+  ["LORET",12,0,605],
+  ["MALBA LUCIA",3,0,0],
+  ["MARCELA NARVAEZ",1,40,15],
+  ["MEYLIN RUIZ ALMENDAREZ Y ENMANUEL",2,60,50],
+  ["MOISES AGUDO CALABRIA",4,120,100],
+  ["SONIA JASMIN ANGARITA, YRSID GARZON ANGARITA",2,60,50],
+];
+
+let PASAJEROS = RAW.map((r,i)=>({
+  id:i,
+  nombre:r[0],
+  plazas:r[1],
+  senal:r[2],
+  pendiente:r[3],
+  solo:r[1]===1,
+  impar:r[1]%2!==0 && r[1]>1,
+  presente:false,
+}));
+
+// Cargar guardado
+function cargarGuardado(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const e = JSON.parse(raw);
+    e.forEach(x=>{ const p=PASAJEROS.find(p=>p.id===x.id); if(p) p.presente=x.presente; });
+    toast("✅ Embarque recuperado automáticamente");
+  }catch(e){}
+}
+
+function guardar(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(PASAJEROS.map(p=>({id:p.id,presente:p.presente})))); }catch(e){}
+}
+
+let busquedaActual = "";
+
+function buscar(q){
+  busquedaActual = q.trim();
+  document.getElementById("btn-clear").style.display = q ? "flex" : "none";
+  document.getElementById("busca-hint").style.display = q ? "none" : "block";
+  mostrarAlerta(busquedaActual);
+  render();
+}
+
+function limpiarBusca(){
+  document.getElementById("buscador").value = "";
+  buscar("");
+  document.getElementById("buscador").focus();
+}
+
+function mostrarAlerta(q){
+  const wrap = document.getElementById("alerta-wrap");
+  if(!q){ wrap.innerHTML=""; return; }
+  const encontrados = PASAJEROS.filter(p=>p.nombre.toLowerCase().includes(q.toLowerCase()));
+  if(encontrados.length===0){ wrap.innerHTML=""; return; }
+  // Tomar el primero con más info relevante
+  const p = encontrados[0];
+  let html = "";
+  if(p.solo){
+    html = `
+      <div style="background:var(--naranja-s);border:2px solid var(--naranja);border-radius:12px;padding:14px 16px;margin-bottom:4px;">
+        <div style="font-size:22px;margin-bottom:4px;">🪑⚠️</div>
+        <div style="font-weight:700;font-size:14px;color:var(--naranja);margin-bottom:3px;">VIAJERO SOLO — COMPARTE FILA</div>
+        <div style="font-size:12.5px;color:#8A3A00;line-height:1.5;">
+          <b>${p.nombre}</b> viaja solo.<br>
+          Debe sentarse junto a otro pasajero que también viaje sin compañero de fila.
+        </div>
+      </div>`;
+  } else if(p.impar){
+    html = `
+      <div style="background:var(--morado-s);border:2px solid var(--morado);border-radius:12px;padding:14px 16px;margin-bottom:4px;">
+        <div style="font-size:22px;margin-bottom:4px;">🪑🔢</div>
+        <div style="font-weight:700;font-size:14px;color:var(--morado);margin-bottom:3px;">GRUPO IMPAR — 1 COMPARTE FILA</div>
+        <div style="font-size:12.5px;color:#4A235A;line-height:1.5;">
+          Son <b>${p.plazas} personas</b>. Dos irán juntas en cada fila pero <b>una de ellas deberá compartir fila</b> con otro viajero que vaya solo.
+        </div>
+      </div>`;
+  } else {
+    html = `
+      <div style="background:var(--verde-s);border:2px solid var(--verde);border-radius:12px;padding:14px 16px;margin-bottom:4px;">
+        <div style="font-size:22px;margin-bottom:4px;">✅</div>
+        <div style="font-weight:700;font-size:14px;color:var(--verde);margin-bottom:3px;">GRUPO PAR — SIN PROBLEMA DE ASIENTOS</div>
+        <div style="font-size:12.5px;color:#1A5C3A;line-height:1.5;">
+          Son <b>${p.plazas} personas</b> — número par. Pueden sentarse todos juntos, de dos en dos.
+        </div>
+      </div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function render(){
+  const q = busquedaActual.toLowerCase();
+  let lista = q
+    ? PASAJEROS.filter(p=>p.nombre.toLowerCase().includes(q))
+    : PASAJEROS;
+
+  // Orden: solos primero, luego impares, luego pares — dentro de cada grupo alfabético
+  if(!q){
+    lista = [
+      ...lista.filter(p=>p.solo),
+      ...lista.filter(p=>p.impar),
+      ...lista.filter(p=>!p.solo && !p.impar),
+    ];
+  }
+
+  const cont = document.getElementById("lista");
+
+  if(lista.length===0){
+    cont.innerHTML = `<div class="empty"><div class="ico">🔍</div>No se encontró ningún viajero con ese nombre.</div>`;
+    actualizarStats();
+    return;
+  }
+
+  let html = "";
+  let seccion = "";
+
+  lista.forEach(p=>{
+    // Títulos de sección solo cuando no hay búsqueda
+    if(!q){
+      const sec = p.solo ? "solo" : p.impar ? "impar" : "par";
+      if(sec!==seccion){
+        seccion=sec;
+        const titulos = {
+          solo:`🪑 Viajan solos — comparten fila (${lista.filter(x=>x.solo).length})`,
+          impar:`🔢 Grupos impares — uno comparte fila (${lista.filter(x=>x.impar).length})`,
+          par:`✅ Grupos pares — sin problema de asientos (${lista.filter(x=>!x.solo&&!x.impar).length})`
+        };
+        html+=`<div class="seccion-titulo">${titulos[sec]}</div>`;
+      }
+    }
+
+    const clases = [
+      "viajero-card",
+      p.presente?"embarcado":"",
+      (!p.presente && p.solo)?"solo-card":"",
+      (!p.presente && p.impar)?"impar-card":"",
+      (q && lista.length<=3 && !p.presente)?"encontrado":"",
+    ].filter(Boolean).join(" ");
+
+    let chips = `<span class="chip chip-plazas">${p.plazas} plaza${p.plazas!==1?"s":""}</span>`;
+    if(p.solo) chips+=`<span class="chip chip-solo">SOLO</span>`;
+    if(p.impar) chips+=`<span class="chip chip-impar">IMPAR</span>`;
+    if(p.pendiente===0) chips+=`<span class="chip chip-ok">Pagado ✓</span>`;
+    else if(p.senal===0) chips+=`<span class="chip chip-debe">Sin señal</span>`;
+    else chips+=`<span class="chip chip-parcial">Parcial</span>`;
+    if(p.presente) chips+=`<span class="chip chip-ok">✅ Embarcado</span>`;
+
+    html+=`
+    <div class="${clases}" id="card-${p.id}">
+      <div class="card-top">
+        <button class="check-btn ${p.presente?"marcado":""}" onclick="toggle(${p.id})">
+          ${p.presente?"✓":""}
+        </button>
+        <div class="card-info">
+          <div class="card-nombre">${p.nombre.split(",")[0]}</div>
+          ${p.nombre.includes(",") ? `<div class="card-grupo">${p.nombre}</div>` : ""}
+          <div class="card-badges">${chips}</div>
+        </div>
+        <div class="card-pago">
+          <div class="pago-senal">Señal: ${p.senal}€</div>
+          <div class="pago-pend ${p.pendiente===0?"ok":"debe"}">${p.pendiente===0?"✓ Pagado":"Debe "+p.pendiente+"€"}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  cont.innerHTML = html;
+  actualizarStats();
+}
+
+function toggle(id){
+  const p = PASAJEROS.find(x=>x.id===id);
+  if(!p) return;
+  p.presente = !p.presente;
+  guardar();
+  const msg = p.presente
+    ? `✅ ${p.nombre.split(",")[0]} — embarcado`
+    : `↩️ ${p.nombre.split(",")[0]} — desmarcado`;
+  toast(msg);
+  render();
+}
+
+function actualizarStats(){
+  const total = PASAJEROS.reduce((s,p)=>s+p.plazas,0);
+  const presentes = PASAJEROS.filter(p=>p.presente).reduce((s,p)=>s+p.plazas,0);
+  const solos = PASAJEROS.filter(p=>p.solo).length;
+  const impares = PASAJEROS.filter(p=>p.impar).length;
+  document.getElementById("stats").innerHTML=`
+    <div class="stat"><div class="n">${presentes}</div><div class="l">Embarcados</div></div>
+    <div class="stat"><div class="n">${total-presentes}</div><div class="l">Faltan</div></div>
+    <div class="stat"><div class="n">${solos}</div><div class="l">Solos 🪑</div></div>
+    <div class="stat"><div class="n">${impares}</div><div class="l">Impares 🔢</div></div>
+  `;
+  document.getElementById("fab").textContent=`${presentes} / ${total} embarcados`;
+}
+
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"),2400);
+}
+
+cargarGuardado();
+render();
+</script>
+</body>
+</html>
