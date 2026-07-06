@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Viaja Con Sergio — Gestor de Viajeros</title>
+<style>
+:root {
+  --navy: #0D1F3C;
+  --navy2: #162B4A;
+  --yellow: #FFD400;
+  --yellow2: #FF8C00;
+  --verde: #2F9E6E;
+  --verde-s: #E4F6EE;
+  --rojo: #E8323C;
+  --rojo-s: #FCE7E3;
+  --azul: #1A6E9E;
+  --azul-s: #E4F0F9;
+  --naranja: #E67E22;
+  --naranja-s: #FEF0E3;
+  --morado: #6C3483;
+  --morado-s: #F0E6F6;
+  --fondo: #EFF4F8;
+  --sup: #fff;
+  --texto: #142634;
+  --suave: #5C7488;
+  --linea: #D7E2EA;
+  --radio: 14px;
+  --sombra: 0 6px 20px -6px rgba(11,53,80,0.18);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+/* TOPBAR */
+.topbar { background: var(--navy); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 30; }
+.topbar-logo { display: flex; align-items: center; gap: 10px; }
+.topbar-logo .icon { width: 34px; height: 34px; background: var(--yellow); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.topbar-logo .name { font-weight: 700; font-size: 14px; color: #fff; }
+.topbar-logo .sub { font-size: 10px; color: #BBD6E8; }
+.btn-nuevo-viaje { background: var(--yellow); color: var(--navy); border: none; border-radius: 100px; padding: 9px 16px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+/* VISTAS */
+.vista { display: none; padding: 16px; max-width: 680px; margin: 0 auto; padding-bottom: 80px; }
+.vista.activa { display: block; }
+
+/* TARJETAS DE VIAJE */
+.viaje-card { background: var(--sup); border-radius: var(--radio); box-shadow: var(--sombra); overflow: hidden; margin-bottom: 14px; cursor: pointer; transition: transform .12s; border: 2px solid transparent; }
+.viaje-card:active { transform: scale(0.98); }
+.viaje-card .foto { width: 100%; height: 130px; object-fit: cover; background: linear-gradient(135deg, var(--azul), var(--navy)); display: flex; align-items: center; justify-content: center; font-size: 40px; }
+.viaje-card .foto img { width: 100%; height: 130px; object-fit: cover; display: block; }
+.viaje-card .info { padding: 14px; }
+.viaje-card .destino { font-weight: 700; font-size: 16px; color: var(--navy); }
+.viaje-card .fecha { font-size: 12px; color: var(--suave); margin-top: 2px; }
+.viaje-card .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.chip { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 100px; }
+.chip-verde { background: var(--verde-s); color: var(--verde); }
+.chip-azul { background: var(--azul-s); color: var(--azul); }
+.chip-rojo { background: var(--rojo-s); color: var(--rojo); }
+.chip-naranja { background: var(--naranja-s); color: var(--naranja); }
+.chip-yellow { background: #FFF8DC; color: #8A5A00; }
+
+.viaje-card .acciones { padding: 0 14px 14px; display: flex; gap: 8px; }
+.btn-sm { border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-primary { background: var(--navy); color: #fff; }
+.btn-ghost { background: transparent; color: var(--navy); border: 1.5px solid var(--linea); }
+.btn-danger { background: var(--rojo-s); color: var(--rojo); }
+.btn-green { background: var(--verde-s); color: var(--verde); }
+.btn-block { width: 100%; padding: 13px; font-size: 14px; border-radius: 10px; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--suave); }
+.empty-state .ico { font-size: 48px; margin-bottom: 12px; }
+.empty-state h3 { font-size: 17px; color: var(--navy); margin-bottom: 6px; }
+.empty-state p { font-size: 13px; line-height: 1.5; }
+
+/* DETALLE VIAJE */
+.back-btn { display: flex; align-items: center; gap: 6px; color: var(--suave); font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 14px; background: none; border: none; padding: 0; }
+.viaje-header { background: var(--navy); border-radius: var(--radio); overflow: hidden; margin-bottom: 14px; }
+.viaje-header .foto-big { width: 100%; height: 160px; object-fit: cover; background: linear-gradient(135deg, var(--azul), var(--navy)); display: flex; align-items: center; justify-content: center; font-size: 60px; }
+.viaje-header .foto-big img { width: 100%; height: 160px; object-fit: cover; }
+.viaje-header .hinfo { padding: 14px; }
+.viaje-header .hdestino { font-size: 20px; font-weight: 700; color: #fff; }
+.viaje-header .hfecha { font-size: 13px; color: #BBD6E8; margin-top: 2px; }
+.viaje-header .hchips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+
+.stats-mini { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 14px; }
+.stat-mini { background: var(--sup); border-radius: 10px; padding: 10px 8px; text-align: center; box-shadow: var(--sombra); }
+.stat-mini .n { font-size: 20px; font-weight: 700; color: var(--navy); }
+.stat-mini .l { font-size: 9px; color: var(--suave); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
+
+/* BUSCAR */
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-wrap input { width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid var(--linea); border-radius: 12px; font-size: 15px; font-family: inherit; background: #fff; color: var(--texto); }
+.search-wrap input:focus { outline: none; border-color: var(--azul); }
+.search-ico { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+
+/* VIAJERO CARD */
+.v-card { background: var(--sup); border-radius: 12px; box-shadow: 0 2px 10px -3px rgba(11,53,80,0.12); margin-bottom: 8px; overflow: hidden; border-left: 4px solid var(--linea); transition: .15s; }
+.v-card.presente { border-left-color: var(--verde); background: var(--verde-s); }
+.v-card.solo-v { border-left-color: var(--naranja); }
+.v-card.impar-v { border-left-color: var(--morado); }
+.v-card .v-top { display: flex; align-items: center; gap: 10px; padding: 12px; }
+.check-circle { width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid var(--linea); background: #fff; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: .15s; }
+.check-circle.on { background: var(--verde); border-color: var(--verde); color: #fff; }
+.v-info { flex: 1; min-width: 0; }
+.v-nombre { font-weight: 700; font-size: 14px; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.v-pago { text-align: right; flex-shrink: 0; }
+.v-senal { font-size: 11px; color: var(--suave); }
+.v-pend { font-size: 13px; font-weight: 700; }
+.v-acciones { display: flex; gap: 6px; padding: 0 12px 10px; }
+
+/* ALERTA ASIENTO */
+.alerta-box { border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: none; }
+.alerta-box.solo { background: var(--naranja-s); border: 1.5px solid var(--naranja); }
+.alerta-box.impar { background: var(--morado-s); border: 1.5px solid var(--morado); }
+.alerta-box.par { background: var(--verde-s); border: 1.5px solid var(--verde); }
+.alerta-box .atitulo { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+.alerta-box .adesc { font-size: 12px; line-height: 1.4; }
+
+/* MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(11,53,80,0.5); display: none; align-items: flex-end; justify-content: center; z-index: 50; }
+.overlay.activo { display: flex; }
+.modal { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 20px 20px 40px; }
+.modal-handle { width: 40px; height: 4px; background: var(--linea); border-radius: 2px; margin: 0 auto 16px; }
+.modal h3 { font-size: 17px; color: var(--navy); margin-bottom: 16px; }
+label { display: block; font-size: 12px; font-weight: 600; color: var(--suave); margin-bottom: 5px; margin-top: 13px; text-transform: uppercase; letter-spacing: 0.3px; }
+label:first-of-type { margin-top: 0; }
+input, select, textarea { width: 100%; padding: 12px 13px; border: 1.5px solid var(--linea); border-radius: 10px; font-size: 14px; font-family: inherit; color: var(--texto); background: #fff; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--azul); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.foto-upload { width: 100%; height: 120px; border: 2px dashed var(--linea); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: var(--fondo); font-size: 13px; color: var(--suave); gap: 6px; overflow: hidden; }
+.foto-upload img { width: 100%; height: 120px; object-fit: cover; }
+.foto-upload input { display: none; }
+
+/* FAB */
+.fab { position: fixed; bottom: 20px; right: 16px; background: var(--navy); color: #fff; border: none; border-radius: 100px; padding: 13px 20px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px -4px rgba(11,53,80,0.4); display: flex; align-items: center; gap: 8px; z-index: 20; }
+.fab.hidden { display: none; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--navy); color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--sombra); opacity: 0; transition: all .25s; z-index: 100; white-space: nowrap; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.seccion-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--suave); padding: 6px 0 5px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="icon">🚌</div>
+    <div>
+      <div class="name">Viaja Con Sergio</div>
+      <div class="sub">Gestor de viajeros</div>
+    </div>
+  </div>
+  <button class="btn-nuevo-viaje" id="btn-nuevo-viaje" onclick="abrirModalViaje()">+ Nuevo viaje</button>
+</div>
+
+<!-- VISTA LISTA DE VIAJES -->
+<div class="vista activa" id="vista-viajes">
+  <div id="lista-viajes"></div>
+</div>
+
+<!-- VISTA DETALLE VIAJE -->
+<div class="vista" id="vista-detalle">
+  <button class="back-btn" onclick="volverALista()">← Todos los viajes</button>
+  <div class="viaje-header" id="dh-header"></div>
+  <div class="stats-mini" id="dh-stats"></div>
+
+  <div class="search-wrap">
+    <span class="search-ico">🔍</span>
+    <input type="text" id="buscador-v" placeholder="Buscar viajero..." oninput="buscarViajero(this.value)" autocomplete="off">
+  </div>
+
+  <div id="alerta-asiento" class="alerta-box"></div>
+  <div id="lista-viajeros"></div>
+</div>
+
+<!-- FAB añadir viajero -->
+<button class="fab hidden" id="fab-viajero" onclick="abrirModalViajero()">+ Añadir viajero</button>
+
+<!-- MODAL VIAJE -->
+<div class="overlay" id="modal-viaje-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modal-viaje-titulo">Nuevo viaje</h3>
+    <input type="hidden" id="mj-id">
+
+    <label>Foto del destino</label>
+    <div class="foto-upload" id="foto-upload-area" onclick="document.getElementById('mj-foto-input').click()">
+      <span id="foto-placeholder">📷 Pulsa para añadir foto</span>
+      <input type="file" id="mj-foto-input" accept="image/*" onchange="previsualizarFoto(this)">
+    </div>
+
+    <label>Destino</label>
+    <input id="mj-destino" placeholder="Ej. Benidorm" required>
+
+    <div class="form-row">
+      <div><label>Fecha del viaje</label><input id="mj-fecha" type="date" required></div>
+      <div><label>Hora de salida</label><input id="mj-hora" type="time" value="01:30"></div>
+    </div>
+
+    <label>Punto de recogida principal</label>
+    <select id="mj-recogida">
+      <option>Plaza Elíptica</option>
+      <option>Atocha</option>
+      <option>Puente de Vallecas</option>
+      <option>Varios puntos</option>
+    </select>
+
+    <div class="form-row">
+      <div><label>Precio adulto (€)</label><input id="mj-precio-a" type="number" min="0" step="0.5" placeholder="55"></div>
+      <div><label>Precio niño (€)</label><input id="mj-precio-n" type="number" min="0" step="0.5" placeholder="50"></div>
+    </div>
+
+    <button class="btn-sm btn-primary btn-block" style="margin-top:18px;" onclick="guardarViaje()">Guardar viaje</button>
+    <button class="btn-sm btn-ghost btn-block" style="margin-top:8px;" onclick="cerrarModal('modal-viaje-overlay')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL VIAJERO -->
+<div class="overlay" id="modal-viajero-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modal-viajero-titulo">Nuevo viajero</h3>
+    <input type="hidden" id="mv-id">
+
+    <label>Nombre completo</label>
+    <input id="mv-nombre" placeholder="Ej. María García López" autocomplete="off">
+
+    <div class="form-row">
+      <div><label>Teléfono</label><input id="mv-tel" type="tel" placeholder="6XX XXX XXX"></div>
+      <div><label>Plazas</label><input id="mv-plazas" type="number" min="1" value="1" oninput="calcularPagoAuto()"></div>
+    </div>
+
+    <label>Punto de recogida</label>
+    <select id="mv-recogida">
+      <option>Plaza Elíptica</option>
+      <option>Atocha</option>
+      <option>Puente de Vallecas</option>
+    </select>
+
+    <div class="form-row">
+      <div><label>Señal pagada (€)</label><input id="mv-senal" type="number" min="0" step="0.5" value="0" oninput="calcularResto()"></div>
+      <div><label>Total a cobrar (€)</label><input id="mv-total" type="number" min="0" step="0.5" value="0" oninput="calcularResto()"></div>
+    </div>
+
+    <label>Resta a pagar al subir (€)</label>
+    <input id="mv-resto" type="number" step="0.5" style="background:var(--fondo); font-weight:700;" readonly>
+
+    <label>Notas (opcional)</label>
+    <textarea id="mv-notas" rows="2" placeholder="Silla de bebé, alergias, etc."></textarea>
+
+    <button class="btn-sm btn-primary btn-block" style="margin-top:18px;" onclick="guardarViajero()">Guardar viajero</button>
+    <button class="btn-sm btn-ghost btn-block" style="margin-top:8px;" onclick="cerrarModal('modal-viajero-overlay')">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB_KEY = "vcs_gestor_v2";
+let DB = cargarDB();
+let viajeActualId = null;
+let busquedaActual = "";
+
+function cargarDB() {
+  try {
+    const r = localStorage.getItem(DB_KEY);
+    return r ? JSON.parse(r) : { viajes: {} };
+  } catch(e) { return { viajes: {} }; }
+}
+
+function guardarDB() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(DB)); } catch(e) {}
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function fmtFecha(iso) { if(!iso) return "—"; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; }
+function fmtEUR(n) { return (n||0).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+"€"; }
+
+// ─── VIAJES ───────────────────────────────────────────────
+function renderLista() {
+  const cont = document.getElementById("lista-viajes");
+  const viajes = Object.values(DB.viajes).sort((a,b) => (a.fecha||"").localeCompare(b.fecha||""));
+  if(!viajes.length) {
+    cont.innerHTML = `<div class="empty-state"><div class="ico">🚌</div><h3>Sin viajes todavía</h3><p>Pulsa "+ Nuevo viaje" para crear tu primer viaje y gestionar sus viajeros.</p></div>`;
+    return;
+  }
+  cont.innerHTML = viajes.map(v => {
+    const vjs = Object.values(v.viajeros||{});
+    const plazas = vjs.reduce((s,x)=>s+(x.plazas||0),0);
+    const cobrado = vjs.reduce((s,x)=>s+(x.senal||0),0);
+    const pendiente = vjs.reduce((s,x)=>s+(x.pendiente||0),0);
+    const presentes = vjs.filter(x=>x.presente).reduce((s,x)=>s+(x.plazas||0),0);
+    const foto = v.foto ? `<img src="${v.foto}" style="width:100%;height:130px;object-fit:cover;display:block;">` : `<div class="foto" style="height:130px;background:linear-gradient(135deg,#1A6E9E,#0D1F3C);display:flex;align-items:center;justify-content:center;font-size:40px;">🏖️</div>`;
+    return `
+    <div class="viaje-card" id="vc-${v.id}">
+      ${foto}
+      <div class="info">
+        <div class="destino">${v.destino}</div>
+        <div class="fecha">📅 ${fmtFecha(v.fecha)} &nbsp;·&nbsp; 🕐 ${v.hora||"—"} &nbsp;·&nbsp; 📍 ${v.recogida||"—"}</div>
+        <div class="chips">
+          <span class="chip chip-azul">👥 ${plazas} plazas</span>
+          <span class="chip chip-verde">✅ ${fmtEUR(cobrado)} cobrado</span>
+          ${pendiente>0 ? `<span class="chip chip-rojo">⏳ ${fmtEUR(pendiente)} pendiente</span>`:""}
+          ${presentes>0 ? `<span class="chip chip-yellow">🚌 ${presentes} embarcados</span>`:""}
+        </div>
+      </div>
+      <div class="acciones">
+        <button class="btn-sm btn-primary" onclick="abrirDetalle('${v.id}')">Ver viajeros</button>
+        <button class="btn-sm btn-ghost" onclick="abrirModalViaje('${v.id}');event.stopPropagation()">Editar</button>
+        <button class="btn-sm btn-danger" onclick="eliminarViaje('${v.id}');event.stopPropagation()">Borrar</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function abrirModalViaje(id) {
+  document.getElementById("mj-id").value = id||"";
+  if(id && DB.viajes[id]) {
+    const v = DB.viajes[id];
+    document.getElementById("modal-viaje-titulo").textContent = "Editar viaje";
+    document.getElementById("mj-destino").value = v.destino||"";
+    document.getElementById("mj-fecha").value = v.fecha||"";
+    document.getElementById("mj-hora").value = v.hora||"01:30";
+    document.getElementById("mj-recogida").value = v.recogida||"Plaza Elíptica";
+    document.getElementById("mj-precio-a").value = v.precioA||"";
+    document.getElementById("mj-precio-n").value = v.precioN||"";
+    const fp = document.getElementById("foto-placeholder");
+    const fa = document.getElementById("foto-upload-area");
+    if(v.foto) {
+      fa.innerHTML = `<img src="${v.foto}"><input type="file" id="mj-foto-input" accept="image/*" onchange="previsualizarFoto(this)">`;
+    } else {
+      fa.innerHTML = `<span id="foto-placeholder">📷 Pulsa para añadir foto</span><input type="file" id="mj-foto-input" accept="image/*" onchange="previsualizarFoto(this)">`;
+    }
+  } else {
+    document.getElementById("modal-viaje-titulo").textContent = "Nuevo viaje";
+    document.getElementById("mj-destino").value = "";
+    document.getElementById("mj-fecha").value = "";
+    document.getElementById("mj-hora").value = "01:30";
+    document.getElementById("mj-precio-a").value = "";
+    document.getElementById("mj-precio-n").value = "";
+    document.getElementById("foto-upload-area").innerHTML = `<span id="foto-placeholder">📷 Pulsa para añadir foto</span><input type="file" id="mj-foto-input" accept="image/*" onchange="previsualizarFoto(this)">`;
+  }
+  document.getElementById("modal-viaje-overlay").classList.add("activo");
+}
+
+function previsualizarFoto(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const fa = document.getElementById("foto-upload-area");
+    fa.innerHTML = `<img src="${e.target.result}"><input type="file" id="mj-foto-input" accept="image/*" onchange="previsualizarFoto(this)">`;
+    fa._fotoData = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function guardarViaje() {
+  const id = document.getElementById("mj-id").value || uid();
+  const fa = document.getElementById("foto-upload-area");
+  const fotoNueva = fa._fotoData || (DB.viajes[id]?.foto) || null;
+  const img = fa.querySelector("img");
+  const fotoFinal = img ? img.src : fotoNueva;
+  DB.viajes[id] = {
+    ...(DB.viajes[id]||{}),
+    id,
+    destino: document.getElementById("mj-destino").value.trim(),
+    fecha: document.getElementById("mj-fecha").value,
+    hora: document.getElementById("mj-hora").value,
+    recogida: document.getElementById("mj-recogida").value,
+    precioA: parseFloat(document.getElementById("mj-precio-a").value)||0,
+    precioN: parseFloat(document.getElementById("mj-precio-n").value)||0,
+    foto: fotoFinal,
+    viajeros: DB.viajes[id]?.viajeros || {}
+  };
+  guardarDB();
+  cerrarModal("modal-viaje-overlay");
+  renderLista();
+  toast("✅ Viaje guardado");
+}
+
+function eliminarViaje(id) {
+  if(!confirm(`¿Eliminar el viaje a ${DB.viajes[id]?.destino}? Se borrarán todos sus viajeros.`)) return;
+  delete DB.viajes[id];
+  guardarDB();
+  renderLista();
+  toast("🗑️ Viaje eliminado");
+}
+
+// ─── DETALLE / VIAJEROS ───────────────────────────────────
+function abrirDetalle(id) {
+  viajeActualId = id;
+  busquedaActual = "";
+  document.getElementById("buscador-v").value = "";
+  document.getElementById("vista-viajes").classList.remove("activa");
+  document.getElementById("vista-detalle").classList.add("activa");
+  document.getElementById("btn-nuevo-viaje").style.display = "none";
+  document.getElementById("fab-viajero").classList.remove("hidden");
+  renderDetalle();
+}
+
+function volverALista() {
+  viajeActualId = null;
+  document.getElementById("vista-detalle").classList.remove("activa");
+  document.getElementById("vista-viajes").classList.add("activa");
+  document.getElementById("btn-nuevo-viaje").style.display = "";
+  document.getElementById("fab-viajero").classList.add("hidden");
+  document.getElementById("alerta-asiento").style.display = "none";
+  renderLista();
+}
+
+function renderDetalle() {
+  const v = DB.viajes[viajeActualId];
+  if(!v) return;
+  const vjs = Object.values(v.viajeros||{});
+  const plazas = vjs.reduce((s,x)=>s+(x.plazas||0),0);
+  const cobrado = vjs.reduce((s,x)=>s+(x.senal||0),0);
+  const pendiente = vjs.reduce((s,x)=>s+(x.pendiente||0),0);
+  const presentes = vjs.filter(x=>x.presente).reduce((s,x)=>s+(x.plazas||0),0);
+
+  // Header
+  const foto = v.foto ? `<img src="${v.foto}" style="width:100%;height:160px;object-fit:cover;display:block;">` : `<div class="foto-big">🏖️</div>`;
+  document.getElementById("dh-header").innerHTML = `
+    ${foto}
+    <div class="hinfo">
+      <div class="hdestino">${v.destino}</div>
+      <div class="hfecha">📅 ${fmtFecha(v.fecha)} &nbsp;·&nbsp; 🕐 ${v.hora||"—"} desde ${v.recogida||"—"}</div>
+      <div class="hchips">
+        ${v.precioA ? `<span class="chip chip-yellow">Adulto ${fmtEUR(v.precioA)}</span>`:""}
+        ${v.precioN ? `<span class="chip chip-azul">Niño ${fmtEUR(v.precioN)}</span>`:""}
+      </div>
+    </div>`;
+
+  // Stats
+  document.getElementById("dh-stats").innerHTML = `
+    <div class="stat-mini"><div class="n">${plazas}</div><div class="l">Plazas</div></div>
+    <div class="stat-mini"><div class="n">${presentes}</div><div class="l">Embarcados</div></div>
+    <div class="stat-mini"><div class="n" style="font-size:15px;">${fmtEUR(cobrado)}</div><div class="l">Cobrado</div></div>
+    <div class="stat-mini"><div class="n" style="font-size:15px;color:var(--rojo)">${fmtEUR(pendiente)}</div><div class="l">Pendiente</div></div>`;
+
+  renderViajeros();
+}
+
+function buscarViajero(q) {
+  busquedaActual = q.trim();
+  mostrarAlertaAsiento(q);
+  renderViajeros();
+}
+
+function mostrarAlertaAsiento(q) {
+  const v = DB.viajes[viajeActualId];
+  const alerta = document.getElementById("alerta-asiento");
+  if(!q || !v) { alerta.style.display="none"; return; }
+  const encontrado = Object.values(v.viajeros||{}).find(x => x.nombre.toLowerCase().includes(q.toLowerCase()));
+  if(!encontrado) { alerta.style.display="none"; return; }
+  const p = encontrado.plazas||1;
+  if(p===1) {
+    alerta.className = "alerta-box solo";
+    alerta.innerHTML = `<div class="atitulo">🪑⚠️ VIAJERO SOLO — COMPARTE FILA</div><div class="adesc"><b>${encontrado.nombre}</b> viaja solo. Debe sentarse con otro pasajero que también vaya sin compañero.</div>`;
+  } else if(p%2!==0) {
+    alerta.className = "alerta-box impar";
+    alerta.innerHTML = `<div class="atitulo">🔢 GRUPO IMPAR — 1 COMPARTE FILA</div><div class="adesc">Son <b>${p} personas</b>. Dos irán juntas por fila pero una deberá compartir con otro viajero solo.</div>`;
+  } else {
+    alerta.className = "alerta-box par";
+    alerta.innerHTML = `<div class="atitulo">✅ GRUPO PAR — SIN PROBLEMA DE ASIENTOS</div><div class="adesc">Son <b>${p} personas</b> — número par. Pueden sentarse todos juntos de dos en dos.</div>`;
+  }
+  alerta.style.display = "block";
+}
+
+function renderViajeros() {
+  const v = DB.viajes[viajeActualId];
+  if(!v) return;
+  const q = busquedaActual.toLowerCase();
+  let lista = Object.values(v.viajeros||{});
+  if(q) lista = lista.filter(x => x.nombre.toLowerCase().includes(q));
+
+  // Ordenar: solos primero, luego impares, luego pares
+  if(!q) lista.sort((a,b) => {
+    const peso = x => x.plazas===1 ? 0 : x.plazas%2!==0 ? 1 : 2;
+    return peso(a)-peso(b) || a.nombre.localeCompare(b.nombre,"es");
+  });
+
+  const cont = document.getElementById("lista-viajeros");
+  if(!lista.length) {
+    cont.innerHTML = q
+      ? `<div class="empty-state"><div class="ico">🔍</div><h3>Sin resultados</h3><p>No hay viajeros con ese nombre.</p></div>`
+      : `<div class="empty-state"><div class="ico">👥</div><h3>Sin viajeros</h3><p>Pulsa el botón "+" para añadir el primer viajero a este viaje.</p></div>`;
+    return;
+  }
+
+  let html = "";
+  let seccion = "";
+  lista.forEach(x => {
+    const p = x.plazas||1;
+    const tipo = p===1?"solo":p%2!==0?"impar":"par";
+    if(!q && tipo!==seccion) {
+      seccion=tipo;
+      const labs={solo:"🪑 Viajan solos — comparten fila",impar:"🔢 Grupos impares — uno comparte",par:"✅ Grupos pares"};
+      html+=`<div class="seccion-label">${labs[tipo]}</div>`;
+    }
+    const clases = ["v-card", x.presente?"presente":"", !x.presente&&tipo==="solo"?"solo-v":"", !x.presente&&tipo==="impar"?"impar-v":""].filter(Boolean).join(" ");
+    const chips = [
+      `<span class="chip chip-azul">${p} plaza${p!==1?"s":""}</span>`,
+      tipo==="solo"?`<span class="chip chip-naranja">SOLO</span>`:"",
+      tipo==="impar"?`<span class="chip chip-morado" style="background:var(--morado-s);color:var(--morado)">IMPAR</span>`:"",
+      x.presente?`<span class="chip chip-verde">✅ Embarcado</span>`:"",
+      (x.pendiente||0)===0?`<span class="chip chip-verde">Pagado ✓</span>`:`<span class="chip chip-rojo">Debe ${fmtEUR(x.pendiente)}</span>`,
+    ].filter(Boolean).join("");
+    html+=`
+    <div class="${clases}">
+      <div class="v-top">
+        <div class="check-circle ${x.presente?"on":""}" onclick="togglePresente('${x.id}')">
+          ${x.presente?"✓":""}
+        </div>
+        <div class="v-info">
+          <div class="v-nombre">${x.nombre}</div>
+          <div class="v-chips">${chips}</div>
+          ${x.notas?`<div style="font-size:11px;color:var(--suave);margin-top:3px;">📝 ${x.notas}</div>`:""}
+        </div>
+        <div class="v-pago">
+          <div class="v-senal">Señal: ${fmtEUR(x.senal)}</div>
+          <div class="v-pend" style="color:${(x.pendiente||0)===0?'var(--verde)':'var(--rojo)'}">${(x.pendiente||0)===0?"✓ Pagado":"Debe "+fmtEUR(x.pendiente)}</div>
+        </div>
+      </div>
+      <div class="v-acciones">
+        <button class="btn-sm btn-ghost" style="font-size:11px;padding:6px 10px;" onclick="abrirModalViajero('${x.id}')">✏️ Editar</button>
+        <button class="btn-sm btn-danger" style="font-size:11px;padding:6px 10px;" onclick="eliminarViajero('${x.id}')">🗑️ Borrar</button>
+      </div>
+    </div>`;
+  });
+  cont.innerHTML = html;
+}
+
+function togglePresente(id) {
+  const v = DB.viajes[viajeActualId];
+  if(!v?.viajeros?.[id]) return;
+  v.viajeros[id].presente = !v.viajeros[id].presente;
+  guardarDB();
+  const msg = v.viajeros[id].presente ? `✅ ${v.viajeros[id].nombre.split(" ")[0]} — embarcado` : `↩️ ${v.viajeros[id].nombre.split(" ")[0]} — desmarcado`;
+  toast(msg);
+  renderDetalle();
+}
+
+// ─── MODAL VIAJERO ────────────────────────────────────────
+function abrirModalViajero(id) {
+  const v = DB.viajes[viajeActualId];
+  document.getElementById("mv-id").value = id||"";
+  if(id && v?.viajeros?.[id]) {
+    const x = v.viajeros[id];
+    document.getElementById("modal-viajero-titulo").textContent = "Editar viajero";
+    document.getElementById("mv-nombre").value = x.nombre||"";
+    document.getElementById("mv-tel").value = x.telefono||"";
+    document.getElementById("mv-plazas").value = x.plazas||1;
+    document.getElementById("mv-recogida").value = x.recogida||"Plaza Elíptica";
+    document.getElementById("mv-senal").value = x.senal||0;
+    document.getElementById("mv-total").value = (x.senal||0)+(x.pendiente||0);
+    document.getElementById("mv-resto").value = x.pendiente||0;
+    document.getElementById("mv-notas").value = x.notas||"";
+  } else {
+    document.getElementById("modal-viajero-titulo").textContent = "Nuevo viajero";
+    document.getElementById("mv-nombre").value = "";
+    document.getElementById("mv-tel").value = "";
+    document.getElementById("mv-plazas").value = 1;
+    document.getElementById("mv-recogida").value = v?.recogida||"Plaza Elíptica";
+    document.getElementById("mv-senal").value = 0;
+    const plazas = 1;
+    const precio = (v?.precioA||0)*plazas;
+    document.getElementById("mv-total").value = precio;
+    document.getElementById("mv-resto").value = precio;
+    document.getElementById("mv-notas").value = "";
+  }
+  document.getElementById("modal-viajero-overlay").classList.add("activo");
+}
+
+function calcularPagoAuto() {
+  const v = DB.viajes[viajeActualId];
+  if(!v) return;
+  const plazas = parseInt(document.getElementById("mv-plazas").value)||1;
+  const total = (v.precioA||0) * plazas;
+  document.getElementById("mv-total").value = total;
+  calcularResto();
+}
+
+function calcularResto() {
+  const total = parseFloat(document.getElementById("mv-total").value)||0;
+  const senal = parseFloat(document.getElementById("mv-senal").value)||0;
+  document.getElementById("mv-resto").value = Math.max(0, Math.round((total-senal)*100)/100);
+}
+
+function guardarViajero() {
+  const v = DB.viajes[viajeActualId];
+  if(!v) return;
+  const id = document.getElementById("mv-id").value || uid();
+  const senal = parseFloat(document.getElementById("mv-senal").value)||0;
+  const total = parseFloat(document.getElementById("mv-total").value)||0;
+  if(!v.viajeros) v.viajeros = {};
+  v.viajeros[id] = {
+    ...(v.viajeros[id]||{}),
+    id,
+    nombre: document.getElementById("mv-nombre").value.trim(),
+    telefono: document.getElementById("mv-tel").value.trim(),
+    plazas: parseInt(document.getElementById("mv-plazas").value)||1,
+    recogida: document.getElementById("mv-recogida").value,
+    senal,
+    pendiente: Math.max(0, Math.round((total-senal)*100)/100),
+    notas: document.getElementById("mv-notas").value.trim(),
+    presente: v.viajeros[id]?.presente || false,
+  };
+  guardarDB();
+  cerrarModal("modal-viajero-overlay");
+  renderDetalle();
+  toast("✅ Viajero guardado");
+}
+
+function eliminarViajero(id) {
+  const v = DB.viajes[viajeActualId];
+  const nombre = v?.viajeros?.[id]?.nombre||"este viajero";
+  if(!confirm(`¿Eliminar a ${nombre}?`)) return;
+  delete v.viajeros[id];
+  guardarDB();
+  renderDetalle();
+  toast("🗑️ Viajero eliminado");
+}
+
+// ─── UTILS ───────────────────────────────────────────────
+function cerrarModal(id) { document.getElementById(id).classList.remove("activo"); }
+
+document.querySelectorAll(".overlay").forEach(o => {
+  o.addEventListener("click", e => { if(e.target===o) o.classList.remove("activo"); });
+});
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("show"), 2400);
+}
+
+renderLista();
+</script>
+</body>
+</html>
