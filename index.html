@@ -7,17 +7,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="VCC Reservas">
 <meta name="theme-color" content="#0D1F3C">
+<!-- Librerías -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <style>
 :root{
-  --navy:#0D1F3C; --navy2:#162B4A; --yellow:#FFD400;
-  --verde:#2F9E6E; --verde-s:#E4F6EE;
-  --rojo:#E8323C; --rojo-s:#FCE7E3;
-  --azul:#1A6E9E; --azul-s:#E4F0F9;
-  --naranja:#E67E22; --naranja-s:#FEF0E3;
-  --morado:#6C3483; --morado-s:#F0E6F6;
-  --fondo:#EFF4F8; --sup:#fff;
-  --texto:#142634; --suave:#5C7488; --linea:#D7E2EA;
-  --radio:14px; --sombra:0 6px 20px -6px rgba(11,53,80,0.18);
+  --navy:#0D1F3C;--yellow:#FFD400;--verde:#2F9E6E;--verde-s:#E4F6EE;
+  --rojo:#E8323C;--rojo-s:#FCE7E3;--azul:#1A6E9E;--azul-s:#E4F0F9;
+  --naranja:#E67E22;--naranja-s:#FEF0E3;--morado:#6C3483;--morado-s:#F0E6F6;
+  --fondo:#EFF4F8;--sup:#fff;--texto:#142634;--suave:#5C7488;--linea:#D7E2EA;
+  --radio:14px;--sombra:0 6px 20px -6px rgba(11,53,80,0.18);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh;-webkit-font-smoothing:antialiased;}
@@ -39,23 +39,22 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--fondo);color:var(
 /* TOPBAR */
 .topbar{background:var(--navy);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30;}
 .topbar-left{display:flex;align-items:center;gap:10px;}
-.topbar-left .ico{font-size:20px;}
 .topbar-left .name{font-weight:700;font-size:14px;color:#fff;}
 .topbar-left .sub{font-size:10px;color:#BBD6E8;}
-.user-pill{display:flex;align-items:center;gap:6px;}
-.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
-.av-cris{background:var(--morado-s);color:var(--morado);}
-.av-ariel{background:var(--verde-s);color:var(--verde);}
-.sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:5px;}
 .sync-dot.ok{background:var(--verde);}
 .sync-dot.sync{background:var(--yellow);animation:pulse 1s infinite;}
 .sync-dot.err{background:var(--rojo);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+.av-cris{background:var(--morado-s);color:var(--morado);}
+.av-ariel{background:var(--verde-s);color:var(--verde);}
 
 /* TABS */
-.tabs{display:flex;background:var(--sup);border-bottom:1px solid var(--linea);}
-.tab{flex:1;padding:12px 0;text-align:center;font-size:12.5px;font-weight:600;color:var(--suave);border-bottom:3px solid transparent;cursor:pointer;}
+.tabs{display:flex;background:var(--sup);border-bottom:1px solid var(--linea);overflow-x:auto;}
+.tab{flex:1;min-width:70px;padding:11px 6px;text-align:center;font-size:12px;font-weight:600;color:var(--suave);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;}
 .tab.activo{color:var(--navy);border-bottom-color:var(--yellow);}
+.badge-pend{background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:100px;margin-left:3px;}
 
 /* VISTAS */
 .vista{display:none;padding:14px;max-width:640px;margin:0 auto;padding-bottom:90px;}
@@ -70,24 +69,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--fondo);color:var(
 .vstat{text-align:center;}
 .vstat .n{font-size:16px;font-weight:700;color:var(--navy);}
 .vstat .l{font-size:9px;color:var(--suave);text-transform:uppercase;}
-.viaje-acc{padding:10px 14px;display:flex;gap:8px;}
+.viaje-acc{padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;}
+.alerta-pend{padding:7px 14px;background:var(--naranja-s);font-size:12px;font-weight:600;color:var(--naranja);}
 
-/* PENDIENTES BADGE */
-.badge-pend{background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;margin-left:6px;}
-
-/* RESERVA CARD */
-.res-card{background:var(--sup);border-radius:12px;box-shadow:0 2px 10px -3px rgba(11,53,80,0.12);margin-bottom:8px;overflow:hidden;border-left:4px solid var(--linea);}
-.res-card.confirmada{border-left-color:var(--verde);}
-.res-card.pendiente{border-left-color:var(--naranja);}
-.res-card.rechazada{border-left-color:var(--rojo);}
-.res-top{padding:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
-.res-info{flex:1;min-width:0;}
-.res-nombre{font-weight:700;font-size:14px;color:var(--navy);}
-.res-meta{font-size:11.5px;color:var(--suave);margin-top:3px;line-height:1.5;}
-.res-pago{text-align:right;flex-shrink:0;}
-.res-senal{font-size:11px;color:var(--suave);}
-.res-pend{font-size:13px;font-weight:700;}
-.res-badges{padding:0 12px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+/* CHIPS */
 .chip{font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px;}
 .chip-verde{background:var(--verde-s);color:var(--verde);}
 .chip-naranja{background:var(--naranja-s);color:var(--naranja);}
@@ -95,7 +80,23 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--fondo);color:var(
 .chip-morado{background:var(--morado-s);color:var(--morado);}
 .chip-azul{background:var(--azul-s);color:var(--azul);}
 .chip-navy{background:var(--navy);color:#fff;}
-.res-confirm-btns{padding:0 12px 10px;display:flex;gap:6px;}
+.chip-teal{background:#E0F7FA;color:#00695C;}
+
+/* RESERVA CARD */
+.res-card{background:var(--sup);border-radius:12px;box-shadow:0 2px 10px -3px rgba(11,53,80,0.12);margin-bottom:8px;overflow:hidden;border-left:4px solid var(--linea);}
+.res-card.confirmada{border-left-color:var(--verde);}
+.res-card.pendiente{border-left-color:var(--naranja);}
+.res-card.rechazada{border-left-color:var(--rojo);}
+.res-card.embarcado{border-left-color:#00695C;background:#E0F7FA;}
+.res-top{padding:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.res-info{flex:1;min-width:0;}
+.res-nombre{font-weight:700;font-size:14px;color:var(--navy);}
+.res-meta{font-size:11.5px;color:var(--suave);margin-top:3px;line-height:1.5;}
+.res-pago{text-align:right;flex-shrink:0;}
+.res-senal{font-size:11px;color:var(--suave);}
+.res-pend{font-size:13px;font-weight:700;}
+.res-badges{padding:0 12px 6px;display:flex;gap:5px;flex-wrap:wrap;}
+.res-btns{padding:0 12px 10px;display:flex;gap:5px;flex-wrap:wrap;}
 
 /* MODALES */
 .overlay{position:fixed;inset:0;background:rgba(11,53,80,0.5);display:none;align-items:flex-end;justify-content:center;z-index:50;}
@@ -110,19 +111,35 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
 /* BOTONES */
-.btn{border:none;border-radius:10px;padding:12px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:.12s;}
+.btn{border:none;border-radius:10px;padding:10px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:.12s;}
 .btn:active{transform:scale(0.97);}
 .btn-primary{background:var(--navy);color:#fff;}
 .btn-green{background:var(--verde);color:#fff;}
 .btn-red{background:var(--rojo);color:#fff;}
 .btn-ghost{background:transparent;color:var(--navy);border:1.5px solid var(--linea);}
 .btn-yellow{background:var(--yellow);color:var(--navy);}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-teal{background:#00695C;color:#fff;}
+.btn-purple{background:var(--morado);color:#fff;}
 .btn-block{width:100%;margin-top:8px;}
-.btn-sm{padding:7px 12px;font-size:12px;border-radius:8px;}
+.btn-sm{padding:6px 10px;font-size:11.5px;border-radius:8px;}
+
+/* SCANNER */
+.scanner-wrap{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#000;}
+.scanner-wrap video{width:100%;display:block;}
+.scanner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.scanner-frame{width:220px;height:220px;border:3px solid var(--yellow);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);}
+.scanner-line{position:absolute;width:200px;height:2px;background:var(--yellow);animation:scan 2s linear infinite;}
+@keyframes scan{0%{top:calc(50% - 100px);}100%{top:calc(50% + 100px);}}
+.scanner-result{margin-top:12px;padding:12px;border-radius:10px;font-size:13px;font-weight:600;text-align:center;}
+.scanner-result.ok{background:var(--verde-s);color:var(--verde);}
+.scanner-result.err{background:var(--rojo-s);color:var(--rojo);}
+
+/* QR hidden div */
+#qr-temp{display:none;}
 
 /* FAB */
-.fab{position:fixed;bottom:20px;right:16px;background:var(--yellow);color:var(--navy);border:none;border-radius:100px;padding:14px 20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px -4px rgba(11,53,80,0.4);z-index:20;display:flex;align-items:center;gap:8px;}
-.fab.hidden{display:none;}
+.fab{position:fixed;bottom:20px;right:16px;background:var(--yellow);color:var(--navy);border:none;border-radius:100px;padding:14px 20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px -4px rgba(11,53,80,0.4);z-index:20;}
 
 /* TOAST */
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--sombra);opacity:0;transition:all .25s;z-index:100;white-space:nowrap;pointer-events:none;}
@@ -132,14 +149,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
 .empty .ico{font-size:40px;margin-bottom:10px;}
 .empty h3{font-size:16px;color:var(--navy);margin-bottom:6px;}
 .seccion-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--suave);padding:8px 0 5px;}
-
 .alerta-confirm{background:#FFF8DC;border:1.5px solid var(--yellow);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;color:var(--navy);}
-.alerta-confirm b{color:var(--rojo);}
-
-/* RESUMEN PANEL */
 .resumen-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
 .res-stat{background:var(--sup);border-radius:12px;padding:14px;box-shadow:var(--sombra);text-align:center;}
-.res-stat .n{font-size:24px;font-weight:700;color:var(--navy);}
+.res-stat .n{font-size:22px;font-weight:700;color:var(--navy);}
 .res-stat .l{font-size:10px;color:var(--suave);margin-top:2px;}
 .vendedor-row{background:var(--sup);border-radius:12px;padding:14px;box-shadow:var(--sombra);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
 </style>
@@ -157,21 +170,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
     <p style="font-size:12px;color:var(--suave);margin-bottom:12px;text-align:center;">¿Quién eres?</p>
     <div class="user-btns">
       <div class="user-btn" id="btn-cris" onclick="selUser('cris')">
-        <div class="ico">👩🏽</div>
-        <div class="nom">Cris</div>
-        <div class="rol">Vendedora</div>
+        <div class="ico">👩🏽</div><div class="nom">Cris</div><div class="rol">Vendedora</div>
       </div>
       <div class="user-btn" id="btn-ariel" onclick="selUser('ariel')">
-        <div class="ico">👨🏽‍💼</div>
-        <div class="nom">Ariel</div>
-        <div class="rol">Gestor</div>
+        <div class="ico">👨🏽‍💼</div><div class="nom">Ariel</div><div class="rol">Gestor</div>
       </div>
     </div>
     <label>Contraseña</label>
     <input type="password" id="login-pass" placeholder="••••••••" style="margin-bottom:14px;">
     <div id="login-error" style="color:var(--rojo);font-size:12px;margin-bottom:10px;display:none;">Contraseña incorrecta</div>
     <button class="btn btn-primary btn-block" onclick="entrar()">Entrar</button>
-    <p style="font-size:10px;color:var(--suave);text-align:center;margin-top:12px;">Datos sincronizados en tiempo real 🔄</p>
   </div>
 </div>
 
@@ -179,39 +187,55 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
 <div id="app" style="display:none;">
   <div class="topbar">
     <div class="topbar-left">
-      <span class="ico">🚌</span>
+      <span style="font-size:20px;">🚌</span>
       <div>
         <div class="name">Viajando Con Cris <span class="sync-dot" id="sync-dot"></span></div>
         <div class="sub">Gestión de reservas</div>
       </div>
     </div>
-    <div class="user-pill">
+    <div style="display:flex;align-items:center;gap:8px;">
       <div class="avatar" id="top-avatar"></div>
-      <button class="btn btn-ghost btn-sm" onclick="cerrarSesion()" style="padding:5px 10px;font-size:11px;">Salir</button>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarSesion()" style="color:#fff;border-color:rgba(255,255,255,0.3);padding:5px 10px;font-size:11px;">Salir</button>
     </div>
   </div>
 
   <div class="tabs">
     <div class="tab activo" id="tab-viajes" onclick="cambiarTab('viajes')">Viajes</div>
-    <div class="tab" id="tab-pendientes" onclick="cambiarTab('pendientes')">
-      Pendientes<span class="badge-pend" id="badge-pend" style="display:none">0</span>
-    </div>
+    <div class="tab" id="tab-pendientes" onclick="cambiarTab('pendientes')">⏳<span class="badge-pend" id="badge-pend" style="display:none">0</span></div>
     <div class="tab" id="tab-resumen" onclick="cambiarTab('resumen')">Resumen</div>
+    <div class="tab" id="tab-scanner" onclick="cambiarTab('scanner')">📷 QR</div>
   </div>
 
   <!-- VIAJES -->
-  <div class="vista activa" id="vista-viajes">
-    <div id="lista-viajes"></div>
-  </div>
+  <div class="vista activa" id="vista-viajes"><div id="lista-viajes"></div></div>
 
   <!-- PENDIENTES -->
-  <div class="vista" id="vista-pendientes">
-    <div id="lista-pendientes"></div>
-  </div>
+  <div class="vista" id="vista-pendientes"><div id="lista-pendientes"></div></div>
 
   <!-- RESUMEN -->
-  <div class="vista" id="vista-resumen">
-    <div id="contenido-resumen"></div>
+  <div class="vista" id="vista-resumen"><div id="contenido-resumen"></div></div>
+
+  <!-- SCANNER QR -->
+  <div class="vista" id="vista-scanner">
+    <div style="margin-top:12px;">
+      <h3 style="margin-bottom:10px;">📷 Lector QR — Embarque</h3>
+      <p style="font-size:12.5px;color:var(--suave);margin-bottom:14px;">Escanea el QR del justificante del viajero para confirmar embarque y cobro del resto.</p>
+      <div class="scanner-wrap" id="scanner-wrap">
+        <video id="scanner-video" playsinline autoplay muted></video>
+        <div class="scanner-overlay">
+          <div style="position:relative;">
+            <div class="scanner-frame"></div>
+            <div class="scanner-line" id="scanner-line"></div>
+          </div>
+        </div>
+      </div>
+      <canvas id="scanner-canvas" style="display:none;"></canvas>
+      <div id="scanner-result"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-green" style="flex:1;" onclick="iniciarScanner()">▶ Iniciar cámara</button>
+        <button class="btn btn-ghost" style="flex:1;" onclick="pararScanner()">⏹ Parar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -223,18 +247,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
   <div class="modal">
     <div class="modal-handle"></div>
     <h3>Nuevo viaje</h3>
-    <label>Destino</label>
-    <input id="mj-destino" placeholder="Ej. Jávea - El Arenal">
+    <label>Destino</label><input id="mj-destino" placeholder="Ej. Jávea - El Arenal">
     <div class="form-row">
       <div><label>Fecha</label><input id="mj-fecha" type="date"></div>
       <div><label>Hora salida</label><input id="mj-hora" type="time" value="01:30"></div>
     </div>
     <label>Punto de recogida</label>
     <select id="mj-recogida">
-      <option>Plaza Elíptica</option>
-      <option>Atocha</option>
-      <option>Puente de Vallecas</option>
-      <option>Varios puntos</option>
+      <option>Plaza Elíptica</option><option>Atocha</option>
+      <option>Puente de Vallecas</option><option>Varios puntos</option>
     </select>
     <div class="form-row">
       <div><label>Precio adulto €</label><input id="mj-pa" type="number" min="0" step="0.5" placeholder="55"></div>
@@ -252,39 +273,31 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
     <h3 id="modal-res-titulo">Nueva reserva</h3>
     <input type="hidden" id="mr-viaje-id">
     <input type="hidden" id="mr-id">
-
     <label>Nombre completo del titular</label>
     <input id="mr-nombre" placeholder="Ej. María García López" autocomplete="off">
-
-    <label>Otros nombres del grupo (uno por línea)</label>
+    <label>Teléfono de contacto</label>
+    <input id="mr-telefono" type="tel" placeholder="6XX XXX XXX">
+    <label>Otros viajeros del grupo (uno por línea)</label>
     <textarea id="mr-otros" rows="3" placeholder="Ana García López&#10;Pedro García López"></textarea>
-
     <div class="form-row">
-      <div><label>Total de plazas</label><input id="mr-plazas" type="number" min="1" value="1" oninput="calcRes()"></div>
-      <div><label>Punto de recogida</label>
+      <div><label>Total plazas</label><input id="mr-plazas" type="number" min="1" value="1" oninput="calcRes()"></div>
+      <div><label>Punto recogida</label>
         <select id="mr-recogida">
-          <option>Plaza Elíptica</option>
-          <option>Atocha</option>
-          <option>Puente de Vallecas</option>
+          <option>Plaza Elíptica</option><option>Atocha</option><option>Puente de Vallecas</option>
         </select>
       </div>
     </div>
-
     <div class="form-row">
       <div><label>Señal pagada €</label><input id="mr-senal" type="number" min="0" step="0.5" value="0" oninput="calcRes()"></div>
       <div><label>Total a cobrar €</label><input id="mr-total" type="number" min="0" step="0.5" value="0" oninput="calcRes()"></div>
     </div>
-
     <label>Resta en metálico al subir €</label>
     <input id="mr-resto" type="number" step="0.5" readonly style="background:var(--fondo);font-weight:700;">
-
     <label>Notas</label>
     <textarea id="mr-notas" rows="2" placeholder="Alergias, silla de bebé..."></textarea>
-
     <div id="mr-aviso-cris" style="display:none;margin-top:14px;" class="alerta-confirm">
-      ⚠️ Tu reserva quedará <b>pendiente de confirmación</b> por Ariel antes de ser oficial.
+      ⚠️ Tu reserva quedará <b>pendiente de confirmación</b> por Ariel.
     </div>
-
     <button class="btn btn-primary btn-block" onclick="guardarReserva()">Guardar reserva</button>
     <button class="btn btn-ghost btn-block" onclick="cerrarModal('modal-reserva')">Cancelar</button>
   </div>
@@ -299,6 +312,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
   </div>
 </div>
 
+<!-- QR TEMP -->
+<div id="qr-temp"></div>
+
 <div class="toast" id="toast"></div>
 
 <!-- FIREBASE -->
@@ -306,406 +322,513 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
 const USERS = {
-  cris:  { pass: "cris2026",  nombre: "Cris",  rol: "Vendedora", av: "C", cls: "av-cris" },
-  ariel: { pass: "ariel2026", nombre: "Ariel", rol: "Gestor",     av: "A", cls: "av-ariel" }
+  cris:  { pass:"cris2026",  nombre:"Cris",  rol:"Vendedora", av:"C", cls:"av-cris" },
+  ariel: { pass:"ariel2026", nombre:"Ariel", rol:"Gestor",     av:"A", cls:"av-ariel" }
 };
 
-// Firebase config (usando el proyecto existente)
 firebase.initializeApp({
-  apiKey: "AIzaSyDI2vdwTHZxAbfw1HRim4S3QsH1yEygHtw",
-  authDomain: "yo-me-voy-reservas.firebaseapp.com",
-  databaseURL: "https://yo-me-voy-reservas-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "yo-me-voy-reservas",
-  storageBucket: "yo-me-voy-reservas.firebasestorage.app",
-  messagingSenderId: "250466590178",
-  appId: "1:250466590178:web:e1d916ce49be57bd592dbb"
+  apiKey:"AIzaSyDI2vdwTHZxAbfw1HRim4S3QsH1yEygHtw",
+  authDomain:"yo-me-voy-reservas.firebaseapp.com",
+  databaseURL:"https://yo-me-voy-reservas-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"yo-me-voy-reservas",
+  storageBucket:"yo-me-voy-reservas.firebasestorage.app",
+  messagingSenderId:"250466590178",
+  appId:"1:250466590178:web:e1d916ce49be57bd592dbb"
 });
 const db = firebase.database();
 const REF = db.ref("viajando_con_cris");
 
-let DATA = { viajes: {} };
+let DATA = {viajes:{}};
 let SESION = null;
 let userSelected = null;
 let tabActivo = "viajes";
-let viajeDetalleId = null;
+let scannerStream = null;
+let scannerInterval = null;
 
 // ── LOGIN ──────────────────────────────────────────────────
 function selUser(u) {
   userSelected = u;
-  document.getElementById("btn-cris").classList.toggle("sel", u==="cris");
-  document.getElementById("btn-ariel").classList.toggle("sel", u==="ariel");
+  document.getElementById("btn-cris").classList.toggle("sel",u==="cris");
+  document.getElementById("btn-ariel").classList.toggle("sel",u==="ariel");
 }
-
 function entrar() {
-  if(!userSelected) { toast("Selecciona un usuario primero"); return; }
+  if(!userSelected){toast("Selecciona un usuario");return;}
   const pass = document.getElementById("login-pass").value;
-  if(pass !== USERS[userSelected].pass) {
-    document.getElementById("login-error").style.display = "block";
-    return;
-  }
-  document.getElementById("login-error").style.display = "none";
-  SESION = userSelected;
-  document.getElementById("login-screen").style.display = "none";
-  document.getElementById("app").style.display = "block";
-  const u = USERS[SESION];
-  const av = document.getElementById("top-avatar");
-  av.textContent = u.av; av.className = "avatar " + u.cls;
+  if(pass!==USERS[userSelected].pass){document.getElementById("login-error").style.display="block";return;}
+  document.getElementById("login-error").style.display="none";
+  SESION=userSelected;
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("app").style.display="block";
+  const u=USERS[SESION];
+  const av=document.getElementById("top-avatar");
+  av.textContent=u.av; av.className="avatar "+u.cls;
   iniciarSync();
 }
-
 function cerrarSesion() {
-  SESION = null; userSelected = null;
-  document.getElementById("login-screen").style.display = "flex";
-  document.getElementById("app").style.display = "none";
-  document.getElementById("login-pass").value = "";
+  pararScanner();
+  SESION=null; userSelected=null;
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("app").style.display="none";
+  document.getElementById("login-pass").value="";
   document.getElementById("btn-cris").classList.remove("sel");
   document.getElementById("btn-ariel").classList.remove("sel");
 }
 
-// ── FIREBASE SYNC ──────────────────────────────────────────
-function setSyncDot(e) { document.getElementById("sync-dot").className="sync-dot "+e; }
-
-function iniciarSync() {
+// ── FIREBASE ───────────────────────────────────────────────
+function setSyncDot(e){document.getElementById("sync-dot").className="sync-dot "+e;}
+function iniciarSync(){
   setSyncDot("sync");
-  REF.on("value", snap => {
-    DATA = snap.val() || { viajes: {} };
-    if(!DATA.viajes) DATA.viajes = {};
-    setSyncDot("ok");
-    renderTodo();
-  }, () => setSyncDot("err"));
+  REF.on("value",snap=>{DATA=snap.val()||{viajes:{}};if(!DATA.viajes)DATA.viajes={};setSyncDot("ok");renderTodo();}
+  ,()=>setSyncDot("err"));
 }
-
-function guardarDB() {
-  setSyncDot("sync");
-  REF.set(DATA).then(()=>setSyncDot("ok")).catch(()=>setSyncDot("err"));
-}
+function guardarDB(){setSyncDot("sync");REF.set(DATA).then(()=>setSyncDot("ok")).catch(()=>setSyncDot("err"));}
 
 // ── UTILS ──────────────────────────────────────────────────
-function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-function fmtF(iso) { if(!iso) return "—"; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; }
-function fmtE(n) { return (n||0).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+"€"; }
-function cerrarModal(id) { document.getElementById(id).classList.remove("activo"); }
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function fmtF(iso){if(!iso)return"—";const[y,m,d]=iso.split("-");return`${d}/${m}/${y}`;}
+function fmtE(n){return(n||0).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+"€";}
+function cerrarModal(id){document.getElementById(id).classList.remove("activo");}
 document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("activo");}));
 let toastTimer;
-function toast(msg) {
-  const t=document.getElementById("toast");
-  t.textContent=msg; t.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove("show"),2400);
-}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600);}
 
-// ── RENDER GENERAL ─────────────────────────────────────────
-function renderTodo() {
-  renderViajes();
-  renderPendientes();
-  renderResumen();
-  // Badge pendientes
-  const pend = Object.values(DATA.viajes||{}).flatMap(v=>Object.values(v.reservas||{})).filter(r=>r.estado==="pendiente").length;
-  const badge = document.getElementById("badge-pend");
-  badge.textContent = pend;
-  badge.style.display = pend>0 ? "inline" : "none";
-}
+// ── RENDER ─────────────────────────────────────────────────
+function renderTodo(){renderViajes();renderPendientes();renderResumen();
+  const pend=Object.values(DATA.viajes||{}).flatMap(v=>Object.values(v.reservas||{})).filter(r=>r.estado==="pendiente").length;
+  const b=document.getElementById("badge-pend");b.textContent=pend;b.style.display=pend>0?"inline":"none";}
 
-// ── TABS ───────────────────────────────────────────────────
-function cambiarTab(t) {
-  tabActivo = t;
-  ["viajes","pendientes","resumen"].forEach(x=>{
+function cambiarTab(t){
+  tabActivo=t;
+  ["viajes","pendientes","resumen","scanner"].forEach(x=>{
     document.getElementById("tab-"+x).classList.toggle("activo",x===t);
     document.getElementById("vista-"+x).classList.toggle("activa",x===t);
   });
-  // FAB solo en viajes
-  document.getElementById("fab").className = "fab" + (t==="viajes"?"":"  hidden");
+  document.getElementById("fab").style.display=t==="viajes"?"flex":"none";
+  if(t!=="scanner")pararScanner();
 }
 
 // ── VIAJES ─────────────────────────────────────────────────
-function renderViajes() {
-  const cont = document.getElementById("lista-viajes");
-  const viajes = Object.values(DATA.viajes||{}).sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||""));
-  if(!viajes.length) {
-    cont.innerHTML = `<div class="empty"><div class="ico">🗺️</div><h3>Sin viajes todavía</h3><p>Pulsa "+ Añadir" para crear el primero.</p></div>`;
-    return;
-  }
-  cont.innerHTML = viajes.map(v => {
-    const ress = Object.values(v.reservas||{});
-    const conf = ress.filter(r=>r.estado==="confirmada");
-    const pend = ress.filter(r=>r.estado==="pendiente");
-    const plazas = conf.reduce((s,r)=>s+(r.plazas||0),0);
-    const cobrado = conf.reduce((s,r)=>s+(r.senal||0),0);
-    const pendCobro = conf.reduce((s,r)=>s+(r.pendiente||0),0);
-    return `
-    <div class="viaje-card">
+function renderViajes(){
+  const cont=document.getElementById("lista-viajes");
+  const viajes=Object.values(DATA.viajes||{}).sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||""));
+  if(!viajes.length){cont.innerHTML=`<div class="empty"><div class="ico">🗺️</div><h3>Sin viajes todavía</h3><p>Ariel debe crear el primer viaje.</p></div>`;return;}
+  cont.innerHTML=viajes.map(v=>{
+    const ress=Object.values(v.reservas||{});
+    const conf=ress.filter(r=>r.estado==="confirmada"||r.estado==="embarcado");
+    const pend=ress.filter(r=>r.estado==="pendiente");
+    const emb=ress.filter(r=>r.estado==="embarcado");
+    const plazas=conf.reduce((s,r)=>s+(r.plazas||0),0);
+    const cobrado=conf.reduce((s,r)=>s+(r.senal||0),0);
+    const porCobrar=conf.filter(r=>r.estado!=="embarcado").reduce((s,r)=>s+(r.pendiente||0),0);
+    return`<div class="viaje-card">
       <div class="viaje-head">
         <div class="viaje-destino">🚌 ${v.destino||"Sin nombre"}</div>
         <div class="viaje-fecha">📅 ${fmtF(v.fecha)} · 🕐 ${v.hora||"—"} · 📍 ${v.recogida||"—"}</div>
       </div>
       <div class="viaje-stats">
         <div class="vstat"><div class="n">${plazas}</div><div class="l">Plazas</div></div>
-        <div class="vstat"><div class="n">${conf.length}</div><div class="l">Confirm.</div></div>
-        <div class="vstat"><div class="n" style="color:${cobrado>0?'var(--verde)':'var(--suave)'}">${fmtE(cobrado)}</div><div class="l">Cobrado</div></div>
-        <div class="vstat"><div class="n" style="color:${pendCobro>0?'var(--rojo)':'var(--suave)'}">${fmtE(pendCobro)}</div><div class="l">Pendiente</div></div>
+        <div class="vstat"><div class="n" style="color:#00695C">${emb.length}</div><div class="l">Embarcados</div></div>
+        <div class="vstat"><div class="n" style="color:var(--verde);font-size:13px">${fmtE(cobrado)}</div><div class="l">Cobrado</div></div>
+        <div class="vstat"><div class="n" style="color:var(--rojo);font-size:13px">${fmtE(porCobrar)}</div><div class="l">Pendiente</div></div>
       </div>
-      ${pend.length>0 ? `<div style="padding:6px 14px;background:var(--naranja-s);font-size:12px;font-weight:600;color:var(--naranja);">⏳ ${pend.length} reserva${pend.length!==1?"s":""} esperando confirmación</div>` : ""}
+      ${pend.length>0?`<div class="alerta-pend">⏳ ${pend.length} reserva${pend.length!==1?"s":""} pendientes de confirmación</div>`:""}
       <div class="viaje-acc">
         <button class="btn btn-primary btn-sm" onclick="verDetalle('${v.id}')">Ver reservas</button>
         <button class="btn btn-yellow btn-sm" onclick="abrirModalReserva('${v.id}')">+ Reserva</button>
-        ${SESION==="ariel" ? `<button class="btn btn-ghost btn-sm" onclick="eliminarViaje('${v.id}')">Borrar</button>` : ""}
+        ${SESION==="ariel"?`<button class="btn btn-ghost btn-sm" onclick="eliminarViaje('${v.id}')">🗑️</button>`:""}
       </div>
     </div>`;
   }).join("");
 }
 
-// ── MODAL VIAJE ────────────────────────────────────────────
-function abrirFab() {
-  if(SESION==="ariel") {
-    document.getElementById("modal-viaje").classList.add("activo");
-  } else {
-    // Cris solo puede añadir reservas — elige viaje
-    const viajes = Object.values(DATA.viajes||{});
-    if(!viajes.length) { toast("Ariel primero debe crear un viaje"); return; }
-    if(viajes.length===1) { abrirModalReserva(viajes[0].id); return; }
-    // Si hay varios, mostrar picker simple
-    const opciones = viajes.map(v=>`<button class="btn btn-ghost btn-block" style="margin-bottom:6px;" onclick="abrirModalReserva('${v.id}');cerrarModal('modal-pick')">🚌 ${v.destino} — ${fmtF(v.fecha)}</button>`).join("");
-    document.getElementById("detalle-contenido").innerHTML = `<h3 style="margin-bottom:14px;">¿Para qué viaje?</h3>${opciones}`;
-    document.getElementById("modal-pick") ? document.getElementById("modal-pick").classList.add("activo") : document.getElementById("modal-detalle").classList.add("activo");
-  }
+function abrirFab(){
+  if(SESION==="ariel"){document.getElementById("modal-viaje").classList.add("activo");return;}
+  const viajes=Object.values(DATA.viajes||{});
+  if(!viajes.length){toast("Ariel primero debe crear un viaje");return;}
+  if(viajes.length===1){abrirModalReserva(viajes[0].id);return;}
+  document.getElementById("detalle-contenido").innerHTML=`<h3 style="margin-bottom:14px;">¿Para qué viaje?</h3>`+viajes.map(v=>`<button class="btn btn-ghost btn-block" style="margin-bottom:6px;" onclick="abrirModalReserva('${v.id}');cerrarModal('modal-detalle')">🚌 ${v.destino} — ${fmtF(v.fecha)}</button>`).join("");
+  document.getElementById("modal-detalle").classList.add("activo");
 }
 
-function guardarViaje() {
-  const id = uid();
-  DATA.viajes[id] = {
-    id,
-    destino: document.getElementById("mj-destino").value.trim(),
-    fecha: document.getElementById("mj-fecha").value,
-    hora: document.getElementById("mj-hora").value,
-    recogida: document.getElementById("mj-recogida").value,
-    precioA: parseFloat(document.getElementById("mj-pa").value)||0,
-    precioN: parseFloat(document.getElementById("mj-pn").value)||0,
-    reservas: {}
-  };
-  guardarDB();
-  cerrarModal("modal-viaje");
-  toast("✅ Viaje creado");
+function guardarViaje(){
+  const id=uid();
+  DATA.viajes[id]={id,destino:document.getElementById("mj-destino").value.trim(),fecha:document.getElementById("mj-fecha").value,hora:document.getElementById("mj-hora").value,recogida:document.getElementById("mj-recogida").value,precioA:parseFloat(document.getElementById("mj-pa").value)||0,precioN:parseFloat(document.getElementById("mj-pn").value)||0,reservas:{}};
+  guardarDB();cerrarModal("modal-viaje");toast("✅ Viaje creado");
 }
-
-function eliminarViaje(id) {
-  if(!confirm(`¿Eliminar viaje a ${DATA.viajes[id]?.destino}?`)) return;
-  delete DATA.viajes[id];
-  guardarDB();
-  toast("🗑️ Viaje eliminado");
-}
+function eliminarViaje(id){if(!confirm(`¿Eliminar viaje a ${DATA.viajes[id]?.destino}?`))return;delete DATA.viajes[id];guardarDB();toast("🗑️ Viaje eliminado");}
 
 // ── MODAL RESERVA ──────────────────────────────────────────
-function abrirModalReserva(viajeId, resId) {
+function abrirModalReserva(vId,rId){
   cerrarModal("modal-detalle");
-  document.getElementById("mr-viaje-id").value = viajeId||"";
-  document.getElementById("mr-id").value = resId||"";
-  const v = DATA.viajes[viajeId];
-  const r = resId ? v?.reservas?.[resId] : null;
-  document.getElementById("modal-res-titulo").textContent = resId ? "Editar reserva" : "Nueva reserva";
-  document.getElementById("mr-nombre").value = r?.nombre||"";
-  document.getElementById("mr-otros").value = r?.otros||"";
-  document.getElementById("mr-plazas").value = r?.plazas||1;
-  document.getElementById("mr-recogida").value = r?.recogida||(v?.recogida||"Plaza Elíptica");
-  document.getElementById("mr-senal").value = r?.senal||0;
-  document.getElementById("mr-total").value = r ? (r.senal||0)+(r.pendiente||0) : (v?.precioA||0)*1;
-  document.getElementById("mr-resto").value = r?.pendiente||0;
-  document.getElementById("mr-notas").value = r?.notas||"";
-  document.getElementById("mr-aviso-cris").style.display = SESION==="cris" && !resId ? "block" : "none";
+  document.getElementById("mr-viaje-id").value=vId||"";
+  document.getElementById("mr-id").value=rId||"";
+  const v=DATA.viajes[vId];const r=rId?v?.reservas?.[rId]:null;
+  document.getElementById("modal-res-titulo").textContent=rId?"Editar reserva":"Nueva reserva";
+  document.getElementById("mr-nombre").value=r?.nombre||"";
+  document.getElementById("mr-telefono").value=r?.telefono||"";
+  document.getElementById("mr-otros").value=r?.otros||"";
+  document.getElementById("mr-plazas").value=r?.plazas||1;
+  document.getElementById("mr-recogida").value=r?.recogida||(v?.recogida||"Plaza Elíptica");
+  document.getElementById("mr-senal").value=r?.senal||0;
+  document.getElementById("mr-total").value=r?(r.senal||0)+(r.pendiente||0):(v?.precioA||0)*1;
+  document.getElementById("mr-resto").value=r?.pendiente||0;
+  document.getElementById("mr-notas").value=r?.notas||"";
+  document.getElementById("mr-aviso-cris").style.display=SESION==="cris"&&!rId?"block":"none";
   document.getElementById("modal-reserva").classList.add("activo");
 }
-
-function calcRes() {
-  const total = parseFloat(document.getElementById("mr-total").value)||0;
-  const senal = parseFloat(document.getElementById("mr-senal").value)||0;
-  document.getElementById("mr-resto").value = Math.max(0,Math.round((total-senal)*100)/100);
-}
-
-function guardarReserva() {
-  const vId = document.getElementById("mr-viaje-id").value;
-  const rId = document.getElementById("mr-id").value || uid();
-  const v = DATA.viajes[vId]; if(!v) return;
-  const senal = parseFloat(document.getElementById("mr-senal").value)||0;
-  const total = parseFloat(document.getElementById("mr-total").value)||0;
-  const esNueva = !document.getElementById("mr-id").value;
-  if(!v.reservas) v.reservas = {};
-  const estadoAnterior = v.reservas[rId]?.estado;
-  v.reservas[rId] = {
-    ...(v.reservas[rId]||{}), id: rId,
-    nombre: document.getElementById("mr-nombre").value.trim(),
-    otros: document.getElementById("mr-otros").value.trim(),
-    plazas: parseInt(document.getElementById("mr-plazas").value)||1,
-    recogida: document.getElementById("mr-recogida").value,
-    senal, pendiente: Math.max(0,Math.round((total-senal)*100)/100),
-    notas: document.getElementById("mr-notas").value.trim(),
-    vendedor: SESION,
-    fecha: v.reservas[rId]?.fecha || Date.now(),
-    estado: esNueva ? (SESION==="ariel" ? "confirmada" : "pendiente") : (estadoAnterior||"pendiente")
-  };
-  guardarDB();
-  cerrarModal("modal-reserva");
-  toast(SESION==="cris" && esNueva ? "⏳ Reserva enviada — esperando confirmación de Ariel" : "✅ Reserva guardada");
+function calcRes(){const t=parseFloat(document.getElementById("mr-total").value)||0;const s=parseFloat(document.getElementById("mr-senal").value)||0;document.getElementById("mr-resto").value=Math.max(0,Math.round((t-s)*100)/100);}
+function guardarReserva(){
+  const vId=document.getElementById("mr-viaje-id").value;const rId=document.getElementById("mr-id").value||uid();
+  const v=DATA.viajes[vId];if(!v)return;
+  const senal=parseFloat(document.getElementById("mr-senal").value)||0;
+  const total=parseFloat(document.getElementById("mr-total").value)||0;
+  const esNueva=!document.getElementById("mr-id").value;
+  if(!v.reservas)v.reservas={};
+  const ant=v.reservas[rId]?.estado;
+  v.reservas[rId]={...(v.reservas[rId]||{}),id:rId,nombre:document.getElementById("mr-nombre").value.trim(),telefono:document.getElementById("mr-telefono").value.trim(),otros:document.getElementById("mr-otros").value.trim(),plazas:parseInt(document.getElementById("mr-plazas").value)||1,recogida:document.getElementById("mr-recogida").value,senal,pendiente:Math.max(0,Math.round((total-senal)*100)/100),notas:document.getElementById("mr-notas").value.trim(),vendedor:SESION,fecha:v.reservas[rId]?.fecha||Date.now(),estado:esNueva?(SESION==="ariel"?"confirmada":"pendiente"):(ant||"pendiente")};
+  guardarDB();cerrarModal("modal-reserva");
+  toast(SESION==="cris"&&esNueva?"⏳ Reserva enviada — esperando confirmación de Ariel":"✅ Reserva guardada");
 }
 
 // ── PENDIENTES ─────────────────────────────────────────────
-function renderPendientes() {
-  const cont = document.getElementById("lista-pendientes");
-  const pends = [];
-  Object.values(DATA.viajes||{}).forEach(v => {
-    Object.values(v.reservas||{}).filter(r=>r.estado==="pendiente").forEach(r => {
-      pends.push({...r, _destino: v.destino, _fecha: v.fecha, _viajeId: v.id});
-    });
-  });
+function renderPendientes(){
+  const cont=document.getElementById("lista-pendientes");
+  const pends=[];
+  Object.values(DATA.viajes||{}).forEach(v=>Object.values(v.reservas||{}).filter(r=>r.estado==="pendiente").forEach(r=>pends.push({...r,_destino:v.destino,_fecha:v.fecha,_viajeId:v.id})));
   pends.sort((a,b)=>b.fecha-a.fecha);
-  if(!pends.length) {
-    cont.innerHTML = `<div class="empty"><div class="ico">✅</div><h3>Todo al día</h3><p>No hay reservas pendientes de confirmación.</p></div>`;
-    return;
-  }
-  const esAriel = SESION==="ariel";
-  cont.innerHTML = (esAriel ? `<div class="alerta-confirm" style="background:var(--naranja-s);border-color:var(--naranja);"><b>Ariel</b> — revisa y confirma o rechaza cada reserva pendiente.</div>` : `<div class="alerta-confirm">Tus reservas esperan la confirmación de Ariel.</div>`)
-  + pends.map(r => `
-    <div class="res-card pendiente">
-      <div class="res-top">
-        <div class="res-info">
-          <div class="res-nombre">${r.nombre}</div>
-          <div class="res-meta">
-            🚌 ${r._destino} · ${fmtF(r._fecha)}<br>
-            👥 ${r.plazas} plaza${r.plazas!==1?"s":""} · 📍 ${r.recogida}
-            ${r.otros ? `<br>👤 ${r.otros.split("\n").join(", ")}` : ""}
-            ${r.notas ? `<br>📝 ${r.notas}` : ""}
-          </div>
-        </div>
-        <div class="res-pago">
-          <div class="res-senal">Señal: ${fmtE(r.senal)}</div>
-          <div class="res-pend" style="color:var(--rojo)">Debe ${fmtE(r.pendiente)}</div>
-        </div>
+  if(!pends.length){cont.innerHTML=`<div class="empty"><div class="ico">✅</div><h3>Todo al día</h3><p>No hay reservas pendientes.</p></div>`;return;}
+  const esA=SESION==="ariel";
+  cont.innerHTML=(esA?`<div class="alerta-confirm"><b>Ariel</b> — confirma o rechaza cada reserva de Cris.</div>`:`<div class="alerta-confirm">Tus reservas esperan confirmación de Ariel.</div>`)
+  +pends.map(r=>`<div class="res-card pendiente">
+    <div class="res-top">
+      <div class="res-info">
+        <div class="res-nombre">${r.nombre}</div>
+        <div class="res-meta">🚌 ${r._destino} · ${fmtF(r._fecha)}<br>👥 ${r.plazas} plaza${r.plazas!==1?"s":""} · 📍 ${r.recogida}${r.otros?`<br>👤 ${r.otros.split("\n").join(", ")}`:""}${r.notas?`<br>📝 ${r.notas}`:""}</div>
       </div>
-      <div class="res-badges">
-        <span class="chip chip-naranja">⏳ PENDIENTE</span>
-        <span class="chip chip-${r.vendedor==='cris'?'morado':'azul'}">${r.vendedor==='cris'?'👩🏽 Cris':'👨🏽‍💼 Ariel'}</span>
+      <div class="res-pago">
+        <div class="res-senal">Señal: ${fmtE(r.senal)}</div>
+        <div class="res-pend" style="color:var(--rojo)">Debe ${fmtE(r.pendiente)}</div>
       </div>
-      ${esAriel ? `
-      <div class="res-confirm-btns">
-        <button class="btn btn-green btn-sm" onclick="confirmar('${r._viajeId}','${r.id}',true)">✅ Confirmar</button>
-        <button class="btn btn-red btn-sm" onclick="confirmar('${r._viajeId}','${r.id}',false)">❌ Rechazar</button>
-        <button class="btn btn-ghost btn-sm" onclick="abrirModalReserva('${r._viajeId}','${r.id}')">✏️ Editar</button>
-      </div>` : ""}
-    </div>`).join("");
+    </div>
+    <div class="res-badges"><span class="chip chip-naranja">⏳ PENDIENTE</span><span class="chip chip-${r.vendedor==="cris"?"morado":"azul"}">${r.vendedor==="cris"?"👩🏽 Cris":"👨🏽‍💼 Ariel"}</span></div>
+    ${esA?`<div class="res-btns">
+      <button class="btn btn-green btn-sm" onclick="confirmar('${r._viajeId}','${r.id}',true)">✅ Confirmar</button>
+      <button class="btn btn-red btn-sm" onclick="confirmar('${r._viajeId}','${r.id}',false)">❌ Rechazar</button>
+      <button class="btn btn-ghost btn-sm" onclick="abrirModalReserva('${r._viajeId}','${r.id}')">✏️</button>
+    </div>`:""}
+  </div>`).join("");
 }
-
-function confirmar(vId, rId, ok) {
-  const v = DATA.viajes[vId];
-  if(!v?.reservas?.[rId]) return;
-  v.reservas[rId].estado = ok ? "confirmada" : "rechazada";
-  guardarDB();
-  toast(ok ? "✅ Reserva confirmada" : "❌ Reserva rechazada");
-}
+function confirmar(vId,rId,ok){const v=DATA.viajes[vId];if(!v?.reservas?.[rId])return;v.reservas[rId].estado=ok?"confirmada":"rechazada";guardarDB();toast(ok?"✅ Confirmada":"❌ Rechazada");}
 
 // ── DETALLE VIAJE ──────────────────────────────────────────
-function verDetalle(vId) {
-  const v = DATA.viajes[vId]; if(!v) return;
-  const ress = Object.values(v.reservas||{}).sort((a,b)=>b.fecha-a.fecha);
-  const conf = ress.filter(r=>r.estado==="confirmada");
-  const pend = ress.filter(r=>r.estado==="pendiente");
-  const rech = ress.filter(r=>r.estado==="rechazada");
+function verDetalle(vId){
+  const v=DATA.viajes[vId];if(!v)return;
+  const ress=Object.values(v.reservas||{}).sort((a,b)=>b.fecha-a.fecha);
+  const conf=ress.filter(r=>r.estado==="confirmada");
+  const emb=ress.filter(r=>r.estado==="embarcado");
+  const pend=ress.filter(r=>r.estado==="pendiente");
+  const rech=ress.filter(r=>r.estado==="rechazada");
+  const plazas=[...conf,...emb].reduce((s,r)=>s+(r.plazas||0),0);
+  const cobrado=[...conf,...emb].reduce((s,r)=>s+(r.senal||0),0);
+  const porCobrar=conf.reduce((s,r)=>s+(r.pendiente||0),0);
 
-  const tarjeta = (r) => {
-    const colEstado = r.estado==="confirmada"?"chip-verde":r.estado==="pendiente"?"chip-naranja":"chip-rojo";
-    const lblEstado = r.estado==="confirmada"?"✅ Confirmada":r.estado==="pendiente"?"⏳ Pendiente":"❌ Rechazada";
-    return `
-    <div class="res-card ${r.estado}">
+  const tarjeta=(r)=>{
+    const esEmb=r.estado==="embarcado";
+    const col=esEmb?"chip-teal":r.estado==="confirmada"?"chip-verde":r.estado==="pendiente"?"chip-naranja":"chip-rojo";
+    const lbl=esEmb?"🚌 EMBARCADO ✓":r.estado==="confirmada"?"✅ Confirmada":r.estado==="pendiente"?"⏳ Pendiente":"❌ Rechazada";
+    const canEdit=SESION==="ariel"||(r.vendedor===SESION&&r.estado==="pendiente");
+    return`<div class="res-card ${esEmb?"embarcado":r.estado}">
       <div class="res-top">
         <div class="res-info">
           <div class="res-nombre">${r.nombre}</div>
-          <div class="res-meta">
-            👥 ${r.plazas} plaza${r.plazas!==1?"s":""} · 📍 ${r.recogida}
-            ${r.otros ? `<br>👤 ${r.otros.split("\n").join(", ")}` : ""}
-            ${r.notas ? `<br>📝 ${r.notas}` : ""}
-          </div>
+          <div class="res-meta">👥 ${r.plazas} plaza${r.plazas!==1?"s":""} · 📍 ${r.recogida}${r.telefono?`<br>📞 ${r.telefono}`:""}${r.otros?`<br>👤 ${r.otros.split("\n").join(", ")}`:""}${r.notas?`<br>📝 ${r.notas}`:""}</div>
         </div>
         <div class="res-pago">
           <div class="res-senal">Señal: ${fmtE(r.senal)}</div>
-          <div class="res-pend" style="color:${r.pendiente===0?'var(--verde)':'var(--rojo)'}">
-            ${r.pendiente===0?"✓ Pagado":"Debe "+fmtE(r.pendiente)}
+          <div class="res-pend" style="color:${esEmb?"#00695C":r.pendiente===0?"var(--verde)":"var(--rojo)"}">
+            ${esEmb?"✓ Cobrado completo":r.pendiente===0?"✓ Pagado":"Debe "+fmtE(r.pendiente)}
           </div>
         </div>
       </div>
       <div class="res-badges">
-        <span class="chip ${colEstado}">${lblEstado}</span>
-        <span class="chip chip-${r.vendedor==='cris'?'morado':'azul'}">${r.vendedor==='cris'?'👩🏽 Cris':'👨🏽‍💼 Ariel'}</span>
+        <span class="chip ${col}">${lbl}</span>
+        <span class="chip chip-${r.vendedor==="cris"?"morado":"azul"}">${r.vendedor==="cris"?"👩🏽 Cris":"👨🏽‍💼 Ariel"}</span>
       </div>
-      ${SESION==="ariel" || r.vendedor===SESION ? `
-      <div class="res-confirm-btns">
-        <button class="btn btn-ghost btn-sm" onclick="abrirModalReserva('${vId}','${r.id}')">✏️ Editar</button>
+      <div class="res-btns">
+        ${r.telefono?`<button class="btn btn-wa btn-sm" onclick="contactarWA('${r.telefono}','${r.nombre}','${v.destino}','${fmtF(v.fecha)}')">📲 WhatsApp</button>`:""}
+        ${(r.estado==="confirmada"||esEmb)?`<button class="btn btn-purple btn-sm" onclick="generarJustificante('${vId}','${r.id}')">📄 PDF</button>`:""}
+        ${canEdit?`<button class="btn btn-ghost btn-sm" onclick="abrirModalReserva('${vId}','${r.id}')">✏️</button>`:""}
+        ${SESION==="ariel"&&r.estado==="pendiente"?`<button class="btn btn-green btn-sm" onclick="confirmar('${vId}','${r.id}',true)">✅</button>`:""}
+        ${SESION==="ariel"&&!esEmb?`<button class="btn btn-teal btn-sm" onclick="embarcar('${vId}','${r.id}')">🚌 Embarcar</button>`:""}
         ${SESION==="ariel"?`<button class="btn btn-red btn-sm" onclick="eliminarRes('${vId}','${r.id}')">🗑️</button>`:""}
-        ${SESION==="ariel"&&r.estado==="pendiente"?`<button class="btn btn-green btn-sm" onclick="confirmar('${vId}','${r.id}',true)">✅ Confirmar</button>`:""}
-      </div>` : ""}
+      </div>
     </div>`;
   };
 
-  const plazasConf = conf.reduce((s,r)=>s+(r.plazas||0),0);
-  const cobrado = conf.reduce((s,r)=>s+(r.senal||0),0);
-  const porCobrar = conf.reduce((s,r)=>s+(r.pendiente||0),0);
-
-  document.getElementById("detalle-contenido").innerHTML = `
+  document.getElementById("detalle-contenido").innerHTML=`
     <div style="background:var(--navy);border-radius:12px;padding:14px;margin-bottom:14px;">
       <div style="font-size:18px;font-weight:700;color:#fff;">🚌 ${v.destino}</div>
       <div style="font-size:12px;color:#BBD6E8;margin-top:3px;">📅 ${fmtF(v.fecha)} · 🕐 ${v.hora||"—"} · 📍 ${v.recogida||"—"}</div>
     </div>
     <div class="resumen-grid" style="margin-bottom:12px;">
-      <div class="res-stat"><div class="n">${plazasConf}</div><div class="l">Plazas conf.</div></div>
-      <div class="res-stat"><div class="n">${conf.length}</div><div class="l">Reservas conf.</div></div>
-      <div class="res-stat"><div class="n" style="font-size:16px;color:var(--verde)">${fmtE(cobrado)}</div><div class="l">Cobrado</div></div>
-      <div class="res-stat"><div class="n" style="font-size:16px;color:var(--rojo)">${fmtE(porCobrar)}</div><div class="l">Por cobrar</div></div>
+      <div class="res-stat"><div class="n">${plazas}</div><div class="l">Plazas</div></div>
+      <div class="res-stat"><div class="n" style="color:#00695C">${emb.length}</div><div class="l">Embarcados</div></div>
+      <div class="res-stat"><div class="n" style="font-size:14px;color:var(--verde)">${fmtE(cobrado)}</div><div class="l">Cobrado</div></div>
+      <div class="res-stat"><div class="n" style="font-size:14px;color:var(--rojo)">${fmtE(porCobrar)}</div><div class="l">Por cobrar</div></div>
     </div>
     <button class="btn btn-yellow btn-block" style="margin-bottom:14px;" onclick="abrirModalReserva('${vId}')">+ Nueva reserva</button>
-    ${pend.length>0?`<div class="seccion-label">⏳ Pendientes de confirmación (${pend.length})</div>${pend.map(tarjeta).join("")}`:""}
+    ${emb.length>0?`<div class="seccion-label">🚌 Embarcados (${emb.length})</div>${emb.map(tarjeta).join("")}`:""}
+    ${pend.length>0?`<div class="seccion-label">⏳ Pendientes (${pend.length})</div>${pend.map(tarjeta).join("")}`:""}
     ${conf.length>0?`<div class="seccion-label">✅ Confirmadas (${conf.length})</div>${conf.map(tarjeta).join("")}`:""}
     ${rech.length>0?`<div class="seccion-label">❌ Rechazadas (${rech.length})</div>${rech.map(tarjeta).join("")}`:""}
-    ${ress.length===0?`<div class="empty"><div class="ico">🎫</div><h3>Sin reservas</h3><p>Añade la primera reserva para este viaje.</p></div>`:""}
+    ${ress.length===0?`<div class="empty"><div class="ico">🎫</div><h3>Sin reservas</h3></div>`:""}
   `;
   document.getElementById("modal-detalle").classList.add("activo");
 }
 
-function eliminarRes(vId, rId) {
-  if(!confirm("¿Eliminar esta reserva?")) return;
-  delete DATA.viajes[vId].reservas[rId];
-  guardarDB();
-  cerrarModal("modal-detalle");
-  toast("🗑️ Reserva eliminada");
+function eliminarRes(vId,rId){if(!confirm("¿Eliminar esta reserva?"))return;delete DATA.viajes[vId].reservas[rId];guardarDB();cerrarModal("modal-detalle");toast("🗑️ Eliminada");}
+
+function embarcar(vId,rId){
+  const r=DATA.viajes[vId]?.reservas?.[rId];if(!r)return;
+  if(!confirm(`¿Confirmar embarque de ${r.nombre} y cobro del resto (${fmtE(r.pendiente)})?`))return;
+  DATA.viajes[vId].reservas[rId].estado="embarcado";
+  DATA.viajes[vId].reservas[rId].pendiente=0;
+  DATA.viajes[vId].reservas[rId].fechaEmbarque=Date.now();
+  guardarDB();cerrarModal("modal-detalle");toast(`🚌 ${r.nombre} — embarcado y cobrado`);
 }
 
-// ── RESUMEN GLOBAL ─────────────────────────────────────────
-function renderResumen() {
-  const viajes = Object.values(DATA.viajes||{});
-  const todas = viajes.flatMap(v=>Object.values(v.reservas||{}));
-  const conf = todas.filter(r=>r.estado==="confirmada");
-  const pend = todas.filter(r=>r.estado==="pendiente");
-  const totalPlazas = conf.reduce((s,r)=>s+(r.plazas||0),0);
-  const totalCobrado = conf.reduce((s,r)=>s+(r.senal||0),0);
-  const totalPorCobrar = conf.reduce((s,r)=>s+(r.pendiente||0),0);
-  const porCris = conf.filter(r=>r.vendedor==="cris");
-  const porAriel = conf.filter(r=>r.vendedor==="ariel");
+// ── WHATSAPP ───────────────────────────────────────────────
+function contactarWA(tel,nombre,destino,fecha){
+  const num=tel.replace(/\D/g,"");
+  const msg=encodeURIComponent(`Hola ${nombre}! Te contactamos de Viajando Con Cris para confirmarte tu reserva a ${destino} el ${fecha}. ¿Tienes alguna duda? 🚌`);
+  window.open(`https://wa.me/34${num}?text=${msg}`,"_blank");
+}
 
-  document.getElementById("contenido-resumen").innerHTML = `
+// ── PDF JUSTIFICANTE ───────────────────────────────────────
+async function generarJustificante(vId,rId){
+  const v=DATA.viajes[vId];const r=v?.reservas?.[rId];if(!v||!r)return;
+  toast("⏳ Generando PDF...");
+
+  // Generar QR
+  const qrData=`VCS-RESERVA-${rId}`;
+  const qrDiv=document.getElementById("qr-temp");
+  qrDiv.innerHTML="";
+  const qr=new QRCode(qrDiv,{text:qrData,width:200,height:200,colorDark:"#0D1F3C",colorLight:"#FFFFFF"});
+  await new Promise(res=>setTimeout(res,500));
+  const qrImg=qrDiv.querySelector("img")||qrDiv.querySelector("canvas");
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  const W=210;
+
+  // Cabecera
+  doc.setFillColor(13,31,60);
+  doc.rect(0,0,W,40,"F");
+  doc.setTextColor(255,212,0);
+  doc.setFontSize(18);doc.setFont("helvetica","bold");
+  doc.text("VIAJANDO CON CRIS",14,18);
+  doc.setTextColor(187,214,232);
+  doc.setFontSize(9);doc.setFont("helvetica","normal");
+  doc.text("Excursiones en bus por España  ·  Tel: +34 614 599 790",14,26);
+  doc.setTextColor(255,212,0);
+  doc.setFontSize(11);doc.setFont("helvetica","bold");
+  doc.text("JUSTIFICANTE DE RESERVA",14,35);
+
+  // Ref y QR
+  const ref=`VCS-${rId.slice(-8).toUpperCase()}`;
+  doc.setTextColor(100,100,100);doc.setFontSize(8);doc.setFont("helvetica","normal");
+  doc.text(`Ref: ${ref}`,W-60,12);
+  doc.text(`Emitido: ${new Date().toLocaleDateString("es-ES")}`,W-60,18);
+
+  // QR en el PDF
+  try{
+    const canvas=qrDiv.querySelector("canvas");
+    if(canvas){const qrDataUrl=canvas.toDataURL("image/png");doc.addImage(qrDataUrl,"PNG",W-52,22,30,30);}
+  }catch(e){}
+
+  // Banda verde
+  doc.setFillColor(47,158,110);
+  doc.rect(0,42,W,8,"F");
+  doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont("helvetica","bold");
+  doc.text("✓  RESERVA CONFIRMADA",14,48);
+
+  // Destino
+  doc.setFillColor(13,31,60);
+  doc.rect(0,52,W,20,"F");
+  doc.setTextColor(255,212,0);doc.setFontSize(16);doc.setFont("helvetica","bold");
+  doc.text(v.destino||"—",14,62);
+  doc.setTextColor(187,214,232);doc.setFontSize(9);doc.setFont("helvetica","normal");
+  doc.text(`${fmtF(v.fecha)}  ·  Salida ${v.hora||"—"}h  ·  ${v.recogida||"—"}`,14,70);
+
+  // Datos reserva
+  let y=82;
+  doc.setFillColor(245,247,250);doc.rect(10,y-6,W-20,34,"F");
+  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+  doc.text("TITULAR DE LA RESERVA",14,y);
+  doc.setTextColor(20,38,52);doc.setFontSize(12);doc.setFont("helvetica","bold");
+  doc.text(r.nombre||"—",14,y+8);
+  if(r.telefono){doc.setFontSize(9);doc.setFont("helvetica","normal");doc.text(`📞 ${r.telefono}`,14,y+16);}
+  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+  doc.text("PLAZAS",W-60,y);
+  doc.setTextColor(20,38,52);doc.setFontSize(14);doc.setFont("helvetica","bold");
+  doc.text(`${r.plazas}`,W-50,y+10);
+
+  // Otros viajeros
+  if(r.otros){
+    y+=40;
+    doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+    doc.text("OTROS VIAJEROS DEL GRUPO",14,y);
+    doc.setTextColor(20,38,52);doc.setFontSize(9);doc.setFont("helvetica","normal");
+    r.otros.split("\n").forEach((n,i)=>{doc.text(`${i+2}. ${n}`,14,y+6+(i*6));});
+    y+=6+r.otros.split("\n").length*6;
+  }else{y+=40;}
+
+  // Pago
+  y+=6;
+  doc.setFillColor(228,246,238);doc.rect(10,y,W-20,18,"F");
+  doc.setTextColor(47,158,110);doc.setFontSize(8);doc.setFont("helvetica","bold");
+  doc.text("SEÑAL ABONADA",14,y+7);
+  doc.setFontSize(13);doc.text(`${r.senal?.toFixed(2)} €`,14,y+15);
+  doc.setTextColor(100,100,100);doc.setFontSize(7);doc.text("PAGADO ✓",W-40,y+7);
+
+  y+=22;
+  doc.setFillColor(255,243,222);doc.rect(10,y,W-20,18,"F");
+  doc.setTextColor(138,90,0);doc.setFontSize(8);doc.setFont("helvetica","bold");
+  doc.text("RESTO PENDIENTE",14,y+7);
+  doc.setFontSize(13);doc.text(`${r.pendiente?.toFixed(2)} €`,14,y+15);
+  doc.setFontSize(7);doc.text("Se abona en metálico al subir al bus",W-80,y+7);
+
+  // Notas
+  if(r.notas){y+=24;doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(92,116,136);doc.text(`📝 ${r.notas}`,14,y);}
+
+  // QR info
+  y+=14;
+  doc.setFillColor(228,236,240);doc.rect(10,y,W-20,24,"F");
+  doc.setTextColor(26,110,158);doc.setFontSize(7);doc.setFont("helvetica","bold");
+  doc.text("CÓDIGO QR DE EMBARQUE",14,y+7);
+  doc.setFont("helvetica","normal");doc.setTextColor(20,38,52);
+  doc.text("Muestra este justificante al subir al autobús.",14,y+13);
+  doc.text("El responsable escaneará el QR para confirmar tu embarque.",14,y+19);
+
+  // Footer
+  doc.setFillColor(13,31,60);doc.rect(0,272,W,25,"F");
+  doc.setTextColor(255,212,0);doc.setFontSize(9);doc.setFont("helvetica","bold");
+  doc.text("Viajando Con Cris — Excursiones en bus por España",14,282);
+  doc.setTextColor(187,214,232);doc.setFontSize(7);doc.setFont("helvetica","normal");
+  doc.text(`Tel: +34 614 599 790  ·  wa.me/34614599790  ·  Ref: ${ref}`,14,290);
+
+  // Guardar / compartir
+  const pdfBlob=doc.output("blob");
+  const url=URL.createObjectURL(pdfBlob);
+  const a=document.createElement("a");
+  a.href=url;a.download=`Justificante_${r.nombre?.split(" ")[0]}_${v.destino?.replace(/\s/g,"_")}.pdf`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast("✅ PDF generado — comparte por WhatsApp");
+}
+
+// ── SCANNER QR ─────────────────────────────────────────────
+async function iniciarScanner(){
+  pararScanner();
+  try{
+    scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+    const video=document.getElementById("scanner-video");
+    video.srcObject=scannerStream;
+    video.play();
+    document.getElementById("scanner-result").innerHTML="";
+    scannerInterval=setInterval(()=>escanearFrame(),300);
+  }catch(e){toast("❌ No se puede acceder a la cámara");}
+}
+
+function escanearFrame(){
+  const video=document.getElementById("scanner-video");
+  const canvas=document.getElementById("scanner-canvas");
+  if(!video||video.readyState!==4)return;
+  canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+  const ctx=canvas.getContext("2d");ctx.drawImage(video,0,0);
+  const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const code=jsQR(img.data,img.width,img.height,{inversionAttempts:"dontInvert"});
+  if(code&&code.data.startsWith("VCS-RESERVA-")){
+    const rId=code.data.replace("VCS-RESERVA-","");
+    procesarQR(rId);
+  }
+}
+
+function procesarQR(rId){
+  pararScanner();
+  // Buscar reserva
+  let resEncontrada=null;let viajeEncontrado=null;
+  Object.values(DATA.viajes||{}).forEach(v=>{
+    const r=v.reservas?.[rId];
+    if(r){resEncontrada=r;viajeEncontrado=v;}
+  });
+  const cont=document.getElementById("scanner-result");
+  if(!resEncontrada){
+    cont.innerHTML=`<div class="scanner-result err">❌ Reserva no encontrada</div>`;return;
+  }
+  if(resEncontrada.estado==="embarcado"){
+    cont.innerHTML=`<div class="scanner-result ok">✅ ${resEncontrada.nombre} ya está embarcado</div>`;return;
+  }
+  if(resEncontrada.estado!=="confirmada"){
+    cont.innerHTML=`<div class="scanner-result err">⚠️ Reserva en estado: ${resEncontrada.estado}</div>`;return;
+  }
+  // Mostrar info y botón de embarcar
+  cont.innerHTML=`
+    <div class="scanner-result ok" style="text-align:left;">
+      <div style="font-size:15px;margin-bottom:8px;">✅ Reserva encontrada</div>
+      <div><b>${resEncontrada.nombre}</b></div>
+      <div style="font-size:12px;margin-top:4px;">🚌 ${viajeEncontrado.destino} · ${fmtF(viajeEncontrado.fecha)}</div>
+      <div style="font-size:12px;">👥 ${resEncontrada.plazas} plaza${resEncontrada.plazas!==1?"s":""} · 📍 ${resEncontrada.recogida}</div>
+      <div style="font-size:13px;font-weight:700;margin-top:6px;color:var(--rojo);">💰 Cobra: ${fmtE(resEncontrada.pendiente)}</div>
+      <button class="btn btn-teal" style="width:100%;margin-top:10px;" onclick="confirmarEmbarqueQR('${viajeEncontrado.id}','${rId}')">
+        🚌 Confirmar embarque y cobro
+      </button>
+    </div>`;
+}
+
+function confirmarEmbarqueQR(vId,rId){
+  const r=DATA.viajes[vId]?.reservas?.[rId];if(!r)return;
+  DATA.viajes[vId].reservas[rId].estado="embarcado";
+  DATA.viajes[vId].reservas[rId].pendiente=0;
+  DATA.viajes[vId].reservas[rId].fechaEmbarque=Date.now();
+  guardarDB();
+  document.getElementById("scanner-result").innerHTML=`<div class="scanner-result ok">🚌 ${r.nombre} — EMBARCADO ✓<br>Cobrado resto en metálico</div>`;
+  toast(`🚌 ${r.nombre} confirmado`);
+}
+
+function pararScanner(){
+  if(scannerInterval){clearInterval(scannerInterval);scannerInterval=null;}
+  if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;}
+  const v=document.getElementById("scanner-video");if(v)v.srcObject=null;
+}
+
+// ── RESUMEN ────────────────────────────────────────────────
+function renderResumen(){
+  const viajes=Object.values(DATA.viajes||{});
+  const todas=viajes.flatMap(v=>Object.values(v.reservas||{}));
+  const conf=todas.filter(r=>r.estado==="confirmada"||r.estado==="embarcado");
+  const emb=todas.filter(r=>r.estado==="embarcado");
+  const pend=todas.filter(r=>r.estado==="pendiente");
+  const tPlazas=conf.reduce((s,r)=>s+(r.plazas||0),0);
+  const tCobrado=conf.reduce((s,r)=>s+(r.senal||0),0)+emb.reduce((s,r)=>s+(r.pendiente||0),0);
+  const tPorCobrar=conf.filter(r=>r.estado!=="embarcado").reduce((s,r)=>s+(r.pendiente||0),0);
+  const porCris=conf.filter(r=>r.vendedor==="cris");
+  const porAriel=conf.filter(r=>r.vendedor==="ariel");
+  document.getElementById("contenido-resumen").innerHTML=`
     <div class="resumen-grid">
-      <div class="res-stat"><div class="n">${viajes.length}</div><div class="l">Viajes activos</div></div>
-      <div class="res-stat"><div class="n">${conf.length}</div><div class="l">Reservas conf.</div></div>
-      <div class="res-stat"><div class="n">${totalPlazas}</div><div class="l">Plazas totales</div></div>
+      <div class="res-stat"><div class="n">${viajes.length}</div><div class="l">Viajes</div></div>
+      <div class="res-stat"><div class="n">${conf.length}</div><div class="l">Confirmadas</div></div>
+      <div class="res-stat"><div class="n" style="color:#00695C">${emb.length}</div><div class="l">Embarcados</div></div>
       <div class="res-stat"><div class="n" style="color:var(--naranja)">${pend.length}</div><div class="l">Pendientes</div></div>
     </div>
     <div class="resumen-grid">
-      <div class="res-stat"><div class="n" style="font-size:18px;color:var(--verde)">${fmtE(totalCobrado)}</div><div class="l">Total cobrado</div></div>
-      <div class="res-stat"><div class="n" style="font-size:18px;color:var(--rojo)">${fmtE(totalPorCobrar)}</div><div class="l">Por cobrar</div></div>
+      <div class="res-stat"><div class="n" style="font-size:16px;color:var(--verde)">${fmtE(tCobrado)}</div><div class="l">Total cobrado</div></div>
+      <div class="res-stat"><div class="n" style="font-size:16px;color:var(--rojo)">${fmtE(tPorCobrar)}</div><div class="l">Por cobrar</div></div>
     </div>
-
-    <div class="seccion-label">Ventas por vendedor</div>
+    <div class="seccion-label">Por vendedor</div>
     <div class="vendedor-row">
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="avatar av-cris">C</div>
-        <div>
-          <div style="font-weight:700;color:var(--navy);">Cris</div>
-          <div style="font-size:11px;color:var(--suave);">Vendedora</div>
-        </div>
+        <div><div style="font-weight:700;">Cris</div><div style="font-size:11px;color:var(--suave);">Vendedora</div></div>
       </div>
       <div style="text-align:right;">
         <div style="font-weight:700;font-size:16px;color:var(--morado)">${porCris.length} reservas</div>
@@ -715,34 +838,25 @@ function renderResumen() {
     <div class="vendedor-row">
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="avatar av-ariel">A</div>
-        <div>
-          <div style="font-weight:700;color:var(--navy);">Ariel</div>
-          <div style="font-size:11px;color:var(--suave);">Gestor</div>
-        </div>
+        <div><div style="font-weight:700;">Ariel</div><div style="font-size:11px;color:var(--suave);">Gestor</div></div>
       </div>
       <div style="text-align:right;">
         <div style="font-weight:700;font-size:16px;color:var(--verde)">${porAriel.length} reservas</div>
         <div style="font-size:11px;color:var(--suave)">${porAriel.reduce((s,r)=>s+(r.plazas||0),0)} plazas · ${fmtE(porAriel.reduce((s,r)=>s+(r.senal||0),0))}</div>
       </div>
     </div>
-
     <div class="seccion-label">Por viaje</div>
     ${viajes.sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||"")).map(v=>{
-      const vr = Object.values(v.reservas||{}).filter(r=>r.estado==="confirmada");
-      const vp = Object.values(v.reservas||{}).filter(r=>r.estado==="pendiente");
-      return `
-      <div class="vendedor-row" onclick="verDetalle('${v.id}')" style="cursor:pointer;">
-        <div>
-          <div style="font-weight:700;color:var(--navy);">🚌 ${v.destino}</div>
-          <div style="font-size:11px;color:var(--suave);">${fmtF(v.fecha)}</div>
-        </div>
+      const vr=Object.values(v.reservas||{}).filter(r=>r.estado==="confirmada"||r.estado==="embarcado");
+      const ve=Object.values(v.reservas||{}).filter(r=>r.estado==="embarcado");
+      const vp=Object.values(v.reservas||{}).filter(r=>r.estado==="pendiente");
+      return`<div class="vendedor-row" onclick="verDetalle('${v.id}')" style="cursor:pointer;">
+        <div><div style="font-weight:700;">🚌 ${v.destino}</div><div style="font-size:11px;color:var(--suave)">${fmtF(v.fecha)}</div></div>
         <div style="text-align:right;">
-          <div style="font-weight:700;color:var(--navy);">${vr.reduce((s,r)=>s+(r.plazas||0),0)} plazas</div>
-          <div style="font-size:11px;color:var(--suave);">${vr.length} conf.${vp.length>0?` · <span style="color:var(--naranja)">${vp.length} pend.</span>`:""}</div>
+          <div style="font-weight:700;">${vr.reduce((s,r)=>s+(r.plazas||0),0)} plazas</div>
+          <div style="font-size:11px;color:var(--suave)">${ve.length} emb. · ${vr.length} conf.${vp.length>0?` · <span style="color:var(--naranja)">${vp.length} pend.</span>`:""}</div>
         </div>
-      </div>`;
-    }).join("")}
-  `;
+      </div>`;}).join("")}`;
 }
 </script>
 </body>
