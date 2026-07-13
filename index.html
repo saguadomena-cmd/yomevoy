@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>Viajando Con Cris — Reservas</title>
+<title>Yo Me Voy Excursiones — Reservas</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="VCC Reservas">
+<meta name="apple-mobile-web-app-title" content="YMV Reservas">
 <meta name="theme-color" content="#0D1F3C">
 <!-- Librerías -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -164,8 +164,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
   <div class="login-card">
     <div class="login-logo">
       <div class="ico">🚌</div>
-      <h1>Viajando Con Cris</h1>
-      <p>Sistema de reservas compartido</p>
+      <h1>Yo Me Voy Excursiones</h1>
+      <p>Reservas · Yo Me Voy Excursiones</p>
     </div>
     <p style="font-size:12px;color:var(--suave);margin-bottom:12px;text-align:center;">¿Quién eres?</p>
     <div class="user-btns">
@@ -189,8 +189,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
     <div class="topbar-left">
       <span style="font-size:20px;">🚌</span>
       <div>
-        <div class="name">Viajando Con Cris <span class="sync-dot" id="sync-dot"></span></div>
-        <div class="sub">Gestión de reservas</div>
+        <div class="name">Yo Me Voy Excursiones <span class="sync-dot" id="sync-dot"></span></div>
+        <div class="sub">Gestion de reservas</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
@@ -220,20 +220,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
     <div style="margin-top:12px;">
       <h3 style="margin-bottom:10px;">📷 Lector QR — Embarque</h3>
       <p style="font-size:12.5px;color:var(--suave);margin-bottom:14px;">Escanea el QR del justificante del viajero para confirmar embarque y cobro del resto.</p>
-      <div class="scanner-wrap" id="scanner-wrap">
-        <video id="scanner-video" playsinline autoplay muted></video>
-        <div class="scanner-overlay">
+      <div class="scanner-wrap" id="scanner-wrap" style="background:#111;border-radius:12px;overflow:hidden;max-height:320px;">
+        <video id="scanner-video" playsinline autoplay muted style="width:100%;display:block;max-height:320px;object-fit:cover;"></video>
+        <div class="scanner-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
           <div style="position:relative;">
             <div class="scanner-frame"></div>
-            <div class="scanner-line" id="scanner-line"></div>
+            <div class="scanner-line"></div>
           </div>
         </div>
       </div>
       <canvas id="scanner-canvas" style="display:none;"></canvas>
-      <div id="scanner-result"></div>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-green" style="flex:1;" onclick="iniciarScanner()">▶ Iniciar cámara</button>
+      <div id="scanner-result" style="margin-top:10px;"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-green" style="flex:1;" onclick="iniciarScanner()">▶ Iniciar camara</button>
         <button class="btn btn-ghost" style="flex:1;" onclick="pararScanner()">⏹ Parar</button>
+      </div>
+      <div style="margin-top:10px;background:var(--azul-s);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--azul);">
+        <b>Como usar:</b> Pulsa "Iniciar camara", da permiso, y apunta la camara al codigo QR del justificante del viajero. El sistema lo detectara automaticamente.
       </div>
     </div>
   </div>
@@ -799,30 +802,70 @@ async function generarJustificante(vId,rId){
 }
 
   // ── SCANNER QR ─────────────────────────────────────────────
+let scannerAnimFrame = null;
+let scannerActivo = false;
+
 async function iniciarScanner(){
   pararScanner();
+  document.getElementById("scanner-result").innerHTML="";
+  const video=document.getElementById("scanner-video");
+
   try{
-    scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
-    const video=document.getElementById("scanner-video");
+    // Pedir camara trasera con maxima resolucion posible
+    scannerStream=await navigator.mediaDevices.getUserMedia({
+      video:{
+        facingMode:{ideal:"environment"},
+        width:{ideal:1280},
+        height:{ideal:720}
+      },
+      audio:false
+    });
     video.srcObject=scannerStream;
-    video.play();
-    document.getElementById("scanner-result").innerHTML="";
-    scannerInterval=setInterval(()=>escanearFrame(),300);
-  }catch(e){toast("❌ No se puede acceder a la cámara");}
+    video.setAttribute("playsinline",true);
+    video.setAttribute("muted",true);
+    await video.play();
+    scannerActivo=true;
+    // Usar requestAnimationFrame para maxima fluidez
+    requestAnimationFrame(tickScanner);
+    document.getElementById("scanner-result").innerHTML=
+      "<div style='text-align:center;padding:12px;color:var(--suave);font-size:13px;'>Apunta la camara al codigo QR del justificante...</div>";
+  }catch(e){
+    console.error(e);
+    document.getElementById("scanner-result").innerHTML=
+      "<div class='scanner-result err'>No se pudo acceder a la camara. Asegurate de dar permiso.</div>";
+  }
 }
 
-function escanearFrame(){
+function tickScanner(){
+  if(!scannerActivo) return;
   const video=document.getElementById("scanner-video");
   const canvas=document.getElementById("scanner-canvas");
-  if(!video||video.readyState!==4)return;
-  canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-  const ctx=canvas.getContext("2d");ctx.drawImage(video,0,0);
-  const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-  const code=jsQR(img.data,img.width,img.height,{inversionAttempts:"dontInvert"});
-  if(code&&code.data.startsWith("VCS-RESERVA-")){
-    const rId=code.data.replace("VCS-RESERVA-","");
-    procesarQR(rId);
+  if(!video||!canvas) return;
+
+  if(video.readyState===video.HAVE_ENOUGH_DATA && video.videoWidth>0){
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    try{
+      const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+      // Intentar con ambas inversiones para mayor exito
+      let code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:"attemptBoth"});
+      if(code && code.data){
+        console.log("QR detectado:", code.data);
+        if(code.data.startsWith("VCS-RESERVA-")){
+          scannerActivo=false;
+          procesarQR(code.data.replace("VCS-RESERVA-",""));
+          return;
+        } else {
+          // QR detectado pero no es nuestro formato
+          document.getElementById("scanner-result").innerHTML=
+            "<div class='scanner-result err'>QR no reconocido: "+code.data.slice(0,30)+"</div>";
+        }
+      }
+    }catch(err){console.error("jsQR error:",err);}
   }
+  scannerAnimFrame=requestAnimationFrame(tickScanner);
 }
 
 function procesarQR(rId){
@@ -868,6 +911,8 @@ function confirmarEmbarqueQR(vId,rId){
 }
 
 function pararScanner(){
+  scannerActivo=false;
+  if(scannerAnimFrame){cancelAnimationFrame(scannerAnimFrame);scannerAnimFrame=null;}
   if(scannerInterval){clearInterval(scannerInterval);scannerInterval=null;}
   if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;}
   const v=document.getElementById("scanner-video");if(v)v.srcObject=null;
