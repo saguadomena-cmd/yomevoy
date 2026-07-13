@@ -607,117 +607,146 @@ function contactarWA(tel,nombre,destino,fecha){
 // ── PDF JUSTIFICANTE ───────────────────────────────────────
 async function generarJustificante(vId,rId){
   const v=DATA.viajes[vId];const r=v?.reservas?.[rId];if(!v||!r)return;
-  toast("⏳ Generando PDF...");
+  toast("Generando PDF...");
 
   // Generar QR
-  const qrData=`VCS-RESERVA-${rId}`;
+  const qrData="VCS-RESERVA-"+rId;
   const qrDiv=document.getElementById("qr-temp");
   qrDiv.innerHTML="";
-  const qr=new QRCode(qrDiv,{text:qrData,width:200,height:200,colorDark:"#0D1F3C",colorLight:"#FFFFFF"});
-  await new Promise(res=>setTimeout(res,500));
-  const qrImg=qrDiv.querySelector("img")||qrDiv.querySelector("canvas");
+  new QRCode(qrDiv,{text:qrData,width:160,height:160,colorDark:"#0D1F3C",colorLight:"#FFFFFF"});
+  await new Promise(res=>setTimeout(res,700));
 
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
   const W=210;
+  const ref="VCS-"+rId.slice(-8).toUpperCase();
 
-  // Cabecera
+  // CABECERA
   doc.setFillColor(13,31,60);
-  doc.rect(0,0,W,40,"F");
+  doc.rect(0,0,W,45,"F");
   doc.setTextColor(255,212,0);
-  doc.setFontSize(18);doc.setFont("helvetica","bold");
-  doc.text("VIAJANDO CON CRIS",14,18);
+  doc.setFontSize(20);doc.setFont("helvetica","bold");
+  doc.text("VIAJANDO CON CRIS",14,16);
   doc.setTextColor(187,214,232);
   doc.setFontSize(9);doc.setFont("helvetica","normal");
-  doc.text("Excursiones en bus por España  ·  Tel: +34 614 599 790",14,26);
-  doc.setTextColor(255,212,0);
-  doc.setFontSize(11);doc.setFont("helvetica","bold");
-  doc.text("JUSTIFICANTE DE RESERVA",14,35);
+  doc.text("Excursiones en bus por Espana  |  Tel: +34 614 599 790",14,24);
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(10);doc.setFont("helvetica","bold");
+  doc.text("JUSTIFICANTE DE RESERVA",14,34);
+  // Ref derecha
+  doc.setTextColor(187,214,232);doc.setFontSize(8);doc.setFont("helvetica","normal");
+  doc.text("Ref: "+ref,W-55,16);
+  doc.text("Emitido: "+new Date().toLocaleDateString("es-ES"),W-55,23);
 
-  // Ref y QR
-  const ref=`VCS-${rId.slice(-8).toUpperCase()}`;
-  doc.setTextColor(100,100,100);doc.setFontSize(8);doc.setFont("helvetica","normal");
-  doc.text(`Ref: ${ref}`,W-60,12);
-  doc.text(`Emitido: ${new Date().toLocaleDateString("es-ES")}`,W-60,18);
+  // BANDA VERDE
+  doc.setFillColor(47,158,110);
+  doc.rect(0,47,W,9,"F");
+  doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont("helvetica","bold");
+  doc.text("RESERVA CONFIRMADA",14,53.5);
 
-  // QR en el PDF
+  // DESTINO
+  doc.setFillColor(22,43,74);
+  doc.rect(0,58,W,22,"F");
+  doc.setTextColor(255,212,0);doc.setFontSize(18);doc.setFont("helvetica","bold");
+  doc.text(v.destino||"---",14,70);
+  doc.setTextColor(187,214,232);doc.setFontSize(9);doc.setFont("helvetica","normal");
+  doc.text("Fecha: "+fmtF(v.fecha)+"   Salida: "+(v.hora||"--")+"h   Punto: "+(v.recogida||"--"),14,78);
+
+  // DATOS TITULAR
+  let y=92;
+  doc.setFillColor(245,247,250);
+  doc.rect(10,y,W-20,28,"F");
+  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+  doc.text("TITULAR DE LA RESERVA",14,y+7);
+  doc.setTextColor(20,38,52);doc.setFontSize(13);doc.setFont("helvetica","bold");
+  doc.text(r.nombre||"---",14,y+17);
+  if(r.telefono){
+    doc.setFontSize(9);doc.setFont("helvetica","normal");
+    doc.text("Tel: "+r.telefono,14,y+25);
+  }
+  // Plazas
+  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+  doc.text("PLAZAS",W-42,y+7);
+  doc.setTextColor(13,31,60);doc.setFontSize(22);doc.setFont("helvetica","bold");
+  doc.text(""+r.plazas,W-35,y+22);
+
+  // OTROS VIAJEROS
+  y+=34;
+  if(r.otros && r.otros.trim()){
+    const lineas=r.otros.trim().split("\n").filter(l=>l.trim());
+    const hOtros=12+lineas.length*7;
+    doc.setFillColor(232,236,240);
+    doc.rect(10,y,W-20,hOtros,"F");
+    doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+    doc.text("OTROS VIAJEROS DEL GRUPO",14,y+7);
+    doc.setTextColor(20,38,52);doc.setFontSize(9);doc.setFont("helvetica","normal");
+    lineas.forEach(function(n,i){doc.text((i+2)+". "+n,14,y+14+(i*7));});
+    y+=hOtros+6;
+  }
+
+  // NOTAS
+  if(r.notas && r.notas.trim()){
+    doc.setFillColor(240,244,248);
+    doc.rect(10,y,W-20,14,"F");
+    doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+    doc.text("NOTAS",14,y+6);
+    doc.setTextColor(20,38,52);doc.setFontSize(8.5);doc.setFont("helvetica","normal");
+    doc.text(r.notas,14,y+12);
+    y+=20;
+  }
+
+  // SENAL
+  y+=4;
+  doc.setFillColor(228,246,238);
+  doc.rect(10,y,W-20,22,"F");
+  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+  doc.text("SENAL ABONADA",14,y+7);
+  doc.setTextColor(47,158,110);doc.setFontSize(14);doc.setFont("helvetica","bold");
+  doc.text((r.senal||0).toFixed(2)+" EUR",14,y+18);
+  doc.setTextColor(47,158,110);doc.setFontSize(8);doc.setFont("helvetica","bold");
+  doc.text("PAGADO",W-35,y+7);
+  doc.setFontSize(7);doc.setFont("helvetica","normal");
+  doc.text("Pago confirmado",W-44,y+14);
+
+  // RESTO
+  y+=28;
+  doc.setFillColor(255,243,222);
+  doc.rect(10,y,W-20,22,"F");
+  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+  doc.text("RESTO PENDIENTE",14,y+7);
+  doc.setTextColor(138,90,0);doc.setFontSize(14);doc.setFont("helvetica","bold");
+  doc.text((r.pendiente||0).toFixed(2)+" EUR",14,y+18);
+  doc.setTextColor(138,90,0);doc.setFontSize(7);doc.setFont("helvetica","normal");
+  doc.text("Se abona en metalico al subir al autobus",W-95,y+14);
+
+  // QR IMAGEN + info
+  y+=30;
+  doc.setFillColor(228,236,240);
+  doc.rect(10,y,W-20,50,"F");
+  doc.setTextColor(26,110,158);doc.setFontSize(8);doc.setFont("helvetica","bold");
+  doc.text("CODIGO QR DE EMBARQUE",14,y+8);
+  doc.setTextColor(20,38,52);doc.setFontSize(8);doc.setFont("helvetica","normal");
+  doc.text("Muestra este justificante al subir al autobus.",14,y+15);
+  doc.text("El responsable escaneara el QR para confirmar tu embarque y cobrar el resto.",14,y+21);
+  // QR imagen
   try{
     const canvas=qrDiv.querySelector("canvas");
-    if(canvas){const qrDataUrl=canvas.toDataURL("image/png");doc.addImage(qrDataUrl,"PNG",W-52,22,30,30);}
+    if(canvas){
+      const qrDataUrl=canvas.toDataURL("image/png");
+      doc.addImage(qrDataUrl,"PNG",W-58,y+4,44,44);
+    }
   }catch(e){}
+  doc.setTextColor(92,116,136);doc.setFontSize(7);
+  doc.text("Ref: "+ref,14,y+46);
 
-  // Banda verde
-  doc.setFillColor(47,158,110);
-  doc.rect(0,42,W,8,"F");
-  doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont("helvetica","bold");
-  doc.text("✓  RESERVA CONFIRMADA",14,48);
-
-  // Destino
-  doc.setFillColor(13,31,60);
-  doc.rect(0,52,W,20,"F");
-  doc.setTextColor(255,212,0);doc.setFontSize(16);doc.setFont("helvetica","bold");
-  doc.text(v.destino||"—",14,62);
-  doc.setTextColor(187,214,232);doc.setFontSize(9);doc.setFont("helvetica","normal");
-  doc.text(`${fmtF(v.fecha)}  ·  Salida ${v.hora||"—"}h  ·  ${v.recogida||"—"}`,14,70);
-
-  // Datos reserva
-  let y=82;
-  doc.setFillColor(245,247,250);doc.rect(10,y-6,W-20,34,"F");
-  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-  doc.text("TITULAR DE LA RESERVA",14,y);
-  doc.setTextColor(20,38,52);doc.setFontSize(12);doc.setFont("helvetica","bold");
-  doc.text(r.nombre||"—",14,y+8);
-  if(r.telefono){doc.setFontSize(9);doc.setFont("helvetica","normal");doc.text(`📞 ${r.telefono}`,14,y+16);}
-  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-  doc.text("PLAZAS",W-60,y);
-  doc.setTextColor(20,38,52);doc.setFontSize(14);doc.setFont("helvetica","bold");
-  doc.text(`${r.plazas}`,W-50,y+10);
-
-  // Otros viajeros
-  if(r.otros){
-    y+=40;
-    doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-    doc.text("OTROS VIAJEROS DEL GRUPO",14,y);
-    doc.setTextColor(20,38,52);doc.setFontSize(9);doc.setFont("helvetica","normal");
-    r.otros.split("\n").forEach((n,i)=>{doc.text(`${i+2}. ${n}`,14,y+6+(i*6));});
-    y+=6+r.otros.split("\n").length*6;
-  }else{y+=40;}
-
-  // Pago
-  y+=6;
-  doc.setFillColor(228,246,238);doc.rect(10,y,W-20,18,"F");
-  doc.setTextColor(47,158,110);doc.setFontSize(8);doc.setFont("helvetica","bold");
-  doc.text("SEÑAL ABONADA",14,y+7);
-  doc.setFontSize(13);doc.text(`${r.senal?.toFixed(2)} €`,14,y+15);
-  doc.setTextColor(100,100,100);doc.setFontSize(7);doc.text("PAGADO ✓",W-40,y+7);
-
-  y+=22;
-  doc.setFillColor(255,243,222);doc.rect(10,y,W-20,18,"F");
-  doc.setTextColor(138,90,0);doc.setFontSize(8);doc.setFont("helvetica","bold");
-  doc.text("RESTO PENDIENTE",14,y+7);
-  doc.setFontSize(13);doc.text(`${r.pendiente?.toFixed(2)} €`,14,y+15);
-  doc.setFontSize(7);doc.text("Se abona en metálico al subir al bus",W-80,y+7);
-
-  // Notas
-  if(r.notas){y+=24;doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(92,116,136);doc.text(`📝 ${r.notas}`,14,y);}
-
-  // QR info
-  y+=14;
-  doc.setFillColor(228,236,240);doc.rect(10,y,W-20,24,"F");
-  doc.setTextColor(26,110,158);doc.setFontSize(7);doc.setFont("helvetica","bold");
-  doc.text("CÓDIGO QR DE EMBARQUE",14,y+7);
-  doc.setFont("helvetica","normal");doc.setTextColor(20,38,52);
-  doc.text("Muestra este justificante al subir al autobús.",14,y+13);
-  doc.text("El responsable escaneará el QR para confirmar tu embarque.",14,y+19);
-
-  // Footer
+  // FOOTER
   doc.setFillColor(13,31,60);doc.rect(0,272,W,25,"F");
   doc.setTextColor(255,212,0);doc.setFontSize(9);doc.setFont("helvetica","bold");
-  doc.text("Viajando Con Cris — Excursiones en bus por España",14,282);
+  doc.text("Viajando Con Cris - Excursiones en bus por Espana",14,282);
   doc.setTextColor(187,214,232);doc.setFontSize(7);doc.setFont("helvetica","normal");
-  doc.text(`Tel: +34 614 599 790  ·  wa.me/34614599790  ·  Ref: ${ref}`,14,290);
+  doc.text("Tel: +34 614 599 790  |  wa.me/34614599790  |  Ref: "+ref,14,290);
 
-  // Guardar / compartir
+    // Guardar / compartir
   const pdfBlob=doc.output("blob");
   const url=URL.createObjectURL(pdfBlob);
   const a=document.createElement("a");
