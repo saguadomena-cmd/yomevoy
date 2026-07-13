@@ -609,153 +609,196 @@ async function generarJustificante(vId,rId){
   const v=DATA.viajes[vId];const r=v?.reservas?.[rId];if(!v||!r)return;
   toast("Generando PDF...");
 
-  // Generar QR
-  const qrData="VCS-RESERVA-"+rId;
+  // -- Generar QR en div oculto --
   const qrDiv=document.getElementById("qr-temp");
   qrDiv.innerHTML="";
-  new QRCode(qrDiv,{text:qrData,width:160,height:160,colorDark:"#0D1F3C",colorLight:"#FFFFFF"});
-  await new Promise(res=>setTimeout(res,700));
+  new QRCode(qrDiv,{text:"VCS-RESERVA-"+rId,width:180,height:180,colorDark:"#0D1F3C",colorLight:"#FFFFFF"});
+  await new Promise(res=>setTimeout(res,800));
 
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-  const W=210;
+  const PW=210; // page width
   const ref="VCS-"+rId.slice(-8).toUpperCase();
 
-  // CABECERA
+  // Helper: texto sin caracteres especiales
+  function tx(s){ return (s||"").replace(/[\u00C0-\u00FF]/g,function(c){
+    const m={192:'A',193:'A',194:'A',195:'A',196:'A',197:'A',198:'AE',199:'C',200:'E',201:'E',202:'E',203:'E',204:'I',205:'I',206:'I',207:'I',208:'D',209:'N',210:'O',211:'O',212:'O',213:'O',214:'O',216:'O',217:'U',218:'U',219:'U',220:'U',221:'Y',224:'a',225:'a',226:'a',227:'a',228:'a',229:'a',230:'ae',231:'c',232:'e',233:'e',234:'e',235:'e',236:'i',237:'i',238:'i',239:'i',241:'n',242:'o',243:'o',244:'o',245:'o',246:'o',248:'o',249:'u',250:'u',251:'u',252:'u',253:'y',255:'y'};
+    return m[c.charCodeAt(0)]||c;
+  }).replace(/[^\x00-\x7E]/g,"?"); }
+
+  // ===== CABECERA =====
   doc.setFillColor(13,31,60);
-  doc.rect(0,0,W,45,"F");
+  doc.rect(0,0,PW,42,"F");
+
   doc.setTextColor(255,212,0);
-  doc.setFontSize(20);doc.setFont("helvetica","bold");
-  doc.text("VIAJANDO CON CRIS",14,16);
+  doc.setFontSize(18);doc.setFont("helvetica","bold");
+  doc.text(r.vendedor==="cris"?"VIAJA CON SERGIO":"YO ME VOY EXCURSIONES",12,15);
+
   doc.setTextColor(187,214,232);
-  doc.setFontSize(9);doc.setFont("helvetica","normal");
-  doc.text("Excursiones en bus por Espana  |  Tel: +34 614 599 790",14,24);
+  doc.setFontSize(8.5);doc.setFont("helvetica","normal");
+  doc.text("Excursiones en bus por Espana  |  Tel: +34 614 599 790",12,23);
+
   doc.setTextColor(255,255,255);
-  doc.setFontSize(10);doc.setFont("helvetica","bold");
-  doc.text("JUSTIFICANTE DE RESERVA",14,34);
-  // Ref derecha
-  doc.setTextColor(187,214,232);doc.setFontSize(8);doc.setFont("helvetica","normal");
-  doc.text("Ref: "+ref,W-55,16);
-  doc.text("Emitido: "+new Date().toLocaleDateString("es-ES"),W-55,23);
+  doc.setFontSize(9.5);doc.setFont("helvetica","bold");
+  doc.text("JUSTIFICANTE DE RESERVA",12,32);
 
-  // BANDA VERDE
+  // Ref (derecha, sin QR encima)
+  doc.setTextColor(187,214,232);doc.setFontSize(7.5);doc.setFont("helvetica","normal");
+  doc.text("Ref: "+ref, PW-14, 15, {align:"right"});
+  doc.text("Emitido: "+new Date().toLocaleDateString("es-ES"), PW-14, 22, {align:"right"});
+
+  // ===== BANDA CONFIRMADA =====
   doc.setFillColor(47,158,110);
-  doc.rect(0,47,W,9,"F");
-  doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont("helvetica","bold");
-  doc.text("RESERVA CONFIRMADA",14,53.5);
+  doc.rect(0,44,PW,8,"F");
+  doc.setTextColor(255,255,255);doc.setFontSize(8.5);doc.setFont("helvetica","bold");
+  doc.text("RESERVA CONFIRMADA",12,50);
 
-  // DESTINO
+  // ===== DESTINO =====
   doc.setFillColor(22,43,74);
-  doc.rect(0,58,W,22,"F");
-  doc.setTextColor(255,212,0);doc.setFontSize(18);doc.setFont("helvetica","bold");
-  doc.text(v.destino||"---",14,70);
-  doc.setTextColor(187,214,232);doc.setFontSize(9);doc.setFont("helvetica","normal");
-  doc.text("Fecha: "+fmtF(v.fecha)+"   Salida: "+(v.hora||"--")+"h   Punto: "+(v.recogida||"--"),14,78);
+  doc.rect(0,54,PW,20,"F");
+  doc.setTextColor(255,212,0);doc.setFontSize(16);doc.setFont("helvetica","bold");
+  doc.text(tx(v.destino||""),12,64);
+  doc.setTextColor(187,214,232);doc.setFontSize(8.5);doc.setFont("helvetica","normal");
+  doc.text("Fecha: "+fmtF(v.fecha)+"   Salida: "+(v.hora||"--")+"h   Recogida: "+tx(v.recogida||""),12,72);
 
-  // DATOS TITULAR
-  let y=92;
-  doc.setFillColor(245,247,250);
-  doc.rect(10,y,W-20,28,"F");
+  // ===== DATOS TITULAR =====
+  doc.setFillColor(244,246,250);
+  doc.rect(10,78,PW-20,26,"F");
   doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-  doc.text("TITULAR DE LA RESERVA",14,y+7);
-  doc.setTextColor(20,38,52);doc.setFontSize(13);doc.setFont("helvetica","bold");
-  doc.text(r.nombre||"---",14,y+17);
+  doc.text("TITULAR",12,85);
+  doc.text("PLAZAS",PW-40,85);
+  doc.setTextColor(20,38,52);doc.setFontSize(12);doc.setFont("helvetica","bold");
+  doc.text(tx(r.nombre||""),12,94);
+  doc.setFontSize(18);
+  doc.text(""+r.plazas, PW-30, 96);
   if(r.telefono){
-    doc.setFontSize(9);doc.setFont("helvetica","normal");
-    doc.text("Tel: "+r.telefono,14,y+25);
+    doc.setFontSize(8.5);doc.setFont("helvetica","normal");
+    doc.setTextColor(92,116,136);
+    doc.text(""+r.telefono.replace(/[^0-9+\ ]/g,""),12,102);
   }
-  // Plazas
-  doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-  doc.text("PLAZAS",W-42,y+7);
-  doc.setTextColor(13,31,60);doc.setFontSize(22);doc.setFont("helvetica","bold");
-  doc.text(""+r.plazas,W-35,y+22);
 
-  // OTROS VIAJEROS
-  y+=34;
+  // ===== OTROS VIAJEROS =====
+  let cy=108;
   if(r.otros && r.otros.trim()){
     const lineas=r.otros.trim().split("\n").filter(l=>l.trim());
-    const hOtros=12+lineas.length*7;
-    doc.setFillColor(232,236,240);
-    doc.rect(10,y,W-20,hOtros,"F");
+    doc.setFillColor(232,237,243);
+    doc.rect(10,cy,PW-20,8+lineas.length*7,"F");
     doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-    doc.text("OTROS VIAJEROS DEL GRUPO",14,y+7);
-    doc.setTextColor(20,38,52);doc.setFontSize(9);doc.setFont("helvetica","normal");
-    lineas.forEach(function(n,i){doc.text((i+2)+". "+n,14,y+14+(i*7));});
-    y+=hOtros+6;
-  }
-
-  // NOTAS
-  if(r.notas && r.notas.trim()){
-    doc.setFillColor(240,244,248);
-    doc.rect(10,y,W-20,14,"F");
-    doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-    doc.text("NOTAS",14,y+6);
+    doc.text("OTROS VIAJEROS",12,cy+6);
     doc.setTextColor(20,38,52);doc.setFontSize(8.5);doc.setFont("helvetica","normal");
-    doc.text(r.notas,14,y+12);
-    y+=20;
+    lineas.forEach(function(n,i){ doc.text((i+2)+". "+tx(n),12,cy+13+(i*7)); });
+    cy+=10+lineas.length*7;
   }
 
-  // SENAL
-  y+=4;
+  // ===== NOTAS =====
+  if(r.notas && r.notas.trim()){
+    cy+=2;
+    doc.setFillColor(240,243,247);
+    doc.rect(10,cy,PW-20,14,"F");
+    doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
+    doc.text("NOTAS",12,cy+6);
+    doc.setTextColor(20,38,52);doc.setFontSize(8);doc.setFont("helvetica","normal");
+    doc.text(tx(r.notas),12,cy+12);
+    cy+=18;
+  }
+
+  // ===== SENAL =====
+  cy+=4;
   doc.setFillColor(228,246,238);
-  doc.rect(10,y,W-20,22,"F");
+  doc.rect(10,cy,PW-20,20,"F");
   doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-  doc.text("SENAL ABONADA",14,y+7);
-  doc.setTextColor(47,158,110);doc.setFontSize(14);doc.setFont("helvetica","bold");
-  doc.text((r.senal||0).toFixed(2)+" EUR",14,y+18);
-  doc.setTextColor(47,158,110);doc.setFontSize(8);doc.setFont("helvetica","bold");
-  doc.text("PAGADO",W-35,y+7);
+  doc.text("SENAL ABONADA",12,cy+7);
+  doc.setTextColor(47,158,110);doc.setFontSize(13);doc.setFont("helvetica","bold");
+  doc.text((r.senal||0).toFixed(2)+" EUR",12,cy+16);
+  doc.setFontSize(8);doc.text("PAGADO",PW-14,cy+7,{align:"right"});
   doc.setFontSize(7);doc.setFont("helvetica","normal");
-  doc.text("Pago confirmado",W-44,y+14);
+  doc.text("Confirmado",PW-14,cy+13,{align:"right"});
 
-  // RESTO
-  y+=28;
+  // ===== RESTO =====
+  cy+=24;
   doc.setFillColor(255,243,222);
-  doc.rect(10,y,W-20,22,"F");
+  doc.rect(10,cy,PW-20,20,"F");
   doc.setTextColor(92,116,136);doc.setFontSize(7);doc.setFont("helvetica","bold");
-  doc.text("RESTO PENDIENTE",14,y+7);
-  doc.setTextColor(138,90,0);doc.setFontSize(14);doc.setFont("helvetica","bold");
-  doc.text((r.pendiente||0).toFixed(2)+" EUR",14,y+18);
-  doc.setTextColor(138,90,0);doc.setFontSize(7);doc.setFont("helvetica","normal");
-  doc.text("Se abona en metalico al subir al autobus",W-95,y+14);
+  doc.text("RESTO PENDIENTE EN METALICO",12,cy+7);
+  doc.setTextColor(138,90,0);doc.setFontSize(13);doc.setFont("helvetica","bold");
+  doc.text((r.pendiente||0).toFixed(2)+" EUR",12,cy+16);
+  doc.setFontSize(7.5);doc.setFont("helvetica","normal");
+  doc.text("Pagar al subir al autobus",PW-14,cy+12,{align:"right"});
 
-  // QR IMAGEN + info
-  y+=30;
-  doc.setFillColor(228,236,240);
-  doc.rect(10,y,W-20,50,"F");
-  doc.setTextColor(26,110,158);doc.setFontSize(8);doc.setFont("helvetica","bold");
-  doc.text("CODIGO QR DE EMBARQUE",14,y+8);
+  // ===== SECCION QR =====
+  cy+=28;
+  doc.setFillColor(228,236,244);
+  doc.rect(10,cy,PW-20,50,"F");
+  doc.setTextColor(26,110,158);doc.setFontSize(7.5);doc.setFont("helvetica","bold");
+  doc.text("CODIGO QR DE EMBARQUE",12,cy+8);
   doc.setTextColor(20,38,52);doc.setFontSize(8);doc.setFont("helvetica","normal");
-  doc.text("Muestra este justificante al subir al autobus.",14,y+15);
-  doc.text("El responsable escaneara el QR para confirmar tu embarque y cobrar el resto.",14,y+21);
-  // QR imagen
+  doc.text("Muestra este justificante al subir al autobus.",12,cy+15);
+  doc.text("El responsable escaneara el QR para confirmar tu embarque.",12,cy+21);
+  doc.text("Ref: "+ref,12,cy+27);
+
+  // -- Insertar imagen QR (derecha de la seccion) --
   try{
-    const canvas=qrDiv.querySelector("canvas");
-    if(canvas){
-      const qrDataUrl=canvas.toDataURL("image/png");
-      doc.addImage(qrDataUrl,"PNG",W-58,y+4,44,44);
+    const cvs=qrDiv.querySelector("canvas");
+    if(cvs){ doc.addImage(cvs.toDataURL("image/png"),"PNG",PW-58,cy+4,46,46); }
+    else{
+      const img=qrDiv.querySelector("img");
+      if(img){ doc.addImage(img.src,"PNG",PW-58,cy+4,46,46); }
     }
-  }catch(e){}
-  doc.setTextColor(92,116,136);doc.setFontSize(7);
-  doc.text("Ref: "+ref,14,y+46);
+  }catch(ignore){}
 
-  // FOOTER
-  doc.setFillColor(13,31,60);doc.rect(0,272,W,25,"F");
+  // ===== FOOTER =====
+  doc.setFillColor(13,31,60);
+  doc.rect(0,272,PW,25,"F");
   doc.setTextColor(255,212,0);doc.setFontSize(9);doc.setFont("helvetica","bold");
-  doc.text("Viajando Con Cris - Excursiones en bus por Espana",14,282);
-  doc.setTextColor(187,214,232);doc.setFontSize(7);doc.setFont("helvetica","normal");
-  doc.text("Tel: +34 614 599 790  |  wa.me/34614599790  |  Ref: "+ref,14,290);
+  doc.text(r.vendedor==="cris"?"Viaja Con Sergio - Excursiones en bus por Espana":"Yo Me Voy Excursiones - Salidas desde Madrid",12,282);
+  doc.setTextColor(187,214,232);doc.setFontSize(7.5);doc.setFont("helvetica","normal");
+  doc.text("+34 614 599 790  |  wa.me/34614599790  |  "+ref,12,290);
 
-    // Guardar / compartir
+  // ===== GUARDAR Y ENVIAR POR WHATSAPP =====
+  const nombreArchivo="Justificante_"+tx(r.nombre||"reserva").split(" ")[0]+"_"+tx(v.destino||"").replace(/\s+/g,"_")+".pdf";
   const pdfBlob=doc.output("blob");
-  const url=URL.createObjectURL(pdfBlob);
-  const a=document.createElement("a");
-  a.href=url;a.download=`Justificante_${r.nombre?.split(" ")[0]}_${v.destino?.replace(/\s/g,"_")}.pdf`;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  toast("✅ PDF generado — comparte por WhatsApp");
+  const pdfFile=new File([pdfBlob],nombreArchivo,{type:"application/pdf"});
+
+  // En movil: intenta compartir directamente (abre WhatsApp con el archivo)
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[pdfFile]})){
+    try{
+      await navigator.share({
+        files:[pdfFile],
+        title:"Justificante - "+tx(v.destino||""),
+        text:"Hola "+tx(r.nombre||"")+", aqui tienes tu justificante de reserva para "+tx(v.destino||"")+" el "+fmtF(v.fecha)+". Muestra el codigo QR al subir al autobus."
+      });
+      toast("Justificante enviado por WhatsApp");
+      return;
+    }catch(ignore){}
+  }
+
+  // Fallback escritorio: descargar PDF + abrir WhatsApp
+  const blobUrl=URL.createObjectURL(pdfBlob);
+  const dlLink=document.createElement("a");
+  dlLink.href=blobUrl;dlLink.download=nombreArchivo;
+  document.body.appendChild(dlLink);dlLink.click();document.body.removeChild(dlLink);
+  setTimeout(()=>URL.revokeObjectURL(blobUrl),2000);
+
+  if(r.telefono){
+    const tel=(r.telefono||"").replace(/[^0-9]/g,"");
+    const msg=encodeURIComponent(
+      "Hola "+tx(r.nombre||"")+", aqui tienes tu justificante!\n\n"+
+      "Destino: "+tx(v.destino||"")+"\n"+
+      "Fecha: "+fmtF(v.fecha)+"\n"+
+      "Recogida: "+tx(v.recogida||"")+" a las "+(v.hora||"--")+"h\n"+
+      "Plazas: "+r.plazas+"\n\n"+
+      "Senal abonada: "+(r.senal||0).toFixed(2)+" EUR\n"+
+      "Resto al subir: "+(r.pendiente||0).toFixed(2)+" EUR en metalico\n\n"+
+      "Adjunta el PDF descargado y guarda el codigo QR. Nos vemos!"
+    );
+    setTimeout(()=>window.open("https://wa.me/34"+tel+"?text="+msg,"_blank"),600);
+    toast("PDF descargado y WhatsApp abierto");
+  }else{
+    toast("PDF descargado. Aniade telefono para enviar por WhatsApp");
+  }
 }
 
-// ── SCANNER QR ─────────────────────────────────────────────
+  // ── SCANNER QR ─────────────────────────────────────────────
 async function iniciarScanner(){
   pararScanner();
   try{
