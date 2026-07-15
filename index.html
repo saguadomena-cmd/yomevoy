@@ -155,6 +155,28 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
 .res-stat .n{font-size:22px;font-weight:700;color:var(--navy);}
 .res-stat .l{font-size:10px;color:var(--suave);margin-top:2px;}
 .vendedor-row{background:var(--sup);border-radius:12px;padding:14px;box-shadow:var(--sombra);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+
+/* ── ASIENTOS ── */
+.seat-bar{margin:0 14px 8px;padding:9px 11px;background:var(--fondo);border-radius:10px;}
+.seat-bar.sin{color:var(--naranja);font-size:11.5px;font-weight:700;text-align:center;background:var(--naranja-s);}
+.seat-bar .sb-top{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:5px;}
+.seat-track{height:9px;background:#DDE6EE;border-radius:6px;overflow:hidden;}
+.seat-fill{height:100%;border-radius:6px;transition:width .3s;}
+.seat-panel{background:var(--fondo);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.seat-panel.sin{background:var(--naranja-s);color:var(--naranja);font-weight:700;font-size:12.5px;text-align:center;}
+.seat-line{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+.seat-line b{font-size:16px;color:var(--verde);}
+.seat-sub{font-size:11px;color:var(--suave);margin-top:5px;}
+.seat-edit{display:flex;gap:8px;margin-bottom:12px;}
+.seat-edit input{flex:1;}
+/* ── CAMBIO DE RECOGIDA ── */
+.chip-cambio{background:#FFE1B3;color:#8A3B00;border:1.5px solid var(--naranja);}
+.cambio-box{margin-top:7px;background:#FFF6E5;border:1.5px dashed var(--naranja);border-radius:9px;padding:8px 10px;font-size:11.5px;color:#7A3B00;line-height:1.6;}
+.cambio-box .ct{font-weight:800;color:var(--naranja);letter-spacing:.3px;display:block;margin-bottom:3px;}
+.cambio-tag{background:var(--rojo);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;letter-spacing:.4px;}
+.mrc-row{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--linea);}
+.mrc-nom{font-size:13px;font-weight:600;color:var(--navy);flex:1;min-width:0;}
+.mrc-row select{width:auto;min-width:150px;padding:8px 10px;font-size:13px;}
 </style>
 </head>
 <body>
@@ -277,6 +299,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
       <div><label>Precio adulto €</label><input id="mj-pa" type="number" min="0" step="0.5" placeholder="55"></div>
       <div><label>Precio niño €</label><input id="mj-pn" type="number" min="0" step="0.5" placeholder="50"></div>
     </div>
+    <label>Asientos totales del bus</label>
+    <input id="mj-asientos" type="number" min="0" placeholder="Ej. 55">
     <button class="btn btn-primary btn-block" onclick="guardarViaje()">Crear viaje</button>
     <button class="btn btn-ghost btn-block" onclick="cerrarModal('modal-viaje')">Cancelar</button>
   </div>
@@ -325,6 +349,21 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul);}
     <div class="modal-handle"></div>
     <div id="detalle-contenido"></div>
     <button class="btn btn-ghost btn-block" onclick="cerrarModal('modal-detalle')">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL RECOGIDA POR VIAJERO -->
+<div class="overlay" id="modal-recogida">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>📍 Punto de recogida por viajero</h3>
+    <input type="hidden" id="mrc-viaje-id"><input type="hidden" id="mrc-res-id">
+    <div id="mrc-personas"></div>
+    <div style="font-size:11.5px;color:var(--suave);margin-top:10px;line-height:1.5;">
+      Cambia el punto de quien lo necesite. Cualquier cambio se marca en rojo en la lista y en el PDF para que se vea claro.
+    </div>
+    <button class="btn btn-primary btn-block" onclick="guardarRecogida()">Guardar cambios</button>
+    <button class="btn btn-ghost btn-block" onclick="cerrarModal('modal-recogida')">Cancelar</button>
   </div>
 </div>
 
@@ -436,6 +475,8 @@ function renderViajes(){
     const plazas=conf.reduce((s,r)=>s+(r.plazas||0),0);
     const cobrado=conf.reduce((s,r)=>s+(r.senal||0),0);
     const porCobrar=conf.filter(r=>r.estado!=="embarcado").reduce((s,r)=>s+(r.pendiente||0),0);
+    const _as=asientosViaje(v);
+    const seatBar=_as.total>0?`<div class="seat-bar"><div class="sb-top"><span>🚌 Asientos</span><span><b style="color:${_as.libres<=0?'var(--rojo)':_as.libres<=5?'var(--naranja)':'var(--verde)'}">${_as.libres} libres</b> / ${_as.total}</span></div><div class="seat-track"><div class="seat-fill" style="width:${Math.min(100,Math.round(_as.ocupados/_as.total*100))}%;background:${_as.libres<=0?'var(--rojo)':_as.libres<=5?'var(--naranja)':'var(--verde)'}"></div></div></div>`:(SESION==="ariel"?`<div class="seat-bar sin" onclick="verDetalle('${v.id}')">🚌 Pulsa para definir los asientos del bus</div>`:`<div class="seat-bar sin">🚌 Asientos por definir</div>`);
     return`<div class="viaje-card">
       <div class="viaje-head">
         <div class="viaje-destino">🚌 ${v.destino||"Sin nombre"}</div>
@@ -448,8 +489,10 @@ function renderViajes(){
         <div class="vstat"><div class="n" style="color:var(--rojo);font-size:13px">${fmtE(porCobrar)}</div><div class="l">Pendiente</div></div>
       </div>
       ${pend.length>0?`<div class="alerta-pend">⏳ ${pend.length} reserva${pend.length!==1?"s":""} pendientes de confirmación</div>`:""}
+      ${seatBar}
       <div class="viaje-acc">
         <button class="btn btn-primary btn-sm" onclick="verDetalle('${v.id}')">Ver reservas</button>
+        <button class="btn btn-ghost btn-sm" onclick="generarListaPDF('${v.id}')">🖨️ Lista PDF</button>
         <button class="btn btn-yellow btn-sm" onclick="abrirModalReserva('${v.id}')">+ Reserva</button>
         ${SESION==="ariel"?`<button class="btn btn-ghost btn-sm" onclick="eliminarViaje('${v.id}')">🗑️</button>`:""}
       </div>
@@ -468,7 +511,7 @@ function abrirFab(){
 
 function guardarViaje(){
   const id=uid();
-  DATA.viajes[id]={id,destino:document.getElementById("mj-destino").value.trim(),fecha:document.getElementById("mj-fecha").value,hora:document.getElementById("mj-hora").value,recogida:document.getElementById("mj-recogida").value,precioA:parseFloat(document.getElementById("mj-pa").value)||0,precioN:parseFloat(document.getElementById("mj-pn").value)||0,reservas:{}};
+  DATA.viajes[id]={id,destino:document.getElementById("mj-destino").value.trim(),fecha:document.getElementById("mj-fecha").value,hora:document.getElementById("mj-hora").value,recogida:document.getElementById("mj-recogida").value,precioA:parseFloat(document.getElementById("mj-pa").value)||0,precioN:parseFloat(document.getElementById("mj-pn").value)||0,asientosTotal:parseInt(document.getElementById("mj-asientos").value)||0,reservas:{}};
   guardarDB();cerrarModal("modal-viaje");toast("✅ Viaje creado");
 }
 function eliminarViaje(id){if(!confirm(`¿Eliminar viaje a ${DATA.viajes[id]?.destino}?`))return;delete DATA.viajes[id];guardarDB();toast("🗑️ Viaje eliminado");}
@@ -558,6 +601,7 @@ function verDetalle(vId){
         <div class="res-info">
           <div class="res-nombre">${r.nombre}</div>
           <div class="res-meta">👥 ${r.plazas} plaza${r.plazas!==1?"s":""} · 📍 ${r.recogida}${r.telefono?`<br>📞 ${r.telefono}`:""}${r.otros?`<br>👤 ${r.otros.split("\n").join(", ")}`:""}${r.notas?`<br>📝 ${r.notas}`:""}</div>
+          ${r.recogidaModificada?`<div class="cambio-box"><span class="ct">📍 CAMBIO DE RECOGIDA</span>${personasDeReserva(r).map(p=>`${p.nombre}: <b>${p.recogida}</b>${p.cambiada?'<span class="cambio-tag">CAMBIO</span>':''}`).join("<br>")}</div>`:""}
         </div>
         <div class="res-pago">
           <div class="res-senal">Señal: ${fmtE(r.senal)}</div>
@@ -569,8 +613,10 @@ function verDetalle(vId){
       <div class="res-badges">
         <span class="chip ${col}">${lbl}</span>
         <span class="chip chip-${r.vendedor==="cris"?"morado":"azul"}">${r.vendedor==="cris"?"👩🏽 Cris":"👨🏽‍💼 Ariel"}</span>
+        ${r.recogidaModificada?'<span class="chip chip-cambio">📍 CAMBIO RECOGIDA</span>':''}
       </div>
       <div class="res-btns">
+        <button class="btn btn-yellow btn-sm" onclick="abrirRecogida('${vId}','${r.id}')">📍 Recogida</button>
         ${r.telefono?`<button class="btn btn-wa btn-sm" onclick="contactarWA('${r.telefono}','${r.nombre}','${v.destino}','${fmtF(v.fecha)}')">📲 WhatsApp</button>`:""}
         ${(r.estado==="confirmada"||esEmb)?`<button class="btn btn-purple btn-sm" onclick="generarJustificante('${vId}','${r.id}')">📄 PDF</button>`:""}
         ${canEdit?`<button class="btn btn-ghost btn-sm" onclick="abrirModalReserva('${vId}','${r.id}')">✏️</button>`:""}
@@ -582,10 +628,12 @@ function verDetalle(vId){
   };
 
   document.getElementById("detalle-contenido").innerHTML=`
-    <div style="background:var(--navy);border-radius:12px;padding:14px;margin-bottom:14px;">
+    <div style="background:var(--navy);border-radius:12px;padding:14px;margin-bottom:12px;">
       <div style="font-size:18px;font-weight:700;color:#fff;">🚌 ${v.destino}</div>
       <div style="font-size:12px;color:#BBD6E8;margin-top:3px;">📅 ${fmtF(v.fecha)} · 🕐 ${v.hora||"—"} · 📍 ${v.recogida||"—"}</div>
     </div>
+    ${seatPanelHTML(v)}
+    <button class="btn btn-ghost btn-block" style="margin-bottom:12px;" onclick="generarListaPDF('${vId}')">🖨️ Imprimir lista completa (PDF)</button>
     <div class="resumen-grid" style="margin-bottom:12px;">
       <div class="res-stat"><div class="n">${plazas}</div><div class="l">Plazas</div></div>
       <div class="res-stat"><div class="n" style="color:#00695C">${emb.length}</div><div class="l">Embarcados</div></div>
@@ -1067,6 +1115,269 @@ function confirmarEmbarqueQR(vId, rId){
   document.getElementById("scanner-result").innerHTML =
     "<div class='scanner-result ok'>"+r.nombre+" — EMBARCADO<br>Resto cobrado en metalico.</div>";
   toast("Embarcado: "+r.nombre);
+}
+
+// ══════════════════════════════════════════════════════════
+//  ASIENTOS · RECOGIDA POR VIAJERO · LISTA PDF
+// ══════════════════════════════════════════════════════════
+const PUNTOS = ["Plaza Elíptica","Atocha","Puente de Vallecas"];
+
+// Lista de personas de una reserva (titular + otros), con su recogida real
+function personasDeReserva(r){
+  const base = r.recogida || PUNTOS[0];
+  const nombres = [r.nombre||"(sin nombre)"]
+    .concat(((r.otros||"").split("\n").map(s=>s.trim()).filter(Boolean)));
+  const plz = r.plazas||1;
+  while(nombres.length < plz) nombres.push("Plaza "+(nombres.length+1));
+  const ov = r.recogidaPersonas || {};
+  return nombres.map((nom,i)=>{
+    const rec = (ov[i]!==undefined && ov[i]!==null) ? ov[i] : base;
+    return { idx:i, nombre:nom, recogida:rec, cambiada: rec!==base };
+  });
+}
+
+// Asientos ocupados/libres de un viaje
+function asientosViaje(v){
+  const ress = Object.values(v.reservas||{});
+  const ocupados = ress.filter(r=>r.estado==="confirmada"||r.estado==="embarcado")
+                       .reduce((s,r)=>s+(r.plazas||0),0);
+  const total = v.asientosTotal||0;
+  const libres = total>0 ? Math.max(0,total-ocupados) : null;
+  return { total, ocupados, libres };
+}
+
+// Panel de asientos en el detalle (con editor para Ariel)
+function seatPanelHTML(v){
+  const a = asientosViaje(v);
+  let panel;
+  if(a.total>0){
+    const pct = Math.min(100, Math.round(a.ocupados/a.total*100));
+    const col = a.libres<=0?"var(--rojo)":a.libres<=5?"var(--naranja)":"var(--verde)";
+    panel = `<div class="seat-panel">
+      <div class="seat-line"><span>🚌 Asientos del bus</span><span><b style="color:${col}">${a.libres}</b> libres / ${a.total}</span></div>
+      <div class="seat-track"><div class="seat-fill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="seat-sub">${a.ocupados} ocupados${a.libres<=0?" · 🔴 BUS COMPLETO":""}</div>
+    </div>`;
+  } else {
+    panel = `<div class="seat-panel sin">🚌 Asientos del bus sin definir${SESION==="ariel"?"":" — pendiente de Ariel"}</div>`;
+  }
+  const editor = SESION==="ariel"
+    ? `<div class="seat-edit">
+         <input id="seat-input-${v.id}" type="number" min="0" placeholder="Total asientos del bus" value="${v.asientosTotal||""}">
+         <button class="btn btn-primary btn-sm" onclick="guardarAsientos('${v.id}')">Guardar</button>
+       </div>` : "";
+  return panel + editor;
+}
+
+function guardarAsientos(vId){
+  const v = DATA.viajes[vId]; if(!v) return;
+  const val = parseInt(document.getElementById("seat-input-"+vId).value)||0;
+  v.asientosTotal = val;
+  guardarDB();
+  toast("🚌 Asientos actualizados: "+val);
+  verDetalle(vId);
+}
+
+// ── Editor de recogida por viajero ──
+function abrirRecogida(vId,rId){
+  const v = DATA.viajes[vId], r = v?.reservas?.[rId]; if(!r) return;
+  document.getElementById("mrc-viaje-id").value = vId;
+  document.getElementById("mrc-res-id").value = rId;
+  const personas = personasDeReserva(r);
+  document.getElementById("mrc-personas").innerHTML = personas.map(p=>`
+    <div class="mrc-row">
+      <div class="mrc-nom">${p.idx===0?"⭐ ":""}${p.nombre}${p.idx===0?" (titular)":""}</div>
+      <select id="mrc-sel-${p.idx}">
+        ${PUNTOS.map(pt=>`<option ${pt===p.recogida?"selected":""}>${pt}</option>`).join("")}
+      </select>
+    </div>`).join("");
+  document.getElementById("modal-recogida").classList.add("activo");
+}
+
+function guardarRecogida(){
+  const vId = document.getElementById("mrc-viaje-id").value;
+  const rId = document.getElementById("mrc-res-id").value;
+  const v = DATA.viajes[vId], r = v?.reservas?.[rId]; if(!r) return;
+  const base = r.recogida || PUNTOS[0];
+  const personas = personasDeReserva(r);
+  const overrides = {};
+  personas.forEach(p=>{
+    const sel = document.getElementById("mrc-sel-"+p.idx);
+    if(sel && sel.value !== base) overrides[p.idx] = sel.value;
+  });
+  r.recogidaPersonas = overrides;
+  r.recogidaModificada = Object.keys(overrides).length > 0;
+  guardarDB();
+  cerrarModal("modal-recogida");
+  toast(r.recogidaModificada ? "📍 Cambio de recogida guardado" : "📍 Recogida unificada");
+  verDetalle(vId);
+}
+
+// ── Sanitizador de texto para el PDF (sin acentos/emoji) ──
+function txPDF(s){
+  return (s||"").replace(/[\u00C0-\u00FF]/g,function(c){
+    const m={192:'A',193:'A',194:'A',195:'A',196:'A',197:'A',198:'AE',199:'C',200:'E',201:'E',202:'E',203:'E',204:'I',205:'I',206:'I',207:'I',208:'D',209:'N',210:'O',211:'O',212:'O',213:'O',214:'O',216:'O',217:'U',218:'U',219:'U',220:'U',221:'Y',224:'a',225:'a',226:'a',227:'a',228:'a',229:'a',230:'ae',231:'c',232:'e',233:'e',234:'e',235:'e',236:'i',237:'i',238:'i',239:'i',241:'n',242:'o',243:'o',244:'o',245:'o',246:'o',248:'o',249:'u',250:'u',251:'u',252:'u',253:'y',255:'y'};
+    return m[c.charCodeAt(0)]||c;
+  }).replace(/[^\x00-\x7E]/g,"");
+}
+
+// ── LISTA COMPLETA EN PDF (Cris o Ariel) ──
+function generarListaPDF(vId){
+  const v = DATA.viajes[vId]; if(!v){ toast("Viaje no encontrado"); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+  const PW = 210, M = 10;
+  const a = asientosViaje(v);
+
+  const ress = Object.values(v.reservas||{})
+    .filter(r=>r.estado!=="rechazada")
+    .sort((x,y)=>{
+      const o=e=>e==="embarcado"?0:e==="confirmada"?1:2;
+      return o(x.estado)-o(y.estado);
+    });
+
+  // Cabecera
+  doc.setFillColor(13,31,60); doc.rect(0,0,PW,32,"F");
+  doc.setTextColor(255,212,0); doc.setFontSize(15); doc.setFont("helvetica","bold");
+  doc.text("LISTA DE RESERVAS",M,13);
+  doc.setTextColor(255,255,255); doc.setFontSize(13);
+  doc.text(txPDF(v.destino||""),M,22);
+  doc.setTextColor(187,214,232); doc.setFontSize(8.5); doc.setFont("helvetica","normal");
+  doc.text("Fecha: "+fmtF(v.fecha)+"   Salida: "+(v.hora||"--")+"h   Emitido: "+new Date().toLocaleDateString("es-ES"),M,29);
+
+  // Resumen asientos + dinero
+  const conf=ress.filter(r=>r.estado==="confirmada"||r.estado==="embarcado");
+  const plazasOcup=conf.reduce((s,r)=>s+(r.plazas||0),0);
+  const cobrado=conf.reduce((s,r)=>s+(r.senal||0),0)+ress.filter(r=>r.estado==="embarcado").reduce((s,r)=>s+(r.pendiente||0),0);
+  const porCobrar=ress.filter(r=>r.estado==="confirmada").reduce((s,r)=>s+(r.pendiente||0),0);
+
+  let y=40;
+  doc.setFillColor(244,246,250); doc.rect(M,y-5,PW-2*M,16,"F");
+  doc.setTextColor(20,38,52); doc.setFontSize(9); doc.setFont("helvetica","bold");
+  const asientosTxt = a.total>0 ? (a.libres+" LIBRES  de  "+a.total+"  ("+plazasOcup+" ocupados)") : (plazasOcup+" plazas ocupadas (asientos sin definir)");
+  doc.text("ASIENTOS: "+asientosTxt, M+2, y+1);
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+  doc.text("Cobrado: "+cobrado.toFixed(2)+" EUR    Por cobrar (en bus): "+porCobrar.toFixed(2)+" EUR", M+2, y+7);
+  y+=18;
+
+  // Cabecera de tabla
+  const cols=[
+    {x:M,      w:8,  t:"#"},
+    {x:M+8,    w:66, t:"TITULAR / GRUPO"},
+    {x:M+74,   w:12, t:"PLZ"},
+    {x:M+86,   w:38, t:"RECOGIDA"},
+    {x:M+124,  w:20, t:"SENAL"},
+    {x:M+144,  w:20, t:"RESTO"},
+    {x:M+164,  w:PW-M-(M+164), t:"ESTADO"},
+  ];
+  function headTabla(){
+    doc.setFillColor(13,31,60); doc.rect(M,y,PW-2*M,8,"F");
+    doc.setTextColor(255,255,255); doc.setFontSize(7.5); doc.setFont("helvetica","bold");
+    cols.forEach(c=>doc.text(c.t,c.x+1.5,y+5.5));
+    y+=8;
+  }
+  headTabla();
+
+  doc.setFont("helvetica","normal");
+  let n=0;
+  ress.forEach(r=>{
+    n++;
+    const personas=personasDeReserva(r);
+    const acomp=personas.slice(1).map(p=>p.nombre);
+    const nomLines=doc.splitTextToSize(txPDF(r.nombre||""),cols[1].w-3);
+    const acompLines=acomp.length?doc.splitTextToSize("+ "+acomp.map(txPDF).join(", "),cols[1].w-3):[];
+    const cambio=r.recogidaModificada;
+    const recTxt=cambio?"VARIOS *":txPDF(r.recogida||"");
+    const filas=Math.max(1,nomLines.length+acompLines.length);
+    const rh=Math.max(9, filas*4.4+3);
+
+    if(y+rh>285){ doc.addPage(); y=16; headTabla(); doc.setFont("helvetica","normal"); }
+
+    // fondo alterno / estado
+    if(r.estado==="embarcado") doc.setFillColor(224,247,250);
+    else if(n%2===0) doc.setFillColor(247,250,252);
+    else doc.setFillColor(255,255,255);
+    doc.rect(M,y,PW-2*M,rh,"F");
+
+    doc.setTextColor(20,38,52); doc.setFontSize(8);
+    doc.text(""+n, cols[0].x+1.5, y+5);
+    // nombre + acompañantes
+    let ty=y+5;
+    doc.setFont("helvetica","bold");
+    nomLines.forEach(l=>{ doc.text(l,cols[1].x+1.5,ty); ty+=4.2; });
+    if(acompLines.length){
+      doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.setTextColor(92,116,136);
+      acompLines.forEach(l=>{ doc.text(l,cols[1].x+1.5,ty); ty+=4; });
+      doc.setTextColor(20,38,52); doc.setFontSize(8);
+    }
+    doc.setFont("helvetica","normal");
+    doc.text(""+(r.plazas||1), cols[2].x+3, y+5);
+    // recogida (rojo si cambio)
+    if(cambio){ doc.setTextColor(200,30,30); doc.setFont("helvetica","bold"); }
+    doc.text(recTxt, cols[3].x+1.5, y+5);
+    doc.setTextColor(20,38,52); doc.setFont("helvetica","normal");
+    doc.text((r.senal||0).toFixed(0)+"E", cols[4].x+1.5, y+5);
+    if((r.pendiente||0)>0){ doc.setTextColor(200,30,30); doc.setFont("helvetica","bold"); }
+    doc.text((r.pendiente||0).toFixed(0)+"E", cols[5].x+1.5, y+5);
+    doc.setTextColor(20,38,52); doc.setFont("helvetica","normal");
+    const estLbl=r.estado==="embarcado"?"EMBARCADO":r.estado==="confirmada"?"Confirm.":"PEND.";
+    doc.setFontSize(7.5); doc.text(estLbl, cols[6].x+1.5, y+5); doc.setFontSize(8);
+
+    y+=rh;
+    doc.setDrawColor(220,228,236); doc.line(M,y,PW-M,y);
+  });
+
+  // Nota cambios
+  y+=6;
+  if(y>280){ doc.addPage(); y=16; }
+  doc.setFontSize(7.5); doc.setTextColor(200,30,30); doc.setFont("helvetica","bold");
+  doc.text("*  VARIOS = hay viajeros con distinto punto de recogida (ver manifiesto por parada).", M, y);
+  y+=8;
+
+  // ── MANIFIESTO POR PARADA (solo confirmados + embarcados) ──
+  const porParada={};
+  conf.forEach(r=>personasDeReserva(r).forEach(p=>{
+    (porParada[p.recogida]=porParada[p.recogida]||[]).push({nombre:p.nombre,cambio:p.cambiada,titular:r.nombre});
+  }));
+  const paradas=Object.keys(porParada);
+  if(paradas.length){
+    if(y>250){ doc.addPage(); y=16; }
+    doc.setFillColor(13,31,60); doc.rect(M,y,PW-2*M,8,"F");
+    doc.setTextColor(255,212,0); doc.setFontSize(9); doc.setFont("helvetica","bold");
+    doc.text("MANIFIESTO POR PUNTO DE RECOGIDA", M+2, y+5.5);
+    y+=12;
+    paradas.forEach(par=>{
+      const lista=porParada[par];
+      if(y>278){ doc.addPage(); y=16; }
+      doc.setTextColor(26,110,158); doc.setFontSize(9); doc.setFont("helvetica","bold");
+      doc.text(txPDF(par)+"  ("+lista.length+")", M, y);
+      y+=5;
+      doc.setTextColor(20,38,52); doc.setFontSize(8); doc.setFont("helvetica","normal");
+      lista.forEach(pe=>{
+        if(y>285){ doc.addPage(); y=16; }
+        let linea="•  "+txPDF(pe.nombre);
+        doc.text(linea, M+3, y);
+        if(pe.cambio){ doc.setTextColor(200,30,30); doc.setFont("helvetica","bold");
+          doc.text("[CAMBIO]", M+3+doc.getTextWidth(linea)+3, y);
+          doc.setTextColor(20,38,52); doc.setFont("helvetica","normal"); }
+        y+=4.6;
+      });
+      y+=3;
+    });
+  }
+
+  // Footer en cada página
+  const pgs=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pgs;i++){
+    doc.setPage(i);
+    doc.setDrawColor(220,228,236); doc.line(M,290,PW-M,290);
+    doc.setTextColor(120,140,160); doc.setFontSize(7); doc.setFont("helvetica","normal");
+    doc.text("Yo Me Voy Excursiones · +34 614 599 790", M, 294);
+    doc.text("Pag. "+i+"/"+pgs, PW-M, 294, {align:"right"});
+  }
+
+  doc.save("Lista_"+txPDF(v.destino||"viaje").replace(/\s+/g,"_")+"_"+fmtF(v.fecha).replace(/\//g,"-")+".pdf");
+  toast("🖨️ Lista PDF generada");
 }
 
 // ── RESUMEN ────────────────────────────────────────────────
