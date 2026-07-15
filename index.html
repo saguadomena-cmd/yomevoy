@@ -814,19 +814,22 @@ async function generarJustificante(vId,rId){
   }
 }
 
-  // ── SCANNER QR ─────────────────────────────────────────────
+  // ── SCANNER QR (optimizado) ────────────────────────────────
 let scannerActivo = false;
 let scannerAnimFrame = null;
+let scannerDetector = null;
+let scannerTorchOn = false;
+let scannerLastBad = 0;
 
 async function iniciarScanner(){
   pararScanner();
   document.getElementById("scanner-result").innerHTML = '';
   const video = document.getElementById("scanner-video");
-
-  try {
+  const status = document.getElementById("scanner-status");
+  try{
     scannerStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false
+      video:{ facingMode:{ ideal:"environment" }, width:{ ideal:1280 }, height:{ ideal:720 } },
+      audio:false
     });
     video.srcObject = scannerStream;
     video.setAttribute("playsinline", true);
@@ -834,116 +837,179 @@ async function iniciarScanner(){
     await video.play();
     scannerActivo = true;
 
-    // Detectar qué API usar
-    const usarNativa = typeof BarcodeDetector !== "undefined";
-    document.getElementById("scanner-status").textContent =
-      usarNativa ? "Usando detector nativo (mejor precision)" : "Usando jsQR";
-
-    if (usarNativa) {
-      tickNativo();
-    } else {
-      tickJsQR();
+    // Preferir el detector NATIVO (mucho mas rapido y fiable)
+    if(typeof BarcodeDetector !== "undefined"){
+      try{
+        const fmts = await BarcodeDetector.getSupportedFormats();
+        if(fmts.includes("qr_code")){
+          scannerDetector = new BarcodeDetector({ formats:["qr_code"] });
+        }
+      }catch(e){ scannerDetector = null; }
     }
+    status.textContent = scannerDetector
+      ? "Detector nativo — apunta al QR"
+      : "Modo compatible — apunta al QR (centra bien el codigo)";
 
-  } catch(e) {
+    mostrarBtnLinterna();
+    scannerLoop();
+  }catch(e){
     console.error(e);
     document.getElementById("scanner-result").innerHTML =
-      "<div class='scanner-result err'>No se pudo acceder a la camara.<br>Asegurate de dar permiso cuando lo pida.</div>";
+      "<div class='scanner-result err'>No se pudo acceder a la camara.<br>Da permiso de camara y recuerda que la pagina debe ir por https.</div>";
   }
 }
 
-// ── METODO 1: BarcodeDetector (nativo Chrome Android / Safari iOS 17+) ──
-async function tickNativo(){
+// Recorta SOLO la zona central (el marco) -> jsQR va 5-10x mas rapido
+function _canvasZonaCentral(video){
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if(!vw || !vh) return null;
+  const lado = Math.floor(Math.min(vw, vh) * 0.62);   // zona = 62% del lado menor
+  const sx = Math.floor((vw - lado)/2), sy = Math.floor((vh - lado)/2);
+  const canvas = document.getElementById("scanner-canvas");
+  canvas.width = lado; canvas.height = lado;
+  const ctx = canvas.getContext("2d", { willReadFrequently:true });
+  ctx.drawImage(video, sx, sy, lado, lado, 0, 0, lado, lado);
+  return { ctx, lado };
+}
+
+async function scannerLoop(){
   if(!scannerActivo) return;
   const video = document.getElementById("scanner-video");
-  if(video.readyState < 2){ scannerAnimFrame = requestAnimationFrame(tickNativo); return; }
+  if(video.readyState < 2){ scannerAnimFrame = requestAnimationFrame(scannerLoop); return; }
 
-  try {
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
-    const codes = await detector.detect(video);
-    if(codes.length > 0){
-      const data = codes[0].rawValue;
-      console.log("QR nativo:", data);
-      if(data.startsWith("VCS-RESERVA-")){
-        scannerActivo = false;
-        procesarQR(data.replace("VCS-RESERVA-",""));
-        return;
-      } else {
-        document.getElementById("scanner-result").innerHTML =
-          "<div class='scanner-result err'>QR no reconocido.<br><small>"+data.slice(0,40)+"</small></div>";
+  let data = null;
+  try{
+    if(scannerDetector){
+      // el detector nativo trabaja mejor sobre el video completo
+      const codes = await scannerDetector.detect(video);
+      if(codes && codes.length) data = codes[0].rawValue;
+    }else{
+      const z = _canvasZonaCentral(video);
+      if(z && typeof jsQR !== "undefined"){
+        const img = z.ctx.getImageData(0, 0, z.lado, z.lado);
+        // dontInvert = 1 pasada (rapido). Si no lee en 1.2s probamos ambas.
+        const modo = (Date.now() - scannerLastBad > 1200) ? "dontInvert" : "attemptBoth";
+        const code = jsQR(img.data, img.width, img.height, { inversionAttempts: modo });
+        if(code && code.data) data = code.data;
       }
     }
-  } catch(e){ console.warn("BarcodeDetector error:", e); }
+  }catch(e){ /* seguir */ }
 
-  if(scannerActivo) scannerAnimFrame = requestAnimationFrame(tickNativo);
+  if(data){
+    if(data.startsWith("VCS-RESERVA-")){
+      scannerActivo = false;
+      feedbackScan("ok");
+      procesarQR(data.replace("VCS-RESERVA-",""));
+      return;
+    }else{
+      scannerLastBad = Date.now();
+      const st = document.getElementById("scanner-status");
+      if(st) st.textContent = "QR detectado pero no es de una reserva…";
+    }
+  }
+  scannerAnimFrame = requestAnimationFrame(scannerLoop);
 }
 
-// ── METODO 2: jsQR fallback ──
-function tickJsQR(){
-  if(!scannerActivo) return;
-  const video  = document.getElementById("scanner-video");
-  const canvas = document.getElementById("scanner-canvas");
-  if(!video || video.readyState < 2){
-    scannerAnimFrame = requestAnimationFrame(tickJsQR); return;
-  }
-  canvas.width  = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(video, 0, 0);
-  try {
-    const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = (typeof jsQR !== "undefined")
-      ? jsQR(img.data, img.width, img.height, { inversionAttempts: "attemptBoth" })
-      : null;
-    if(code && code.data){
-      console.log("jsQR:", code.data);
-      if(code.data.startsWith("VCS-RESERVA-")){
-        scannerActivo = false;
-        procesarQR(code.data.replace("VCS-RESERVA-",""));
-        return;
+// ── Linterna (si el movil la permite en el navegador) ──
+function mostrarBtnLinterna(){
+  try{
+    const track = scannerStream && scannerStream.getVideoTracks()[0];
+    const caps = track && track.getCapabilities ? track.getCapabilities() : {};
+    if(caps && caps.torch){
+      let b = document.getElementById("btn-torch-scan");
+      if(!b){
+        b = document.createElement("button");
+        b.id = "btn-torch-scan";
+        b.className = "btn btn-ghost";
+        b.style.marginTop = "8px";
+        b.onclick = toggleTorchScan;
+        const cont = document.getElementById("scanner-status").parentNode;
+        cont.insertBefore(b, document.getElementById("scanner-result"));
       }
+      b.textContent = scannerTorchOn ? "🔦 Apagar linterna" : "🔦 Encender linterna";
+      b.style.display = "block";
     }
-  } catch(e){ console.error(e); }
-  if(scannerActivo) scannerAnimFrame = requestAnimationFrame(tickJsQR);
+  }catch(e){}
+}
+async function toggleTorchScan(){
+  try{
+    const track = scannerStream && scannerStream.getVideoTracks()[0];
+    if(!track) return;
+    scannerTorchOn = !scannerTorchOn;
+    await track.applyConstraints({ advanced:[{ torch: scannerTorchOn }] });
+    mostrarBtnLinterna();
+  }catch(e){ toast("Linterna no disponible en este movil"); }
+}
+
+// ── Feedback sonoro + vibracion ──
+function feedbackScan(tipo){
+  try{ if(navigator.vibrate) navigator.vibrate(tipo==="ok"?[60]:[120,60,120]); }catch(e){}
+  try{
+    const AC = window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    const ctx = feedbackScan._c || (feedbackScan._c = new AC());
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = tipo==="ok"?880:220;
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.22);
+    o.start(); o.stop(ctx.currentTime+0.24);
+  }catch(e){}
 }
 
 // ── ALTERNATIVA: Foto desde galeria / camara ──
 function escanearFoto(){
   const input = document.createElement("input");
-  input.type  = "file";
-  input.accept = "image/*";
-  input.capture = "environment";
+  input.type = "file"; input.accept = "image/*"; input.capture = "environment";
   input.onchange = async (e) => {
     const file = e.target.files[0]; if(!file) return;
-    const bitmap = await createImageBitmap(file);
+    document.getElementById("scanner-result").innerHTML =
+      "<div class='scanner-result' style='background:#eef;color:#333'>Procesando foto…</div>";
+    let bitmap;
+    try{ bitmap = await createImageBitmap(file); }catch(err){
+      document.getElementById("scanner-result").innerHTML =
+        "<div class='scanner-result err'>No se pudo abrir la imagen.</div>"; return;
+    }
     const canvas = document.getElementById("scanner-canvas");
-    canvas.width  = bitmap.width;
-    canvas.height = bitmap.height;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    canvas.width = bitmap.width; canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently:true });
     ctx.drawImage(bitmap, 0, 0);
 
-    // Intentar nativo primero
+    // 1) detector nativo
     if(typeof BarcodeDetector !== "undefined"){
       try{
-        const det = new BarcodeDetector({ formats: ["qr_code"] });
+        const det = new BarcodeDetector({ formats:["qr_code"] });
         const codes = await det.detect(canvas);
-        if(codes.length > 0 && codes[0].rawValue.startsWith("VCS-RESERVA-")){
-          procesarQR(codes[0].rawValue.replace("VCS-RESERVA-",""));
-          return;
+        if(codes.length && codes[0].rawValue.startsWith("VCS-RESERVA-")){
+          feedbackScan("ok"); procesarQR(codes[0].rawValue.replace("VCS-RESERVA-","")); return;
         }
       }catch(e){}
     }
-    // Fallback jsQR
+    // 2) jsQR a resolucion normal y reducida (por si la foto es enorme)
     if(typeof jsQR !== "undefined"){
-      const img  = ctx.getImageData(0,0,canvas.width,canvas.height);
-      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "attemptBoth" });
-      if(code && code.data.startsWith("VCS-RESERVA-")){
-        procesarQR(code.data.replace("VCS-RESERVA-",""));
-        return;
+      const intentar = (cv)=>{
+        const c = cv.getContext("2d",{willReadFrequently:true});
+        const im = c.getImageData(0,0,cv.width,cv.height);
+        return jsQR(im.data, im.width, im.height, { inversionAttempts:"attemptBoth" });
+      };
+      let code = intentar(canvas);
+      if(!(code && code.data)){
+        // reescalar a max 1000px
+        const max=1000, esc=Math.min(1, max/Math.max(canvas.width,canvas.height));
+        if(esc<1){
+          const c2=document.createElement("canvas");
+          c2.width=Math.round(canvas.width*esc); c2.height=Math.round(canvas.height*esc);
+          c2.getContext("2d").drawImage(canvas,0,0,c2.width,c2.height);
+          code=intentar(c2);
+        }
+      }
+      if(code && code.data && code.data.startsWith("VCS-RESERVA-")){
+        feedbackScan("ok"); procesarQR(code.data.replace("VCS-RESERVA-","")); return;
       }
     }
+    feedbackScan("err");
     document.getElementById("scanner-result").innerHTML =
-      "<div class='scanner-result err'>No se detecto ningun QR en la imagen. Intentalo de nuevo con mejor iluminacion.</div>";
+      "<div class='scanner-result err'>No se detecto ningun QR valido en la foto.<br>Acercate mas y evita reflejos.</div>";
   };
   input.click();
 }
@@ -953,8 +1019,9 @@ function pararScanner(){
   if(scannerAnimFrame){ cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame = null; }
   if(scannerInterval){ clearInterval(scannerInterval); scannerInterval = null; }
   if(scannerStream){ scannerStream.getTracks().forEach(t=>t.stop()); scannerStream = null; }
-  const v = document.getElementById("scanner-video");
-  if(v) v.srcObject = null;
+  scannerDetector = null; scannerTorchOn = false;
+  const b = document.getElementById("btn-torch-scan"); if(b) b.style.display="none";
+  const v = document.getElementById("scanner-video"); if(v) v.srcObject = null;
 }
 
 function procesarQR(rId){
