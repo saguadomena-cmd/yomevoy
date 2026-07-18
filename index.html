@@ -58,7 +58,7 @@ textarea{resize:vertical;min-height:44px}
     <div class="st"><div class="n" id="s1">0</div><div class="l">Reserv.</div></div>
     <div class="st"><div class="n" id="s2">0</div><div class="l">Suben</div></div>
     <div class="st"><div class="n" id="s3">0</div><div class="l">Faltan</div></div>
-    <div class="st"><div class="n" id="s4">0€</div><div class="l">Cobrado</div></div>
+    <div class="st"><div class="n" id="s4">0€</div><div class="l">Cobr. bus</div></div>
   </div>
 </div>
 
@@ -79,7 +79,7 @@ textarea{resize:vertical;min-height:44px}
 <div class="toast" id="toast"></div>
 
 <script>
-const BASE = [{"id": "r1", "nombre": "CESAR AGUSTO Y DIANA ANDREA", "res": 2, "senal": 60, "pend": 50, "punto": "Puente de Vallecas", "mia": false}, {"id": "r2", "nombre": "ELSY EMPERATRIZ", "res": 4, "senal": 120, "pend": 100, "punto": "Puente de Vallecas", "mia": false}, {"id": "r3", "nombre": "JENNIFER SEGURA", "res": 1, "senal": 30, "pend": 25, "punto": "Puente de Vallecas", "mia": false}, {"id": "r4", "nombre": "MIA MARBELY", "res": 2, "senal": 60, "pend": 50, "punto": "Puente de Vallecas", "mia": false}, {"id": "r5", "nombre": "YEXIBEL HOLGUIN FLOREZ, AURA LILIANA MARIN Y EMMANUEL GOMEZ", "res": 3, "senal": 90, "pend": 75, "punto": "Puente de Vallecas", "mia": true}, {"id": "r6", "nombre": "ALEJANDRO CARLOS GONZALEZ Y MELANI PAULINA", "res": 2, "senal": 30, "pend": 80, "punto": "NH Atocha", "mia": false}, {"id": "r7", "nombre": "BELKIS ZAMBRANO, PAOLA, NICOLEE Y YANGENIS PEREZ", "res": 4, "senal": 120, "pend": 100, "punto": "NH Atocha", "mia": true}, {"id": "r8", "nombre": "BLANCA LOPEZ Y ROLANDO ROJAS", "res": 2, "senal": 60, "pend": 50, "punto": "NH Atocha", "mia": false}, {"id": "r9", "nombre": "CESAR ARAGON", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": false}, {"id": "r10", "nombre": "DAVID GONZALEZ CALLEJAS Y SALIHAN ORTEGA GARCIA", "res": 2, "senal": 60, "pend": 0, "punto": "NH Atocha", "mia": false}, {"id": "r11", "nombre": "DEILA MORALES", "res": 2, "senal": 60, "pend": 50, "punto": "NH Atocha", "mia": false}, {"id": "r12", "nombre": "FERNANDO AMELINE", "res": 3, "senal": 90, "pend": 70, "punto": "NH Atocha", "mia": false}, {"id": "r13", "nombre": "GISELA DA SILVA Y CHRISTOPHER PORTALES", "res": 2, "senal": 60, "pend": 50, "punto": "NH Atocha", "mia": true}, {"id": "r14", "nombre": "JAVIER ALEXANDRE LOAIZA, LEIDY MARCELA BEDOYA Y VALENTINA LOAIZA", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": true}, {"id": "r15", "nombre": "JHORLEY GUTIERREZ, ESTHER CHEPE, ERIKA DAYANA", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": true}, {"id": "r16", "nombre": "LUZ DENIA RODRIGUEZ", "res": 4, "senal": 120, "pend": 90, "punto": "NH Atocha", "mia": false}, {"id": "r17", "nombre": "MARIA ISABEL HERNANDEZ", "res": 1, "senal": 30, "pend": 25, "punto": "NH Atocha", "mia": true}, {"id": "r18", "nombre": "MELANIE PAULINA", "res": 2, "senal": 60, "pend": 50, "punto": "NH Atocha", "mia": false}, {"id": "r19", "nombre": "NATALY ARRIETA", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": false}, {"id": "r20", "nombre": "RONALD FEREIRA", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": false}, {"id": "r21", "nombre": "YANELIS MONTES", "res": 7, "senal": 210, "pend": 150, "punto": "NH Atocha", "mia": false}, {"id": "r22", "nombre": "ZULLY CUELLA", "res": 2, "senal": 80, "pend": 30, "punto": "NH Atocha", "mia": false}, {"id": "r23", "nombre": "JOSE EDUARDO MORENO Y KEILA YASMINA", "res": 2, "senal": 60, "pend": 50, "punto": "Plaza Elíptica", "mia": false}, {"id": "r24", "nombre": "PATRICIA ALICIA MOROCHO, AINOHA PILAGUANO Y LOURDES", "res": 3, "senal": 90, "pend": 70, "punto": "Plaza Elíptica", "mia": true}, {"id": "r25", "nombre": "VICTORIA MARESCO Y NELSON MARTINEZ", "res": 2, "senal": 60, "pend": 50, "punto": "Plaza Elíptica", "mia": false}, {"id": "r26", "nombre": "YASMIN MOSQUERA Y TATIANA ACOSTA", "res": 2, "senal": 60, "pend": 50, "punto": "Plaza Elíptica", "mia": false}];
+const BASE = [{"id": "r1", "nombre": "CESAR AGUSTO Y DIANA ANDREA", "res": 2, "senal": 60, "pend": 50, "punto": "Puente de Vallecas", "mia": false}, {"id": "r2", "nombre": "ELSY EMPERATRIZ", "res": 4, "senal": 120, "pend": 100, "punto": "Puente de Vallecas", "mia": false}, {"id": "r3", "nombre": "JENNIFER SEGURA", "res": 1, "senal": 30, "pend": 25, "punto": "Puente de Vallecas", "mia": false}, {"id": "r4", "nombre": "MIA MARBELY", "res": 2, "senal": 60, "pend": 50, "punto": "Puente de Vallecas", "mia": false}, {"id": "r5", "nombre": "YEXIBEL HOLGUIN FLOREZ, AURA LILIANA MARIN Y EMMANUEL GOMEZ", "res": 3, "senal": 90, "pend": 75, "punto": "Puente de Vallecas", "mia": true}, {"id": "r6", "nombre": "ALEJANDRO CARLOS GONZALEZ Y MELANI PAULINA", "res": 2, "senal": 30, "pend": 80, "punto": "NH Atocha", "mia": false}, {"id": "r7", "nombre": "BELKIS ZAMBRANO, PAOLA, NICOLEE Y YANGENIS PEREZ", "res": 4, "senal": 120, "pend": 100, "punto": "NH Atocha", "mia": true}, {"id": "r8", "nombre": "BLANCA LOPEZ Y ROLANDO ROJAS", "res": 2, "senal": 60, "pend": 50, "punto": "NH Atocha", "mia": false}, {"id": "r9", "nombre": "CESAR ARAGON", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": false}, {"id": "r10", "nombre": "DEILA MORALES", "res": 2, "senal": 60, "pend": 50, "punto": "NH Atocha", "mia": false}, {"id": "r11", "nombre": "FERNANDO AMELINE", "res": 3, "senal": 90, "pend": 70, "punto": "NH Atocha", "mia": false}, {"id": "r12", "nombre": "GISELA DA SILVA Y CHRISTOPHER PORTALES", "res": 2, "senal": 60, "pend": 50, "punto": "NH Atocha", "mia": true}, {"id": "r13", "nombre": "JAVIER ALEXANDRE LOAIZA, LEIDY MARCELA BEDOYA Y VALENTINA LOAIZA", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": true}, {"id": "r14", "nombre": "JHORLEY GUTIERREZ, ESTHER CHEPE, ERIKA DAYANA", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": true}, {"id": "r15", "nombre": "LUZ DENIA RODRIGUEZ", "res": 4, "senal": 120, "pend": 90, "punto": "NH Atocha", "mia": false}, {"id": "r16", "nombre": "MARIA ISABEL HERNANDEZ", "res": 1, "senal": 30, "pend": 25, "punto": "NH Atocha", "mia": true}, {"id": "r17", "nombre": "MELANIE PAULINA", "res": 2, "senal": 60, "pend": 50, "punto": "NH Atocha", "mia": false}, {"id": "r18", "nombre": "NATALY ARRIETA", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": false}, {"id": "r19", "nombre": "RONALD FEREIRA", "res": 3, "senal": 90, "pend": 75, "punto": "NH Atocha", "mia": false}, {"id": "r20", "nombre": "YANELIS MONTES", "res": 7, "senal": 210, "pend": 150, "punto": "NH Atocha", "mia": false}, {"id": "r21", "nombre": "ZULLY CUELLA", "res": 2, "senal": 80, "pend": 30, "punto": "NH Atocha", "mia": false}, {"id": "r22", "nombre": "JOSE EDUARDO MORENO Y KEILA YASMINA", "res": 2, "senal": 60, "pend": 50, "punto": "Plaza Elíptica", "mia": false}, {"id": "r23", "nombre": "PATRICIA ALICIA MOROCHO, AINOHA PILAGUANO Y LOURDES", "res": 3, "senal": 90, "pend": 70, "punto": "Plaza Elíptica", "mia": true}, {"id": "r24", "nombre": "VICTORIA MARESCO Y NELSON MARTINEZ", "res": 2, "senal": 60, "pend": 50, "punto": "Plaza Elíptica", "mia": false}, {"id": "r25", "nombre": "YASMIN MOSQUERA Y TATIANA ACOSTA", "res": 2, "senal": 60, "pend": 50, "punto": "Plaza Elíptica", "mia": false}];
 const KEY = "embarque_sanjuan_19jul2026";
 let E = {};           // estado editable
 let filtro = "TODOS";
@@ -88,7 +88,7 @@ function load(){
   try{ E = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ E={}; }
   if(!E.rows) E.rows={};
   BASE.forEach(r=>{
-    if(!E.rows[r.id]) E.rows[r.id]={suben:r.res, emb:false, pagado:null, punto:r.punto, obs:"", pend:r.pend};
+    if(!E.rows[r.id]) E.rows[r.id]={suben:r.res, emb:false, pagado:null, punto:r.punto, obs:"", pend:r.pend, senal:r.senal};
   });
   if(E.notas===undefined) E.notas="";
   document.getElementById("notasgen").value=E.notas;
@@ -102,8 +102,8 @@ function guardar(aviso){
 let tt; function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("s");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("s"),1800);}
 
 function stats(){
-  let res=0, sub=0, cob=0;
-  BASE.forEach(r=>{ const e=E.rows[r.id]; res+=r.res;
+  let res=0, sub=0, cob=0, sen=0;
+  BASE.forEach(r=>{ const e=E.rows[r.id]; res+=r.res; sen+=Number(e.senal!==undefined?e.senal:r.senal)||0;
     if(e.emb){ sub+=Number(e.suben)||0; cob+=(e.pagado==="si"? Number(e.pend)||0 : 0); } });
   document.getElementById("s1").textContent=res;
   document.getElementById("s2").textContent=sub;
@@ -140,6 +140,7 @@ function render(){
             <div class="nom">${r.nombre}</div>
             <div class="badges">
               <span class="b b1">Reservó ${r.res}</span>
+              <span class="b b3">Pagó ${r.senal}€</span>
               ${e.pend>0?`<span class="b b2">Debe ${e.pend}€</span>`:`<span class="b b3">Pagado ✓</span>`}
               ${r.mia?'<span class="b b4">MI VENTA</span>':''}
               ${cambio?`<span class="b b5">CAMBIO → ${e.punto}</span>`:''}
@@ -149,6 +150,8 @@ function render(){
         <div class="rows">
           <div class="fld"><label>Suben</label>
             <input type="number" min="0" inputmode="numeric" value="${e.suben}" onchange="set('${r.id}','suben',this.value)"></div>
+          <div class="fld"><label>Ya pagó €</label>
+            <input type="number" min="0" inputmode="decimal" value="${e.senal!==undefined?e.senal:r.senal}" onchange="set('${r.id}','senal',this.value)"></div>
           <div class="fld"><label>Resto €</label>
             <input type="number" min="0" inputmode="decimal" value="${e.pend}" onchange="set('${r.id}','pend',this.value)"></div>
           <div class="fld full"><label>Cobro del resto</label>
@@ -182,13 +185,13 @@ function exportar(){
       const e=E.rows[r.id];
       tr+=r.res; if(e.emb){ts+=Number(e.suben)||0; if(e.pagado==="si")tc+=Number(e.pend)||0;}
       t+=(e.emb?"[X] ":"[ ] ")+r.nombre+" — res:"+r.res+" suben:"+(e.emb?e.suben:0)
-        +" resto:"+e.pend+"€"+(e.pagado==="si"?" PAGADO":e.pagado==="no"?" NO PAGO":"")
+        +" pagó:"+(e.senal!==undefined?e.senal:r.senal)+"€ resto:"+e.pend+"€"+(e.pagado==="si"?" PAGADO":e.pagado==="no"?" NO PAGO":"")
         +(r.punto!==e.punto?" (cambió de "+r.punto+")":"")
         +(e.obs?" | "+e.obs:"")+"\n";
     });
     t+="\n";
   });
-  t+="TOTAL reservados: "+tr+"\nTOTAL subidos: "+ts+"\nFALTAN: "+(tr-ts)+"\nCOBRADO EN BUS: "+tc+"€\n";
+  t+="TOTAL reservados: "+tr+"\nPLAZAS LIBRES (bus 72): "+(72-tr)+"\nTOTAL subidos: "+ts+"\nFALTAN: "+(tr-ts)+"\nCOBRADO EN BUS: "+tc+"€\n";
   if(E.notas) t+="\nNOTAS:\n"+E.notas+"\n";
   if(navigator.share){ navigator.share({title:"Embarque San Juan",text:t}).catch(()=>{}); }
   else { navigator.clipboard.writeText(t); toast("📋 Copiado al portapapeles"); }
