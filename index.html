@@ -569,7 +569,8 @@ function renderPendientes(){
         <div class="res-pend" style="color:var(--rojo)">Debe ${fmtE(r.pendiente)}</div>
       </div>
     </div>
-    <div class="res-badges"><span class="chip chip-naranja">⏳ PENDIENTE</span><span class="chip chip-${r.vendedor==="cris"?"morado":"azul"}">${r.vendedor==="cris"?"👩🏽 Cris":"👨🏽‍💼 Ariel"}</span></div>
+    <div class="res-badges"><span class="chip chip-naranja">⏳ PENDIENTE</span><span class="chip chip-${r.vendedor==="cris"?"morado":(r.vendedor==="web"?"teal":"azul")}">${r.vendedor==="cris"?"👩🏽 Cris":(r.vendedor==="web"?"🌐 Web":"👨🏽‍💼 Ariel")}</span>${r.comprobante?`<span class="chip chip-verde">🧾 Con justificante</span>`:`<span class="chip chip-rojo">⚠️ Sin justificante</span>`}</div>
+    ${r.comprobante?`<button class="btn btn-ghost btn-sm" style="margin:0 12px 8px;width:calc(100% - 24px)" onclick="verComprobante('${r._viajeId}','${r.id}')">🧾 Ver justificante de pago</button>`:``}
     ${esA?`<div class="res-btns">
       <button class="btn btn-green btn-sm" onclick="confirmar('${r._viajeId}','${r.id}',true)">✅ Confirmar</button>
       <button class="btn btn-red btn-sm" onclick="confirmar('${r._viajeId}','${r.id}',false)">❌ Rechazar</button>
@@ -577,7 +578,16 @@ function renderPendientes(){
     </div>`:""}
   </div>`).join("");
 }
-function confirmar(vId,rId,ok){const v=DATA.viajes[vId];if(!v?.reservas?.[rId])return;v.reservas[rId].estado=ok?"confirmada":"rechazada";guardarDB();toast(ok?"✅ Confirmada":"❌ Rechazada");}
+function confirmar(vId,rId,ok){const v=DATA.viajes[vId];if(!v?.reservas?.[rId])return;
+  if(ok&&!v.reservas[rId].comprobante&&!confirm("⚠️ Esta reserva NO tiene justificante adjunto. ¿Confirmar de todos modos?"))return;
+  v.reservas[rId].estado=ok?"confirmada":"rechazada";guardarDB();toast(ok?"✅ Confirmada":"❌ Rechazada");}
+function verComprobante(vId,rId){
+  const r=DATA.viajes[vId]?.reservas?.[rId]; if(!r||!r.comprobante){toast("Sin justificante");return;}
+  document.getElementById("comp-img").src=r.comprobante;
+  document.getElementById("comp-dl").href=r.comprobante;
+  document.getElementById("comp-info").textContent=r.nombre+" · "+(r.telefono||"");
+  document.getElementById("modal-comprobante").classList.add("activo");
+}
 
 // ── DETALLE VIAJE ──────────────────────────────────────────
 function verDetalle(vId){
@@ -1496,5 +1506,15 @@ function renderResumen(){
       </div>`;}).join("")}`;
 }
 </script>
+<div class="overlay" id="modal-comprobante">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>🧾 Justificante de pago</h3>
+    <div id="comp-info" style="font-size:12.5px;color:var(--suave);margin-bottom:10px;"></div>
+    <img id="comp-img" src="" style="width:100%;border-radius:12px;border:1px solid var(--linea);margin-bottom:12px;">
+    <a id="comp-dl" href="" download="justificante.jpg" class="btn btn-primary btn-block">⬇️ Descargar</a>
+    <button class="btn btn-ghost btn-block" onclick="cerrarModal('modal-comprobante')">Cerrar</button>
+  </div>
+</div>
 </body>
 </html>
