@@ -1,115 +1,178 @@
 <!DOCTYPE html><html lang="es"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
 <title>Gestor de Embarque · Yo Me Voy</title>
-<link rel="apple-touch-icon" href="icon-512.png">
-<link rel="icon" href="logo.png">
+<link rel="apple-touch-icon" href="icon-512.png"><link rel="icon" href="logo.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Embarque">
 <meta name="theme-color" content="#0D1F3C">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
-:root{--navy:#0D1F3C;--navy2:#16345f;--gold:#FFD400;--bg:#EEF3F8;--line:#DCE5EE;--muted:#5f7286;--green:#1E9E63;--greenbg:#E6F6EE;--amber:#B45309;--amberbg:#FFF4CC;--red:#E8323C;--rose:#D81B60}
+:root{--navy:#0D1F3C;--navy2:#16345f;--gold:#FFD400;--bg:#EEF3F8;--line:#DCE5EE;--muted:#5f7286;--green:#1E9E63;--greenbg:#E6F6EE;--amber:#B45309;--red:#E8323C;--rose:#D81B60;--wa:#25D366}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif}
-body{background:var(--bg);color:#12202f;padding-bottom:96px}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:#12202f;padding-bottom:100px;font-size:15px;line-height:1.4}
 .top{background:var(--navy);color:#fff;border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:20}
-.top-in{max-width:820px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 11px) 14px 11px;display:flex;align-items:center;gap:11px}
-.top img{width:38px;height:38px;border-radius:9px;background:#fff}
-.top b{font-size:15px;line-height:1.1}.top .s{font-size:10px;letter-spacing:1px;color:#AEC6DC;text-transform:uppercase}
-.dot{margin-left:auto;width:10px;height:10px;border-radius:50%;background:#7CFAB8}.dot.off{background:#E8323C}
-.wrap{max-width:820px;margin:0 auto;padding:14px}
-.back{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--navy);font-weight:800;font-size:14px;margin-bottom:10px;cursor:pointer}
-h2{font-size:18px;margin:2px 2px 12px}
-.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:11px;box-shadow:0 4px 16px -13px rgba(13,31,60,.5)}
-.viaje{cursor:pointer}.viaje .d{font-weight:800;font-size:16px}
+.top-in{max-width:900px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 10px) 12px 0;display:flex;align-items:center;gap:10px}
+.top img{width:34px;height:34px;border-radius:8px;background:#fff;flex-shrink:0}
+.top b{font-size:14.5px;line-height:1.1}.top .s{font-size:9.5px;letter-spacing:.8px;color:#AEC6DC;text-transform:uppercase}
+.dot{margin-left:auto;width:10px;height:10px;border-radius:50%;background:#7CFAB8;flex-shrink:0}.dot.off{background:#E8323C}
+.tabs{max-width:900px;margin:0 auto;display:flex;gap:4px;padding:8px 12px 0}
+.tab{flex:1;text-align:center;padding:9px 6px;font-size:13px;font-weight:800;color:#AEC6DC;border-bottom:3px solid transparent;cursor:pointer}
+.tab.on{color:#fff;border-color:var(--gold)}
+.wrap{max-width:900px;margin:0 auto;padding:13px 12px}
+.back{display:inline-flex;align-items:center;gap:5px;background:none;border:none;color:var(--navy);font-weight:800;font-size:14px;margin-bottom:9px;cursor:pointer;padding:4px 0}
+h2{font-size:17px;margin:2px 0 11px;line-height:1.25}
+.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px;margin-bottom:10px;box-shadow:0 4px 16px -13px rgba(13,31,60,.5)}
+.viaje{cursor:pointer}
+.vnum{display:inline-block;background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;margin-right:6px;vertical-align:2px}
+.viaje .d{font-weight:800;font-size:15.5px}
 .viaje .m{font-size:12.5px;color:var(--muted);margin-top:3px}
-.mini{display:flex;gap:7px;margin-top:10px}
-.mini>div{flex:1;background:var(--bg);border-radius:9px;padding:7px;text-align:center}
-.mini b{font-size:15px;display:block}.mini small{font-size:9.5px;color:var(--muted);text-transform:uppercase}
-.cap{margin-top:10px;background:var(--bg);border-radius:10px;padding:9px 11px}
-.cap .hd{display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:6px}
+.mini{display:flex;gap:6px;margin-top:9px}
+.mini>div{flex:1;background:var(--bg);border-radius:9px;padding:7px 4px;text-align:center;min-width:0}
+.mini b{font-size:14px;display:block;white-space:nowrap}.mini small{font-size:9px;color:var(--muted);text-transform:uppercase;display:block}
+.cap{margin-top:9px;background:var(--bg);border-radius:10px;padding:9px 10px}
 .bar{height:9px;border-radius:6px;background:#d7e0ea;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--green);transition:.3s}
 .bar.warn i{background:var(--amber)}.bar.full i{background:var(--red)}
-.cap .bl{font-size:11px;color:var(--muted);margin-top:5px}
-.pax{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;margin-bottom:9px;background:#fff}
+.bl{font-size:11px;color:var(--muted);margin-top:5px}
+.pax{display:flex;align-items:flex-start;gap:10px;padding:11px;border:1px solid var(--line);border-radius:13px;margin-bottom:9px;background:#fff}
 .pax.emb{background:var(--greenbg);border-color:#9BD9B8}
-.chk{width:30px;height:30px;border-radius:8px;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;font-weight:800;background:#fff;cursor:pointer;margin-top:2px}
+.chk{width:30px;height:30px;border-radius:8px;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;font-weight:800;background:#fff;cursor:pointer;margin-top:1px}
 .pax.emb .chk{background:var(--green);border-color:var(--green)}
-.pax .i{flex:1;min-width:0}.pax .n{font-weight:800;font-size:14.5px}
-.pax .acom{font-size:12px;color:#3d4f63;margin-top:2px;line-height:1.45}
-.pax .mm{font-size:11.5px;color:var(--muted);margin-top:3px}
+.pax .i{flex:1;min-width:0}
+.pax .n{font-weight:800;font-size:14.5px;word-break:break-word}
+.pax .acom{font-size:12px;color:#3d4f63;margin-top:3px;word-break:break-word}
+.pax .mm{font-size:11.5px;color:var(--muted);margin-top:3px;word-break:break-word}
 .pax .r{text-align:right;flex-shrink:0}
-.pax .eur{font-weight:800;font-size:14px;color:var(--amber)}
+.pax .eur{font-weight:800;font-size:14px;color:var(--amber);white-space:nowrap}
 .pax.cob .eur{color:var(--muted);text-decoration:line-through;font-size:12px}
 .pax .cob-lbl{font-size:9px;color:var(--green);font-weight:800;display:none}.pax.cob .cob-lbl{display:block}
+.loc{font-size:10px;font-weight:800;color:var(--navy);background:#eef2f8;border-radius:5px;padding:2px 6px;display:inline-block;margin-top:4px;letter-spacing:.4px}
 .tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:#eaf0f7;color:var(--navy);margin-right:4px}
 .tag.n{background:#FFF1D6;color:var(--amber)}.tag.b{background:#F3E6F7;color:#7B1FA2}
-.tag.solo{background:#FDE7EF;color:var(--rose)}
-.acts{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
-.acts button{border:1px solid var(--line);background:#fff;border-radius:8px;font-size:11.5px;font-weight:800;padding:6px 9px;cursor:pointer;color:var(--navy)}
+.tag.solo{background:#FDE7EF;color:var(--rose)}.tag.pt{background:#E7F1FF;color:#1c5fa8}
+.tag.mix{background:var(--rose);color:#fff}
+.acts{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.acts button{border:1px solid var(--line);background:#fff;border-radius:8px;font-size:11.5px;font-weight:800;padding:7px 9px;cursor:pointer;color:var(--navy)}
 .acts .tel{background:var(--navy);color:#fff;border-color:var(--navy)}
+.acts .just{background:#fff7dd;border-color:#f0d98a;color:#8a6100}
 .pax.cob .acts .bc{background:var(--green);color:#fff;border-color:var(--green)}
-.btn{border:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;cursor:pointer;width:100%}
+.btn{border:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;cursor:pointer;width:100%;display:block;text-align:center;text-decoration:none}
 .bp{background:var(--navy);color:#fff}.bg2{background:#fff;border:1.5px solid var(--line);color:var(--navy)}
-.bdel{background:#fff;border:1.5px solid #f3c4c8;color:var(--red)}
-.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 16px);z-index:30;background:var(--gold);color:var(--navy);font-weight:800;border:none;padding:15px 26px;border-radius:100px;box-shadow:0 12px 30px -8px rgba(13,31,60,.5);font-size:15px;cursor:pointer}
-.ov{position:fixed;inset:0;background:rgba(10,20,35,.6);z-index:40;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.bwa{background:var(--wa);color:#fff}.bdel{background:#fff;border:1.5px solid #f3c4c8;color:var(--red)}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:30;background:var(--gold);color:var(--navy);font-weight:800;border:none;padding:15px 24px;border-radius:100px;box-shadow:0 12px 30px -8px rgba(13,31,60,.5);font-size:15px;cursor:pointer;max-width:92vw}
+.ov{position:fixed;inset:0;background:rgba(10,20,35,.6);z-index:40;display:none;align-items:flex-end;justify-content:center}
 .ov.on{display:flex}
-.sheet{background:#fff;width:100%;max-width:640px;max-height:94vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 20px)}
-@media(min-width:640px){.ov{align-items:center}.sheet{border-radius:20px}}
-label{display:block;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:12px 0 5px}
-input,select{width:100%;font-size:16px;padding:12px;border:1.5px solid var(--line);border-radius:11px;background:#fff}
-.row2{display:flex;gap:10px}.row2>div{flex:1}
-.sumbox{background:var(--bg);border-radius:11px;padding:12px;margin-top:12px;font-size:14px}
-.sumbox .r{display:flex;justify-content:space-between;padding:3px 0}
+.sheet{background:#fff;width:100%;max-width:660px;max-height:92vh;max-height:92dvh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden}
+@media(min-width:660px){.ov{align-items:center}.sheet{border-radius:20px;max-height:88vh}}
+.sh-h{padding:15px 15px 9px;border-bottom:1px solid var(--line);flex-shrink:0}
+.sh-h h2{margin:0;font-size:16.5px}
+.sh-b{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 15px 14px;flex:1}
+.sh-f{padding:11px 15px calc(env(safe-area-inset-bottom) + 12px);border-top:1px solid var(--line);flex-shrink:0;background:#fff;display:flex;gap:8px}
+.sh-f .btn{padding:13px}
+label{display:block;font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:11px 0 5px;letter-spacing:.3px}
+input,select,textarea{width:100%;font-size:16px;padding:11px;border:1.5px solid var(--line);border-radius:11px;background:#fff;font-family:inherit}
+textarea{min-height:76px;resize:vertical}
+.row2{display:flex;gap:9px}.row2>div{flex:1;min-width:0}
+.sumbox{background:var(--bg);border-radius:11px;padding:11px;margin-top:11px;font-size:14px}
+.sumbox .r{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
 .sumbox .big{font-weight:800;border-top:1px dashed var(--line);margin-top:5px;padding-top:6px}
-.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:11px 18px;border-radius:11px;font-weight:600;font-size:14px;opacity:0;transition:.2s;z-index:60;pointer-events:none;max-width:90%;text-align:center}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:11px 17px;border-radius:11px;font-weight:600;font-size:13.5px;opacity:0;transition:.2s;z-index:60;pointer-events:none;max-width:90vw;text-align:center}
 .toast.s{opacity:1;transform:translateX(-50%)}
-.empty{text-align:center;color:var(--muted);padding:34px 16px;font-size:14px}
+.empty{text-align:center;color:var(--muted);padding:32px 14px;font-size:14px}
 .hint{font-size:11px;color:var(--green);font-weight:700;margin-top:5px;min-height:14px}
-.big-tot{display:flex;gap:8px;margin-bottom:10px}
-.big-tot>div{flex:1;background:var(--navy2);color:#fff;border-radius:12px;padding:11px;text-align:center}
-.big-tot b{font-size:19px;display:block}.big-tot small{font-size:10px;color:#AEC6DC;text-transform:uppercase}
-.search{display:flex;gap:8px;margin-bottom:10px}
-.search input{flex:1;padding:11px 13px}
-.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;-webkit-overflow-scrolling:touch}
-.chip{white-space:nowrap;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:100px;padding:8px 14px;font-size:12.5px;font-weight:800;cursor:pointer}
+.big-tot{display:flex;gap:7px;margin-bottom:10px}
+.big-tot>div{flex:1;background:var(--navy2);color:#fff;border-radius:12px;padding:10px 5px;text-align:center;min-width:0}
+.big-tot b{font-size:17px;display:block;white-space:nowrap}.big-tot small{font-size:9px;color:#AEC6DC;text-transform:uppercase;display:block}
+.search input{width:100%;padding:11px 13px;margin-bottom:9px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
+.chip{white-space:nowrap;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:100px;padding:8px 13px;font-size:12.5px;font-weight:800;cursor:pointer;flex-shrink:0}
 .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.buses{display:flex;flex-direction:column;gap:8px;margin-top:6px}
-.busop{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;background:#fff}
+.ptabs{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ptab{border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:11px;padding:11px 8px;font-size:13px;font-weight:800;cursor:pointer;text-align:center}
+.ptab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.buses{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:5px}
+@media(max-width:400px){.buses,.ptabs{grid-template-columns:1fr}}
+.busop{display:flex;align-items:center;gap:9px;border:1.5px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;background:#fff}
 .busop.on{border-color:var(--navy);background:#f2f6fb}
-.busop .bx{width:24px;height:24px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;flex-shrink:0}
+.busop .bx{width:22px;height:22px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0}
 .busop.on .bx{background:var(--navy);border-color:var(--navy)}
-.busop b{font-size:14px}.busop small{display:block;color:var(--muted);font-size:11.5px;font-weight:600}
-.vrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.vrow input.nm{flex:1}
-.vrow select{width:104px;flex-shrink:0;padding:11px 8px;font-size:14px}
-.vrow input.ed{width:62px;flex-shrink:0;text-align:center}
-.vrow .x{width:38px;height:44px;flex-shrink:0;border:1.5px solid var(--line);background:#fff;border-radius:10px;color:var(--red);font-size:17px;font-weight:800;cursor:pointer}
-.addv{border:1.5px dashed var(--line);background:#fff;color:var(--navy);border-radius:11px;padding:11px;font-weight:800;font-size:13.5px;width:100%;cursor:pointer;margin-top:2px}
-.titu{font-size:10.5px;font-weight:800;color:var(--gold);background:var(--navy);border-radius:5px;padding:2px 6px;margin-right:5px}
+.busop b{font-size:13px;display:block}.busop small{display:block;color:var(--muted);font-size:11px;font-weight:600}
+.vrow{border:1px solid var(--line);border-radius:12px;padding:9px;margin-bottom:8px;background:#fbfcfe}
+.vr1{display:flex;gap:6px;flex-wrap:wrap}
+.vr1 input.nm{flex:1 1 100%;min-width:0}
+.vr1 select{flex:1 1 auto;min-width:108px;padding:10px 6px;font-size:14px}
+.vr1 input.ed{flex:0 0 74px;text-align:center;padding:10px 4px}
+.vr1 .x{flex:0 0 44px;border:1.5px solid var(--line);background:#fff;border-radius:10px;color:var(--red);font-size:16px;font-weight:800;cursor:pointer}
+.vrec{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.vrec button{flex:1 1 auto;min-width:78px;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 4px;font-size:11.5px;font-weight:800;color:var(--navy);cursor:pointer}
+.vrec button.on{background:#1c5fa8;color:#fff;border-color:#1c5fa8}
+.addv{border:1.5px dashed var(--line);background:#fff;color:var(--navy);border-radius:11px;padding:11px;font-weight:800;font-size:13.5px;width:100%;cursor:pointer}
+.sw{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:11px;margin-top:11px;cursor:pointer;background:#fff}
+.sw.on{border-color:#1c5fa8;background:#f2f7fd}
+.sw .bx{width:22px;height:22px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0}
+.sw.on .bx{background:#1c5fa8;border-color:#1c5fa8}
+.sw b{font-size:13px}.sw small{display:block;color:var(--muted);font-size:11.5px;font-weight:600}
+.titu{font-size:10px;font-weight:800;color:var(--gold);background:var(--navy);border-radius:5px;padding:2px 6px;margin-right:5px;vertical-align:1px}
+.cli{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);border-radius:13px;margin-bottom:9px;background:#fff;cursor:pointer}
+.cli .av{width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+.cli .i{flex:1;min-width:0}.cli .n{font-weight:800;font-size:14.5px}
+.cli .m{font-size:11.5px;color:var(--muted);margin-top:2px}
+.cli .b{background:var(--gold);color:var(--navy);font-weight:800;font-size:12px;border-radius:20px;padding:4px 10px;flex-shrink:0}
+.note{background:#FFF9EA;border:1px solid #f0d7a8;border-radius:10px;padding:10px;font-size:12.5px;margin-top:9px}
 #print-area{display:none}
 @media print{
+ @page{margin:8mm}
  body>*:not(#print-area){display:none!important}
- #print-area{display:block!important;padding:14px;font-family:Arial,sans-serif;color:#000}
- #print-area h1{font-size:19px;margin:0 0 3px}
- #print-area .meta{font-size:12px;color:#333;margin-bottom:5px}
- #print-area .buses-p{font-size:12px;margin-bottom:10px;font-weight:bold}
- #print-area table{width:100%;border-collapse:collapse;font-size:11px}
- #print-area th,#print-area td{border:1px solid #999;padding:5px 6px;text-align:left;vertical-align:top}
- #print-area th{background:#e8edf3}
- #print-area tfoot td{font-weight:bold;background:#f4f7fa}
- #print-area .acp{color:#333;font-size:10px}
- #print-area .sq{display:inline-block;width:11px;height:11px;border:1.3px solid #333}
+ body{background:#fff}
+ #print-area{display:block!important;font-family:Arial,Helvetica,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .lst-h{background:#0D1F3C;color:#fff;padding:9px 11px;border-radius:6px 6px 0 0}
+ .lst-h h1{font-size:16px;margin:0;color:#fff}
+ .lst-h .s1{font-size:9.5px;color:#c8d6e6;margin-top:1px}
+ .lst-h .s2{font-size:12px;color:#FFD400;font-weight:bold;margin-top:3px}
+ .lst-i{background:#EEF3F8;border:1px solid #999;border-top:none;padding:5px 8px;font-size:9px;display:flex;justify-content:space-between;gap:8px}
+ .lst-i .rr{color:#D81B60;font-weight:bold}
+ table.lst{width:100%;border-collapse:collapse;font-size:10.5px;border:1.4px solid #0D1F3C}
+ table.lst th{background:#0D1F3C;color:#fff;padding:5px 4px;font-size:9px;text-align:left;border:1px solid #4a627f}
+ table.lst td{border:1px solid #97a6b8;padding:5px 4px;vertical-align:top}
+ table.lst tr:nth-child(even) td{background:#F4F7FB}
+ table.lst .nm{font-weight:bold;font-size:11px}
+ table.lst .ac{font-size:9px;color:#33465c}
+ table.lst .so{font-size:8.5px;color:#D81B60;font-weight:bold}
+ table.lst .lc{font-size:8px;color:#5f7286}
+ table.lst .ce{text-align:center}
+ table.lst .pe{font-weight:bold;color:#B45309;text-align:right}
+ table.lst .sq{display:inline-block;width:12px;height:12px;border:1.4px solid #0D1F3C}
+ table.lst tfoot td{background:#FFD400;font-weight:bold;border:1.4px solid #0D1F3C;font-size:11px}
+ .gr-h{background:#0D1F3C;color:#fff;padding:4px 8px;font-size:9.5px;font-weight:bold;margin-top:9px;display:flex;justify-content:space-between}
+ table.gr{width:100%;border-collapse:collapse;font-size:7.5px}
+ table.gr td{border:1px solid #97a6b8;text-align:center;padding:3px 0;width:3%}
+ .fir{background:#FFF9EA;border:1.4px solid #0D1F3C;border-top:none;padding:5px 8px;font-size:9.5px;display:flex;justify-content:space-between;font-weight:bold}
  tr{page-break-inside:avoid}
+ .jst{border:2px solid #0D1F3C;border-radius:10px;padding:16px;max-width:640px;margin:0 auto}
+ .jst .hd{background:#0D1F3C;color:#fff;margin:-16px -16px 12px;padding:12px 16px;border-radius:7px 7px 0 0;overflow:hidden}
+ .jst .hd h1{color:#fff;font-size:19px;margin:0}
+ .jst .hd .sub{font-size:11px;color:#c8d6e6}
+ .jst .lc{float:right;background:#FFD400;color:#0D1F3C;padding:5px 10px;border-radius:5px;font-weight:bold;font-size:13px}
+ .jst .rw{display:flex;justify-content:space-between;border-bottom:1px dotted #bbb;padding:5px 0;font-size:12.5px}
+ .jst .rw b{text-align:right}
+ .jst h3{font-size:12px;margin:13px 0 5px;color:#0D1F3C;border-bottom:2px solid #FFD400;display:inline-block;padding-bottom:2px}
+ .jst .tot{background:#f2f6fb;border-radius:8px;padding:10px;margin-top:10px}
+ .jst .pend{background:#FFF4CC;border-radius:7px;padding:9px;margin-top:7px;font-weight:bold;display:flex;justify-content:space-between}
+ .jst .avi{border:1.5px solid #B45309;background:#FFF9EA;border-radius:7px;padding:9px;margin-top:10px;font-size:10.5px;line-height:1.5}
+ .jst .avi b{color:#B45309}
+ .jst .cond{font-size:9.5px;color:#555;margin-top:10px;line-height:1.5}
+ .jst .ft{margin-top:12px;border-top:2px solid #FFD400;padding-top:8px;font-size:11px;text-align:center;font-weight:bold}
 }
 </style></head><body>
 <header class="top"><div class="top-in">
  <img src="logo.png" alt="" onerror="this.style.display='none'">
  <div><b>Gestor de Embarque</b><div class="s">Yo Me Voy Excursiones</div></div>
- <div class="dot" id="dot" title="Conexión"></div>
-</div></header>
+ <div class="dot" id="dot"></div></div>
+ <div class="tabs"><div class="tab on" id="tb-v" onclick="goTab('viajes')">🚌 Viajes</div><div class="tab" id="tb-c" onclick="goTab('clientes')">👥 Clientes</div></div>
+</header>
 <div class="wrap" id="app"></div>
 <button class="fab" id="fab" onclick="fabAction()">+ Nuevo viaje</button>
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
@@ -118,280 +181,466 @@ input,select{width:100%;font-size:16px;padding:12px;border:1.5px solid var(--lin
 <script>
 firebase.initializeApp({apiKey:"AIzaSyDI2vdwTHZxAbfw1HRim4S3QsH1yEygHtw",authDomain:"yo-me-voy-reservas.firebaseapp.com",databaseURL:"https://yo-me-voy-reservas-default-rtdb.europe-west1.firebasedatabase.app",projectId:"yo-me-voy-reservas",storageBucket:"yo-me-voy-reservas.firebasestorage.app",messagingSenderId:"250466590178",appId:"1:250466590178:web:e1d916ce49be57bd592dbb"});
 var REF=firebase.database().ref("gestor_embarque");
-var DB={viajes:{}},VIEW="lista",CUR=null,Q="",FPT="__all";
+var TEL_EMP="614599790",MARCA="Viaja Con Sergio · Yo Me Voy Excursiones";
+var PTS=["Plaza Elíptica","Atocha","Puente de Vallecas"];
+var DB={viajes:{},clientes:{},counters:{}},TAB="viajes",VIEW="lista",CUR=null,Q="",QC="",FPT="__all";
 var BUSES=[{id:"b97",n:"Bus grande",cap:97},{id:"b84",n:"Bus mediano",cap:84},{id:"b60a",n:"Bus pequeño A",cap:60},{id:"b60b",n:"Bus pequeño B",cap:60}];
-var tt;function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("s");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("s")},2400)}
+var tt;function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("s");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("s")},2600)}
 function money(n){return (Math.round(n*100)/100)+" €"}
-function esc(s){return (s||"").replace(/[<>&"]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]})}
+function esc(s){return (""+(s||"")).replace(/[<>&"]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]})}
+function jsq(s){return (""+(s||"")).replace(/\\/g,"").replace(/'/g,"\u2019").replace(/"/g,"")}
 function normTel(t){if(!t)return"";var s=(""+t).replace(/\D/g,"");if(s.indexOf("34")===0&&s.length>9)s=s.slice(2);return s.slice(-9)}
 function uid(p){return p+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
-function fmtF(iso){if(!iso)return"";var a=iso.split("-");return a[2]?a[2]+"/"+a[1]+"/"+a[0]:iso}
+function fmtF(iso){if(!iso)return"";var a=(""+iso).split("-");return a[2]?a[2]+"/"+a[1]+"/"+a[0]:iso}
+function pad(n,l){var s=""+n;while(s.length<l)s="0"+s;return s}
+function fmtLargo(iso){if(!iso)return"";var d=new Date(iso+"T12:00:00");if(isNaN(d.getTime()))return fmtF(iso);
+ var dd=["DOMINGO","LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO"],mm=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+ return dd[d.getDay()]+" "+d.getDate()+" DE "+mm[d.getMonth()]+" DE "+d.getFullYear()}
+function fmtLargoMin(iso){var s=fmtLargo(iso);return s?s.charAt(0)+s.slice(1).toLowerCase():""}
 
-/* ---------- Firebase: lectura en tiempo real + escrituras parciales ---------- */
-REF.on("value",function(s){DB=s.val()||{viajes:{}};if(!DB.viajes)DB.viajes={};document.getElementById("dot").classList.remove("off");render()},
+/* ---------- Firebase ---------- */
+REF.on("value",function(s){var d=s.val()||{};DB={viajes:d.viajes||{},clientes:d.clientes||{},counters:d.counters||{}};
+ document.getElementById("dot").classList.remove("off");render()},
  function(){document.getElementById("dot").classList.add("off")});
 function fail(){toast("Sin conexión: cambio no guardado");document.getElementById("dot").classList.add("off")}
 function wViaje(v){var c=Object.assign({},v);delete c.pasajeros;return REF.child("viajes/"+v.id).update(c).catch(fail)}
 function wPax(vId,p){return REF.child("viajes/"+vId+"/pasajeros/"+p.id).update(p).catch(fail)}
-function wField(path,val){return REF.child(path).set(val).catch(fail)}
-function wDel(path){return REF.child(path).remove().catch(fail)}
+function wField(p,v){return REF.child(p).set(v).catch(fail)}
+function wUpd(p,v){return REF.child(p).update(v).catch(fail)}
+function wDel(p){return REF.child(p).remove().catch(fail)}
+function nextNum(c,d){return REF.child("counters/"+c).transaction(function(x){return (x==null||x<d)?d:x+1})
+ .then(function(r){return r.snapshot.val()}).catch(function(){return d})}
 
-/* ---------- Cálculos ---------- */
+/* ---------- Modelo ---------- */
 function viajeros(p){
  if(p.viajeros&&p.viajeros.length)return p.viajeros;
- var a=[];var n=(p.nombre||"").trim();
- if(n)a.push({nombre:n,tipo:"adulto",edad:""});
- for(var i=1;i<(+p.adultos||0);i++)a.push({nombre:"",tipo:"adulto",edad:""});
- for(var j=0;j<(+p.ninos||0);j++)a.push({nombre:"",tipo:"nino",edad:""});
- return a;
-}
-function cuenta(vjs){var r={ad:0,ni:0,be:0};for(var i=0;i<vjs.length;i++){var t=vjs[i].tipo;if(t==="nino")r.ni++;else if(t==="bebe")r.be++;else r.ad++}return r}
-function importe(v,vjs){var c=cuenta(vjs);return c.ad*(+v.precioA||0)+c.ni*(+v.precioN||+v.precioA||0)}
+ var a=[],n=(p.nombre||"").trim();if(n)a.push({nombre:n,tipo:"adulto",edad:"",rec:""});
+ for(var i=1;i<(+p.adultos||0);i++)a.push({nombre:"",tipo:"adulto",edad:"",rec:""});
+ for(var j=0;j<(+p.ninos||0);j++)a.push({nombre:"",tipo:"nino",edad:"",rec:""});
+ return a}
+function cuenta(v){var r={ad:0,ni:0,be:0};for(var i=0;i<v.length;i++){var t=v[i].tipo;if(t==="nino")r.ni++;else if(t==="bebe")r.be++;else r.ad++}return r}
+function precioN(v){return (v.precioN!=null&&v.precioN!=="")?+v.precioN:(+v.precioA||0)}
+function importe(v,vjs){var c=cuenta(vjs);return c.ad*(+v.precioA||0)+c.ni*precioN(v)}
 function plazasDe(p){var c=cuenta(viajeros(p));return c.ad+c.ni}
 function paxArr(v){var o=v.pasajeros||{};return Object.keys(o).map(function(k){return o[k]})}
-function capacidad(v){var t=0;(BUSES).forEach(function(b){if(v.buses&&v.buses[b.id])t+=b.cap});return t}
-function busNames(v){return BUSES.filter(function(b){return v.buses&&v.buses[b.id]}).map(function(b){return b.n+" ("+b.cap+")"}).join(" + ")}
-function totViaje(v){
- var p=paxArr(v),plazas=0,emb=0,senal=0,pend=0,cobBus=0,solos=0,be=0;
- p.forEach(function(x){var pl=plazasDe(x);plazas+=pl;if(x.embarcado)emb+=pl;
-  senal+=(+x.senal||0);pend+=(+x.pendiente||0);if(x.cobrado)cobBus+=(+x.pendiente||0);
-  if(pl===1)solos++;be+=cuenta(viajeros(x)).be});
+function recBase(p,v){return (p.recogida||"").trim()||(v&&v.punto)||"(sin punto)"}
+function recDe(p,x,v){return ((x&&x.rec)||"").trim()||recBase(p,v)}
+function mixto(p,v){var b=recBase(p,v);return viajeros(p).some(function(x){return recDe(p,x,v)!==b})}
+function capacidad(v){var t=0;BUSES.forEach(function(b){if(v.buses&&v.buses[b.id])t+=b.cap});return t}
+function busSel(v){return BUSES.filter(function(b){return v.buses&&v.buses[b.id]})}
+function busNames(v){return busSel(v).map(function(b){return b.n+" ("+b.cap+")"}).join(" + ")}
+function totViaje(v){var p=paxArr(v),plazas=0,emb=0,senal=0,pend=0,cobBus=0,be=0;
+ p.forEach(function(x){var pl=plazasDe(x);plazas+=pl;if(x.embarcado)emb+=pl;senal+=(+x.senal||0);pend+=(+x.pendiente||0);
+  if(x.cobrado)cobBus+=(+x.pendiente||0);be+=cuenta(viajeros(x)).be});
  var cap=capacidad(v);
- return {plazas:plazas,emb:emb,senal:senal,pend:pend,cobBus:cobBus,cobrado:senal+cobBus,
-  porcobrar:pend-cobBus,ngrupos:p.length,cap:cap,libres:cap-plazas,solos:solos,bebes:be};
-}
+ return {plazas:plazas,emb:emb,senal:senal,pend:pend,cobBus:cobBus,cobrado:senal+cobBus,porcobrar:pend-cobBus,
+  ngrupos:p.length,cap:cap,libres:cap-plazas,bebes:be}}
+function puntosDe(v){var s={},a=[];paxArr(v).forEach(function(p){viajeros(p).forEach(function(x){var r=recDe(p,x,v);if(!s[r]){s[r]=1;a.push(r)}})});
+ return a.sort(function(x,y){var i=PTS.indexOf(x),j=PTS.indexOf(y);return (i<0?9:i)-(j<0?9:j)||x.localeCompare(y)})}
+function plazasPunto(v,pt){var n=0;paxArr(v).forEach(function(p){viajeros(p).forEach(function(x){
+ if(x.tipo!=="bebe"&&recDe(p,x,v)===pt)n++})});return n}
+function enPunto(p,pt,v){return viajeros(p).filter(function(x){return recDe(p,x,v)===pt})}
 
 /* ---------- Render ---------- */
-function render(){document.getElementById("fab").textContent=VIEW==="lista"?"+ Nuevo viaje":"+ Añadir pasajero";
+function goTab(t){TAB=t;VIEW="lista";Q="";QC="";render()}
+function render(){
+ document.getElementById("tb-v").classList.toggle("on",TAB==="viajes");
+ document.getElementById("tb-c").classList.toggle("on",TAB==="clientes");
+ var f=document.getElementById("fab");
+ if(TAB==="clientes"){f.style.display="none"}else{f.style.display="";f.textContent=VIEW==="lista"?"+ Nuevo viaje":"+ Añadir reserva"}
+ if(TAB==="clientes")return renderClientes();
  if(VIEW==="lista")renderLista();else renderDetalle()}
 
 function renderLista(){
- var vs=Object.keys(DB.viajes).map(function(k){return DB.viajes[k]}).sort(function(a,b){return (b.fecha||"").localeCompare(a.fecha||"")});
+ var vs=Object.keys(DB.viajes).map(function(k){return DB.viajes[k]}).sort(function(a,b){return (b.num||0)-(a.num||0)||(""+(b.fecha||"")).localeCompare(a.fecha||"")});
  var h='<h2>Viajes</h2>';
- h+=vs.length?vs.map(function(v){
-  var t=totViaje(v);
-  var barra=t.cap?'<div class="cap"><div class="hd"><span>'+t.plazas+' / '+t.cap+' plazas</span><span style="color:'+(t.libres<0?"var(--red)":t.libres<=5?"var(--amber)":"var(--green)")+'">'+(t.libres<0?"SOBREVENTA "+Math.abs(t.libres):t.libres+" libres")+'</span></div><div class="bar '+(t.libres<0?"full":t.libres<=5?"warn":"")+'"><i style="width:'+Math.min(100,t.cap?t.plazas/t.cap*100:0)+'%"></i></div><div class="bl">'+esc(busNames(v))+'</div></div>':'<div class="cap"><div class="bl">⚠️ Sin autobús asignado — pulsa el viaje y elige el bus</div></div>';
-  return '<div class="card viaje" onclick="abrir(\''+v.id+'\')"><div class="d">🚌 '+esc(v.destino)+'</div>'+
-   '<div class="m">'+(v.fecha?fmtF(v.fecha):"sin fecha")+(v.hora?" · "+esc(v.hora):"")+(v.punto?" · "+esc(v.punto):"")+'</div>'+
-   '<div class="mini"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Embarcados</small></div>'+
-   '<div><b>'+money(t.cobrado)+'</b><small>Cobrado</small></div>'+
-   '<div><b>'+money(t.porcobrar)+'</b><small>Por cobrar</small></div></div>'+barra+'</div>'}).join("")
-  :'<div class="empty">Aún no hay viajes.<br>Pulsa <b>+ Nuevo viaje</b> para crear el primero.</div>';
- document.getElementById("app").innerHTML=h;
-}
+ h+=vs.length?vs.map(function(v){var t=totViaje(v);
+  var cap=t.cap?'<div class="cap"><div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;margin-bottom:6px;flex-wrap:wrap"><span>'+t.plazas+' / '+t.cap+' plazas</span><span style="color:'+(t.libres<0?"var(--red)":t.libres<=5?"var(--amber)":"var(--green)")+'">'+(t.libres<0?"SOBREVENTA "+Math.abs(t.libres):t.libres+" libres")+'</span></div><div class="bar '+(t.libres<0?"full":t.libres<=5?"warn":"")+'"><i style="width:'+Math.min(100,t.plazas/t.cap*100)+'%"></i></div><div class="bl">'+esc(busNames(v))+'</div></div>'
+   :'<div class="cap"><div class="bl">⚠️ Sin autobús asignado — ábrelo y elige el bus</div></div>';
+  return '<div class="card viaje" onclick="abrir(\''+v.id+'\')">'+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+
+   '<span class="d">🚌 '+esc(v.destino)+'</span><div class="m">'+(v.fecha?fmtF(v.fecha):"sin fecha")+(v.hora?" · "+esc(v.hora):"")+'</div>'+
+   '<div class="mini"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Embarcados</small></div><div><b>'+money(t.cobrado)+'</b><small>Cobrado</small></div><div><b>'+money(t.porcobrar)+'</b><small>Por cobrar</small></div></div>'+cap+'</div>'}).join("")
+  :'<div class="empty">Aún no hay viajes.<br>Pulsa <b>+ Nuevo viaje</b>.</div>';
+ document.getElementById("app").innerHTML=h}
 
-function puntosDe(v){var s={},a=[];paxArr(v).forEach(function(p){var r=(p.recogida||"").trim()||"(sin punto)";if(!s[r]){s[r]=1;a.push(r)}});return a.sort()}
+function filtra(p,v){
+ if(FPT!=="__all"&&!enPunto(p,FPT,v).length)return false;
+ if(!Q)return true;var q=Q.toLowerCase(),d=q.replace(/\D/g,"");
+ if((p.nombre||"").toLowerCase().indexOf(q)>=0)return true;
+ if((p.localizador||"").toLowerCase().indexOf(q)>=0)return true;
+ if(d&&(p.tel||"").replace(/\D/g,"").indexOf(d)>=0)return true;
+ return viajeros(p).some(function(x){return (x.nombre||"").toLowerCase().indexOf(q)>=0})}
 
 function renderDetalle(){
  var v=DB.viajes[CUR];if(!v){VIEW="lista";return render()}
  var t=totViaje(v),pts=puntosDe(v);
- var lista=paxArr(v).sort(function(a,b){return (a.ts||0)-(b.ts||0)}).filter(function(p){return filtra(p)});
+ var lista=paxArr(v).sort(function(a,b){return (a.ts||0)-(b.ts||0)}).filter(function(p){return filtra(p,v)});
  var h='<button class="back" onclick="VIEW=\'lista\';Q=\'\';FPT=\'__all\';render()">‹ Viajes</button>';
- h+='<h2>🚌 '+esc(v.destino)+'</h2>';
- h+='<div style="color:var(--muted);font-size:13px;margin:-8px 2px 12px">'+(v.fecha?fmtF(v.fecha):"")+(v.hora?" · "+esc(v.hora):"")+(v.punto?" · "+esc(v.punto):"")+
-    ' · <a onclick="modalViaje(\''+v.id+'\')" style="color:var(--navy);font-weight:800;cursor:pointer">✏️ editar</a></div>';
- h+='<div class="big-tot"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Embarcados</small></div>'+
-    '<div><b>'+money(t.cobrado)+'</b><small>Cobrado</small></div>'+
-    '<div><b>'+money(t.porcobrar)+'</b><small>Por cobrar</small></div></div>';
- h+=t.cap?'<div class="card" style="padding:12px"><div class="hd" style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:7px"><span>Ocupación: '+t.plazas+' / '+t.cap+'</span><span style="color:'+(t.libres<0?"var(--red)":t.libres<=5?"var(--amber)":"var(--green)")+'">'+(t.libres<0?"SOBREVENTA de "+Math.abs(t.libres):t.libres+" plazas libres")+'</span></div><div class="bar '+(t.libres<0?"full":t.libres<=5?"warn":"")+'"><i style="width:'+Math.min(100,t.plazas/t.cap*100)+'%"></i></div><div class="bl" style="font-size:11.5px;color:var(--muted);margin-top:6px">'+esc(busNames(v))+(t.bebes?" · "+t.bebes+" bebé(s) en brazos sin plaza":"")+'</div></div>'
-  :'<div class="card" style="padding:12px;border-color:#f0d7a8;background:#FFF9EA"><b style="font-size:13px">⚠️ Este viaje no tiene autobús asignado.</b><div style="font-size:12px;color:var(--muted);margin-top:4px">Pulsa <b>editar</b> y elige el bus para controlar las plazas libres.</div></div>';
- h+='<div class="search"><input id="q" placeholder="🔍 Buscar por nombre, acompañante o teléfono" value="'+esc(Q)+'" oninput="Q=this.value;renderDetalle();document.getElementById(\'q\').focus()"></div>';
+ h+='<h2>'+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+'🚌 '+esc(v.destino)+'</h2>';
+ h+='<div style="color:var(--muted);font-size:12.5px;margin:-6px 0 11px">'+(v.fecha?fmtF(v.fecha):"")+(v.hora?" · "+esc(v.hora):"")+
+  ' · <a onclick="modalViaje(\''+v.id+'\')" style="color:var(--navy);font-weight:800;cursor:pointer">✏️ editar viaje</a></div>';
+ h+='<div class="big-tot"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Embarcados</small></div><div><b>'+money(t.cobrado)+'</b><small>Cobrado</small></div><div><b>'+money(t.porcobrar)+'</b><small>Por cobrar</small></div></div>';
+ h+='<div class="card" style="padding:12px">'+(t.cap?
+   '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;margin-bottom:7px;flex-wrap:wrap"><span>Ocupación '+t.plazas+' / '+t.cap+'</span><span style="color:'+(t.libres<0?"var(--red)":t.libres<=5?"var(--amber)":"var(--green)")+'">'+(t.libres<0?"SOBREVENTA de "+Math.abs(t.libres):t.libres+" libres")+'</span></div>'+
+   '<div class="bar '+(t.libres<0?"full":t.libres<=5?"warn":"")+'"><i style="width:'+Math.min(100,t.plazas/t.cap*100)+'%"></i></div>'+
+   '<div class="bl">'+esc(busNames(v))+(t.bebes?" · "+t.bebes+" bebé(s) sin plaza":"")+'</div>'
+  :'<b style="font-size:13px">⚠️ Sin autobús asignado</b><div class="bl">No se pueden controlar las plazas libres.</div>')+
+  '<button class="btn bg2" style="margin-top:9px;padding:10px;font-size:13.5px" onclick="modalBuses(\''+v.id+'\')">🚌 '+(t.cap?"Cambiar / añadir autobuses":"Elegir autobuses")+'</button></div>';
+ h+='<div class="search"><input id="q" placeholder="🔍 Nombre, acompañante, teléfono o localizador" value="'+esc(Q)+'" oninput="Q=this.value;renderDetalle();var e=document.getElementById(\'q\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
  h+='<div class="chips"><div class="chip '+(FPT==="__all"?"on":"")+'" onclick="FPT=\'__all\';renderDetalle()">Todos ('+t.plazas+')</div>';
- pts.forEach(function(r){var n=paxArr(v).filter(function(p){return ((p.recogida||"").trim()||"(sin punto)")===r}).reduce(function(s,p){return s+plazasDe(p)},0);
-  h+='<div class="chip '+(FPT===r?"on":"")+'" onclick="FPT=\''+esc(r).replace(/'/g,"")+'\';renderDetalle()">'+esc(r)+' ('+n+')</div>'});
- h+='</div>';
- h+='<button class="btn bg2" style="margin-bottom:12px" onclick="imprimir(\''+v.id+'\')">🖨️ Imprimir listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button>';
- h+=lista.length?lista.map(function(p){return paxRow(v.id,p)}).join(""):'<div class="empty">Ningún pasajero coincide con la búsqueda.</div>';
- document.getElementById("app").innerHTML=h;
-}
-function filtra(p){
- if(FPT!=="__all"&&(((p.recogida||"").trim()||"(sin punto)")!==FPT))return false;
- if(!Q)return true;
- var q=Q.toLowerCase();
- if((p.nombre||"").toLowerCase().indexOf(q)>=0)return true;
- if((p.tel||"").replace(/\D/g,"").indexOf(q.replace(/\D/g,""))>=0&&q.replace(/\D/g,""))return true;
- return viajeros(p).some(function(x){return (x.nombre||"").toLowerCase().indexOf(q)>=0});
-}
-function paxRow(vId,p){
- var vjs=viajeros(p),c=cuenta(vjs),pl=c.ad+c.ni;
+ pts.forEach(function(r){h+='<div class="chip '+(FPT===r?"on":"")+'" onclick="FPT=\''+jsq(r)+'\';renderDetalle()">'+esc(r)+' ('+plazasPunto(v,r)+')</div>'});
+ h+='</div><button class="btn bg2" style="margin-bottom:11px" onclick="imprimir(\''+v.id+'\')">🖨️ Imprimir listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button>';
+ h+=lista.length?lista.map(function(p){return paxRow(v,p)}).join(""):'<div class="empty">Ninguna reserva coincide.</div>';
+ document.getElementById("app").innerHTML=h}
+
+function paxRow(v,p){
+ var vId=v.id,vjs=viajeros(p),c=cuenta(vjs),pl=c.ad+c.ni,tel=normTel(p.tel),mx=mixto(p,v);
  var acom=vjs.slice(1).map(function(x){
-   var tg=x.tipo==="nino"?'<span class="tag n">niño'+(x.edad?" "+x.edad+"a":"")+'</span>':x.tipo==="bebe"?'<span class="tag b">bebé</span>':"";
-   return tg+esc(x.nombre||"(sin nombre)")}).join(" · ");
- var tel=normTel(p.tel);
+  var tg=x.tipo==="nino"?'<span class="tag n">niño'+(x.edad?" "+x.edad+"a":"")+'</span>':x.tipo==="bebe"?'<span class="tag b">bebé'+(x.edad?" "+x.edad:"")+'</span>':"";
+  return tg+esc(x.nombre||"(sin nombre)")+(mx?' <span class="tag pt">'+esc(recDe(p,x,v))+'</span>':"")}).join(" · ");
  return '<div class="pax '+(p.embarcado?"emb":"")+' '+(p.cobrado?"cob":"")+'">'+
-  '<div class="chk" onclick="toggleEmb(\''+vId+'\',\''+p.id+'\')">'+(p.embarcado?"✓":"")+'</div>'+
-  '<div class="i"><div class="n"><span class="titu">TITULAR</span>'+esc(vjs[0]?vjs[0].nombre:p.nombre)+'</div>'+
+  '<div class="chk" onclick="toggleEmb(\''+vId+'\',\''+p.id+'\')">'+(p.embarcado?"✓":"")+'</div><div class="i">'+
+  '<div class="n"><span class="titu">TITULAR</span>'+esc(vjs[0]?vjs[0].nombre:p.nombre)+(mx?' <span class="tag pt">'+esc(recDe(p,vjs[0],v))+'</span>':"")+'</div>'+
   (acom?'<div class="acom">'+acom+'</div>':"")+
-  '<div class="mm">'+pl+' plaza(s)'+(c.be?" + "+c.be+" bebé":"")+(p.recogida?" · "+esc(p.recogida):"")+(pl===1?' <span class="tag solo">no sentar solo</span>':"")+(p.nota?" · "+esc(p.nota):"")+'</div>'+
+  '<div class="mm">'+pl+' plaza(s)'+(c.be?" + "+c.be+" bebé":"")+(mx?' <span class="tag mix">RECOGIDAS DISTINTAS</span>':" · "+esc(recBase(p,v)))+(pl===1?' <span class="tag solo">no sentar solo</span>':"")+(p.nota?" · "+esc(p.nota):"")+'</div>'+
+  (p.localizador?'<div class="loc">'+esc(p.localizador)+'</div>':"")+
   '<div class="acts">'+
-   (tel?'<button class="tel" onclick="event.stopPropagation();menuTel(\''+tel+'\',\''+esc(vjs[0]?vjs[0].nombre:p.nombre).replace(/'/g,"")+'\')">📞 '+esc(p.tel)+'</button>':'<button onclick="event.stopPropagation();modalPax(\''+vId+'\',\''+p.id+'\')">📞 sin teléfono</button>')+
-   '<button class="bc" onclick="event.stopPropagation();toggleCob(\''+vId+'\',\''+p.id+'\')">'+(p.cobrado?"✓ Cobrado":"Cobrar "+(+p.pendiente||0)+"€")+'</button>'+
-   '<button onclick="event.stopPropagation();modalPax(\''+vId+'\',\''+p.id+'\')">✏️</button>'+
-   '<button onclick="event.stopPropagation();delPax(\''+vId+'\',\''+p.id+'\')">🗑️</button></div></div>'+
-  '<div class="r"><div class="eur">'+money(+p.pendiente||0)+'</div><div class="cob-lbl">COBRADO</div></div></div>';
-}
+   (tel?'<button class="tel" onclick="menuTel(\''+tel+'\',\''+jsq(vjs[0]?vjs[0].nombre:p.nombre)+'\')">📞 '+esc(p.tel)+'</button>':"")+
+   '<button class="just" onclick="justificante(\''+vId+'\',\''+p.id+'\')">🧾 Justificante</button>'+
+   '<button class="bc" onclick="toggleCob(\''+vId+'\',\''+p.id+'\')">'+(p.cobrado?"✓ Cobrado":"Cobrar "+(+p.pendiente||0)+"€")+'</button>'+
+   '<button onclick="modalPax(\''+vId+'\',\''+p.id+'\')">✏️</button>'+
+   '<button onclick="delPax(\''+vId+'\',\''+p.id+'\')">🗑️</button></div></div>'+
+  '<div class="r"><div class="eur">'+money(+p.pendiente||0)+'</div><div class="cob-lbl">COBRADO</div></div></div>'}
+
+/* ---------- Clientes ---------- */
+function nViajes(c){return Object.keys(c.viajes||{}).length}
+function totPlazas(c){var v=c.viajes||{};return Object.keys(v).reduce(function(s,k){return s+(+v[k].plazas||0)},0)}
+function renderClientes(){
+ var cs=Object.keys(DB.clientes||{}).map(function(k){return DB.clientes[k]}).filter(function(c){
+  if(!QC)return true;var q=QC.toLowerCase();
+  return (c.nombre||"").toLowerCase().indexOf(q)>=0||(""+(c.tel||"")).indexOf(q.replace(/\D/g,""))>=0})
+  .sort(function(a,b){return nViajes(b)-nViajes(a)||(a.nombre||"").localeCompare(b.nombre||"")});
+ var tot=Object.keys(DB.clientes||{}).length;
+ var h='<h2>Clientes ('+tot+')</h2>';
+ h+='<div class="search"><input id="qc" placeholder="🔍 Buscar cliente por nombre o teléfono" value="'+esc(QC)+'" oninput="QC=this.value;renderClientes();var e=document.getElementById(\'qc\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
+ h+=cs.length?cs.map(function(c){var n=nViajes(c);
+  return '<div class="cli" onclick="abrirCliente(\''+c.tel+'\')"><div class="av">'+esc((c.nombre||"?").trim().charAt(0).toUpperCase())+'</div>'+
+   '<div class="i"><div class="n">'+esc(c.nombre)+'</div><div class="m">'+esc(c.tel)+' · '+totPlazas(c)+' plazas'+(c.nota?' · 📝':"")+'</div></div>'+
+   '<div class="b">'+n+' viaje'+(n===1?"":"s")+'</div></div>'}).join("")
+  :'<div class="empty">'+(tot?"Ningún cliente coincide.":"Aún no hay clientes.<br>Se crean solos al guardar reservas con teléfono.")+'</div>';
+ document.getElementById("app").innerHTML=h}
+function abrirCliente(tel){
+ var c=DB.clientes[tel];if(!c)return;
+ var vs=Object.keys(c.viajes||{}).map(function(k){return c.viajes[k]}).sort(function(a,b){return (""+(b.fecha||"")).localeCompare(a.fecha||"")});
+ var wa="https://wa.me/34"+c.tel+"?text="+encodeURIComponent("Hola "+c.nombre+", te escribo de "+MARCA+".");
+ sheet('<h2>'+esc(c.nombre)+'</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(c.tel)+' · '+nViajes(c)+' viaje(s) · '+totPlazas(c)+' plazas</div>',
+  '<label>Historial de viajes</label>'+
+  (vs.length?vs.map(function(x){return '<div class="card" style="padding:10px;margin-bottom:7px"><b style="font-size:13.5px">'+(x.num?"Nº "+x.num+" · ":"")+esc(x.destino)+'</b><div style="font-size:12px;color:var(--muted)">'+fmtF(x.fecha)+' · '+x.plazas+' plaza(s)'+(x.acomp?" · "+x.acomp+" acompañante(s)":"")+(x.localizador?' · '+esc(x.localizador):"")+'</div></div>'}).join(""):'<div class="empty">Sin viajes registrados.</div>')+
+  '<label>Comentario sobre el cliente</label><textarea id="c-nota" placeholder="Ej. paga siempre en efectivo · pide asiento delante…">'+esc(c.nota||"")+'</textarea>'+
+  '<a class="btn bwa" style="margin-top:11px" href="'+wa+'" target="_blank" rel="noopener">💬 WhatsApp</a>'+
+  '<a class="btn bg2" style="margin-top:8px" href="tel:+34'+c.tel+'">📞 Llamar</a>',
+  '<button class="btn bg2" onclick="cerrar()">Cerrar</button><button class="btn bp" onclick="guardarNota(\''+c.tel+'\')">Guardar</button>')}
+function guardarNota(tel){var n=document.getElementById("c-nota").value.trim();
+ DB.clientes[tel].nota=n;wUpd("clientes/"+tel,{nota:n});cerrar();render();toast("Comentario guardado")}
 
 /* ---------- Teléfono ---------- */
 function menuTel(tel,nombre){
- var wa="https://wa.me/34"+tel+"?text="+encodeURIComponent("Hola "+nombre+", te escribo de Viaja Con Sergio sobre tu reserva.");
- document.getElementById("sheet").innerHTML='<h2>'+esc(nombre)+'</h2>'+
-  '<div style="font-size:22px;font-weight:800;margin:6px 2px 16px">'+tel+'</div>'+
-  '<a class="btn bp" style="display:block;text-align:center;text-decoration:none;margin-bottom:9px" href="tel:+34'+tel+'">📞 Llamar</a>'+
-  '<a class="btn" style="display:block;text-align:center;text-decoration:none;background:#25D366;color:#fff;margin-bottom:9px" href="'+wa+'" target="_blank" rel="noopener">💬 Enviar WhatsApp</a>'+
-  '<button class="btn bg2" onclick="copiar(\''+tel+'\')">📋 Copiar número</button>'+
-  '<button class="btn bg2" style="margin-top:9px" onclick="cerrar()">Cerrar</button>';
- abrirOv();
-}
+ var wa="https://wa.me/34"+tel+"?text="+encodeURIComponent("Hola "+nombre+", te escribo de "+MARCA+" sobre tu reserva.");
+ sheet('<h2>'+esc(nombre)+'</h2><div style="font-size:21px;font-weight:800;margin-top:4px">'+tel+'</div>',
+  '<a class="btn bp" style="margin-top:8px" href="tel:+34'+tel+'">📞 Llamar</a>'+
+  '<a class="btn bwa" style="margin-top:9px" href="'+wa+'" target="_blank" rel="noopener">💬 Enviar WhatsApp</a>'+
+  '<button class="btn bg2" style="margin-top:9px" onclick="copiar(\''+tel+'\')">📋 Copiar número</button>',
+  '<button class="btn bg2" onclick="cerrar()">Cerrar</button>')}
 function copiar(t){if(navigator.clipboard)navigator.clipboard.writeText(t);toast("Número copiado");cerrar()}
 
-/* ---------- Acciones rápidas ---------- */
+/* ---------- Acciones ---------- */
 function abrir(id){CUR=id;VIEW="detalle";Q="";FPT="__all";render()}
 function fabAction(){VIEW==="lista"?modalViaje():modalPax(CUR)}
 function toggleEmb(vId,pId){var p=DB.viajes[vId].pasajeros[pId];p.embarcado=!p.embarcado;wField("viajes/"+vId+"/pasajeros/"+pId+"/embarcado",p.embarcado);render()}
 function toggleCob(vId,pId){var p=DB.viajes[vId].pasajeros[pId];p.cobrado=!p.cobrado;wField("viajes/"+vId+"/pasajeros/"+pId+"/cobrado",p.cobrado);render()}
 function delPax(vId,pId){if(confirm("¿Eliminar esta reserva?")){delete DB.viajes[vId].pasajeros[pId];wDel("viajes/"+vId+"/pasajeros/"+pId);render()}}
 
+/* ---------- Sheet ---------- */
+function sheet(head,body,foot){document.getElementById("sheet").innerHTML=
+ '<div class="sh-h">'+head+'</div><div class="sh-b">'+body+'</div><div class="sh-f">'+(foot||"")+'</div>';
+ document.getElementById("ov").classList.add("on")}
+function cerrar(){document.getElementById("ov").classList.remove("on")}
+document.getElementById("ov").addEventListener("click",function(e){if(e.target.id==="ov")cerrar()});
+
+/* ---------- Autobuses ---------- */
+function busOps(sel){return BUSES.map(function(x){return '<div class="busop '+(sel[x.id]?"on":"")+'" id="bo_'+x.id+'" onclick="togBus(\''+x.id+'\')"><div class="bx">'+(sel[x.id]?"✓":"")+'</div><div><b>'+x.n+'</b><small>'+x.cap+' plazas</small></div></div>'}).join("")}
+function togBus(id){window._bus[id]=!window._bus[id];var e=document.getElementById("bo_"+id);
+ e.classList.toggle("on",!!window._bus[id]);e.querySelector(".bx").textContent=window._bus[id]?"✓":"";capInfo()}
+function capInfo(){var t=0;BUSES.forEach(function(b){if(window._bus[b.id])t+=b.cap});
+ var el=document.getElementById("capinfo");if(!el)return;
+ var v=CUR?DB.viajes[CUR]:null,oc=(v&&window._conOcup)?totViaje(v).plazas:0;
+ el.innerHTML=t?("Capacidad total: <b>"+t+" plazas</b>"+(window._conOcup?" · ocupadas "+oc+" · "+((t-oc)>=0?"<b style='color:var(--green)'>"+(t-oc)+" libres</b>":"<b style='color:var(--red)'>SOBREVENTA "+(oc-t)+"</b>"):"")):"Sin autobús seleccionado"}
+function modalBuses(vId){
+ var v=DB.viajes[vId];window._bus=Object.assign({},v.buses||{});window._conOcup=true;
+ sheet('<h2>🚌 Autobuses del viaje</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):"")+'</div>',
+  '<div class="buses">'+busOps(window._bus)+'</div><div id="capinfo" style="font-size:13.5px;font-weight:800;margin-top:11px;color:var(--navy)"></div>'+
+  '<div class="note">Las cuadrículas de recuento del listado impreso se generan según los buses que marques aquí.</div>',
+  '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" onclick="guardarBuses(\''+vId+'\')">Guardar</button>');
+ capInfo()}
+function guardarBuses(vId){DB.viajes[vId].buses=Object.assign({},window._bus);
+ wField("viajes/"+vId+"/buses",window._bus);cerrar();render();toast("Autobuses actualizados")}
+
+/* ---------- Selector de punto (pestañas) ---------- */
+function ptabs(cur,fn){
+ var o=PTS.map(function(x){return '<div class="ptab '+(cur===x?"on":"")+'" onclick="'+fn+'(\''+jsq(x)+'\')">'+esc(x)+'</div>'}).join("");
+ var otro=cur&&PTS.indexOf(cur)<0;
+ return o+'<div class="ptab '+(otro?"on":"")+'" onclick="'+fn+'(\'__otro\')">Otro'+(otro?": "+esc(cur):"")+'</div>'}
+
 /* ---------- Modal viaje ---------- */
 function modalViaje(id){
- var v=id?DB.viajes[id]:{buses:{}};var b=v.buses||{};
- var ops=BUSES.map(function(x){return '<div class="busop '+(b[x.id]?"on":"")+'" id="bo_'+x.id+'" onclick="togBus(\''+x.id+'\')"><div class="bx">'+(b[x.id]?"✓":"")+'</div><div><b>'+x.n+'</b><small>'+x.cap+' plazas</small></div></div>'}).join("");
- document.getElementById("sheet").innerHTML='<h2>'+(id?"Editar viaje":"Nuevo viaje")+'</h2>'+
+ var v=id?DB.viajes[id]:{buses:{}};window._bus=Object.assign({},v.buses||{});window._conOcup=!!id;
+ window._vpunto=v.punto||PTS[0];
+ sheet('<h2>'+(id?("Editar viaje"+(v.num?" Nº "+v.num:"")):"Nuevo viaje")+'</h2>',
   '<label>Destino</label><input id="v-dest" value="'+esc(v.destino||"")+'" placeholder="Ej. Benidorm">'+
   '<div class="row2"><div><label>Fecha</label><input id="v-fecha" type="date" value="'+(v.fecha||"")+'"></div>'+
   '<div><label>Hora salida</label><input id="v-hora" value="'+esc(v.hora||"")+'" placeholder="01:20"></div></div>'+
-  '<label>Punto de salida principal</label><input id="v-punto" value="'+esc(v.punto||"")+'" placeholder="Plaza Elíptica / Atocha…">'+
+  '<label>Punto de salida por defecto</label><div class="ptabs" id="vpt">'+ptabs(window._vpunto,"setVPunto")+'</div>'+
   '<div class="row2"><div><label>Precio adulto €</label><input id="v-pa" type="number" inputmode="decimal" value="'+(v.precioA!=null?v.precioA:"")+'" placeholder="55"></div>'+
   '<div><label>Precio niño €</label><input id="v-pn" type="number" inputmode="decimal" value="'+(v.precioN!=null?v.precioN:"")+'" placeholder="50"></div></div>'+
-  '<label>Autobús / autobuses del viaje</label><div class="buses">'+ops+'</div>'+
-  '<div id="capinfo" style="font-size:13px;font-weight:800;margin-top:9px;color:var(--navy)"></div>'+
-  '<button class="btn bp" style="margin-top:16px" onclick="guardarViaje(\''+(id||"")+'\')">'+(id?"Guardar cambios":"Crear viaje")+'</button>'+
-  (id?'<button class="btn bdel" style="margin-top:8px" onclick="delViaje(\''+id+'\')">🗑️ Eliminar viaje</button>':"")+
-  '<button class="btn bg2" style="margin-top:8px" onclick="cerrar()">Cancelar</button>';
- window._bus=Object.assign({},b);abrirOv();capInfo();
-}
-function togBus(id){window._bus[id]=!window._bus[id];var el=document.getElementById("bo_"+id);
- el.classList.toggle("on",!!window._bus[id]);el.querySelector(".bx").textContent=window._bus[id]?"✓":"";capInfo()}
-function capInfo(){var t=0;BUSES.forEach(function(b){if(window._bus[b.id])t+=b.cap});
- document.getElementById("capinfo").textContent=t?"Capacidad total: "+t+" plazas":"Sin autobús seleccionado"}
+  '<label>Regreso desde el destino</label><input id="v-regreso" value="'+esc(v.regreso||"")+'" placeholder="19:00">'+
+  '<label>Autobús / autobuses</label><div class="buses">'+busOps(window._bus)+'</div>'+
+  '<div id="capinfo" style="font-size:13.5px;font-weight:800;margin-top:10px;color:var(--navy)"></div>'+
+  (id?'<button class="btn bdel" style="margin-top:14px" onclick="delViaje(\''+id+'\')">🗑️ Eliminar viaje</button>':""),
+  '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" onclick="guardarViaje(\''+(id||"")+'\')">'+(id?"Guardar":"Crear")+'</button>');
+ capInfo()}
+function setVPunto(x){if(x==="__otro"){var t=prompt("Escribe el punto de salida:",window._vpunto||"");if(t===null)return;window._vpunto=t.trim()}else window._vpunto=x;
+ document.getElementById("vpt").innerHTML=ptabs(window._vpunto,"setVPunto")}
 function guardarViaje(id){
- var dest=document.getElementById("v-dest").value.trim();
- if(!dest){toast("Pon el destino");return}
- var pa=parseFloat(document.getElementById("v-pa").value)||0;
- var pnv=document.getElementById("v-pn").value;
+ var dest=document.getElementById("v-dest").value.trim();if(!dest){toast("Pon el destino");return}
+ var pa=parseFloat(document.getElementById("v-pa").value)||0,pnv=document.getElementById("v-pn").value;
  var pn=pnv===""?pa:(parseFloat(pnv)||0);
- var vid=id||uid("v");
- var v={id:vid,destino:dest,fecha:document.getElementById("v-fecha").value,
-  hora:document.getElementById("v-hora").value.trim(),
-  punto:document.getElementById("v-punto").value.trim(),
+ var base={destino:dest,fecha:document.getElementById("v-fecha").value,hora:document.getElementById("v-hora").value.trim(),
+  punto:window._vpunto||"",regreso:document.getElementById("v-regreso").value.trim(),
   precioA:pa,precioN:pn,buses:Object.assign({},window._bus)};
- if(!DB.viajes[vid])DB.viajes[vid]=Object.assign({pasajeros:{}},v);
- else Object.assign(DB.viajes[vid],v);
- wViaje(v);
- /* recalcula importes de los pasajeros ya metidos con los precios nuevos */
- if(id){var vv=DB.viajes[vid],n=0;
-  paxArr(vv).forEach(function(p){var tot=importe(vv,viajeros(p));
-   var pend=Math.max(0,Math.round((tot-(+p.senal||0))*100)/100);
-   if(pend!==(+p.pendiente||0)){p.pendiente=pend;wField("viajes/"+vid+"/pasajeros/"+p.id+"/pendiente",pend);n++}});
-  if(n)toast("Recalculados "+n+" importes con los precios nuevos")}
- cerrar();if(!id){CUR=vid;VIEW="detalle"}render();
-}
-function delViaje(id){if(confirm("¿Eliminar el viaje y TODOS sus pasajeros?")){delete DB.viajes[id];wDel("viajes/"+id);cerrar();VIEW="lista";render();toast("Viaje eliminado")}}
+ if(id){var v=Object.assign({id:id},base);Object.assign(DB.viajes[id],v);wViaje(v);
+  var vv=DB.viajes[id],n=0;
+  paxArr(vv).forEach(function(p){var pend=Math.max(0,Math.round((importe(vv,viajeros(p))-(+p.senal||0))*100)/100);
+   if(pend!==(+p.pendiente||0)){p.pendiente=pend;wField("viajes/"+id+"/pasajeros/"+p.id+"/pendiente",pend);n++}});
+  cerrar();render();toast(n?"Guardado · "+n+" importes recalculados":"Viaje actualizado");
+ }else nextNum("viaje",100).then(function(num){
+   var vid=uid("v"),v2=Object.assign({id:vid,num:num,creado:Date.now()},base);
+   DB.viajes[vid]=Object.assign({pasajeros:{}},v2);wViaje(v2);
+   cerrar();CUR=vid;VIEW="detalle";render();toast("Viaje Nº "+num+" creado")})}
+function delViaje(id){if(confirm("¿Eliminar el viaje y TODAS sus reservas?")){delete DB.viajes[id];wDel("viajes/"+id);cerrar();VIEW="lista";render();toast("Viaje eliminado")}}
 
-/* ---------- Modal pasajero ---------- */
+/* ---------- Modal reserva ---------- */
 function modalPax(vId,pId){
- var v=DB.viajes[vId];var p=pId?v.pasajeros[pId]:{senal:0};
- window._vj=JSON.parse(JSON.stringify(viajeros(p)));
- if(!window._vj.length)window._vj=[{nombre:"",tipo:"adulto",edad:""}];
- window._vid=vId;
- document.getElementById("sheet").innerHTML='<h2>'+(pId?"Editar reserva":"Nueva reserva")+'</h2>'+
-  '<label>Titular y acompañantes</label><div id="vjs"></div>'+
-  '<button class="addv" onclick="addV()">+ Añadir acompañante</button>'+
-  '<label>Teléfono</label><input id="p-tel" type="tel" value="'+esc(p.tel||"")+'" placeholder="6XX XXX XXX" oninput="autofill()">'+
+ var v=DB.viajes[vId],p=pId?v.pasajeros[pId]:{senal:0};
+ window._vj=JSON.parse(JSON.stringify(viajeros(p)));if(!window._vj.length)window._vj=[{nombre:"",tipo:"adulto",edad:"",rec:""}];
+ window._vid=vId;window._pid=pId||"";
+ window._rec=recBase(p,v);
+ window._mix=mixto(p,v);
+ sheet('<h2>'+(pId?"Editar reserva":"Nueva reserva")+'</h2>'+(p.localizador?'<div class="loc" style="margin-top:4px">'+esc(p.localizador)+'</div>':""),
+  '<label>Punto de recogida del grupo</label><div class="ptabs" id="rpt">'+ptabs(window._rec,"setRec")+'</div>'+
+  '<div class="sw '+(window._mix?"on":"")+'" id="swmix" onclick="togMix()"><div class="bx">'+(window._mix?"✓":"")+'</div><div><b>Cada pasajero en un punto distinto</b><small>Para grupos que suben en paradas diferentes</small></div></div>'+
+  '<label>Titular y acompañantes</label><div id="vjs"></div><button class="addv" onclick="addV()">+ Añadir acompañante</button>'+
+  '<label>Teléfono del titular</label><input id="p-tel" type="tel" inputmode="tel" value="'+esc(p.tel||"")+'" placeholder="6XX XXX XXX" oninput="autofill()">'+
   '<div class="hint" id="p-hint"></div>'+
-  '<label>Punto de recogida</label><input id="p-rec" value="'+esc(p.recogida||v.punto||"")+'" placeholder="Elíptica / Atocha / Vallecas">'+
   '<div class="row2"><div><label>Señal pagada €</label><input id="p-senal" type="number" inputmode="decimal" value="'+(p.senal!=null?p.senal:0)+'" oninput="calcPax()"></div>'+
   '<div><label>Nota</label><input id="p-nota" value="'+esc(p.nota||"")+'" placeholder="opcional"></div></div>'+
-  '<div class="sumbox" id="p-sum"></div>'+
-  '<button class="btn bp" style="margin-top:14px" onclick="guardarPax(\''+vId+'\',\''+(pId||"")+'\')">'+(pId?"Guardar":"Añadir")+'</button>'+
-  '<button class="btn bg2" style="margin-top:8px" onclick="cerrar()">Cancelar</button>';
- abrirOv();pintaV();
-}
+  '<div class="sumbox" id="p-sum"></div>',
+  '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" onclick="guardarPax(\''+vId+'\',\''+(pId||"")+'\')">'+(pId?"Guardar":"Añadir")+'</button>');
+ pintaV()}
+function setRec(x){if(x==="__otro"){var t=prompt("Escribe el punto de recogida:",window._rec||"");if(t===null)return;window._rec=t.trim()}else window._rec=x;
+ document.getElementById("rpt").innerHTML=ptabs(window._rec,"setRec");pintaV()}
+function togMix(){window._mix=!window._mix;
+ var e=document.getElementById("swmix");e.classList.toggle("on",window._mix);e.querySelector(".bx").textContent=window._mix?"✓":"";
+ if(!window._mix)window._vj.forEach(function(x){x.rec=""});pintaV()}
+function setVRec(i,x){if(x==="__otro"){var t=prompt("Punto de recogida de este pasajero:",window._vj[i].rec||window._rec);if(t===null)return;window._vj[i].rec=t.trim()}
+ else window._vj[i].rec=x;pintaV()}
 function pintaV(){
- var h=window._vj.map(function(x,i){
-  return '<div class="vrow">'+
-   '<input class="nm" value="'+esc(x.nombre)+'" placeholder="'+(i===0?"Nombre del titular":"Nombre del acompañante")+'" oninput="setV('+i+',\'nombre\',this.value)">'+
+ document.getElementById("vjs").innerHTML=window._vj.map(function(x,i){
+  var cur=(x.rec||"").trim()||window._rec;
+  var rec=window._mix?'<div class="vrec">'+PTS.map(function(pt){return '<button class="'+(cur===pt?"on":"")+'" onclick="setVRec('+i+',\''+jsq(pt)+'\')">'+esc(pt)+'</button>'}).join("")+
+   '<button class="'+(PTS.indexOf(cur)<0?"on":"")+'" onclick="setVRec('+i+',\'__otro\')">Otro</button></div>':"";
+  return '<div class="vrow"><div class="vr1"><input class="nm" value="'+esc(x.nombre)+'" placeholder="'+(i===0?"Nombre del titular":"Nombre del acompañante")+'" oninput="setV('+i+',\'nombre\',this.value)">'+
    '<select onchange="setV('+i+',\'tipo\',this.value)"><option value="adulto"'+(x.tipo==="adulto"?" selected":"")+'>Adulto</option><option value="nino"'+(x.tipo==="nino"?" selected":"")+'>Niño</option><option value="bebe"'+(x.tipo==="bebe"?" selected":"")+'>Bebé</option></select>'+
-   (x.tipo==="nino"||x.tipo==="bebe"?'<input class="ed" inputmode="numeric" value="'+esc(x.edad)+'" placeholder="edad" oninput="setV('+i+',\'edad\',this.value)">':"")+
-   (i>0?'<button class="x" onclick="delV('+i+')">✕</button>':"")+'</div>'}).join("");
- document.getElementById("vjs").innerHTML=h;calcPax();
-}
+   ((x.tipo==="nino"||x.tipo==="bebe")?'<input class="ed" inputmode="numeric" value="'+esc(x.edad)+'" placeholder="edad" oninput="setV('+i+',\'edad\',this.value)">':"")+
+   (i>0?'<button class="x" onclick="delV('+i+')">✕</button>':"")+'</div>'+rec+'</div>'}).join("");
+ calcPax()}
 function setV(i,k,val){window._vj[i][k]=val;if(k==="tipo")pintaV();else calcPax()}
-function addV(){window._vj.push({nombre:"",tipo:"adulto",edad:""});pintaV()}
+function addV(){window._vj.push({nombre:"",tipo:"adulto",edad:"",rec:""});pintaV();
+ var n=document.querySelectorAll("#vjs .nm");if(n.length)n[n.length-1].focus()}
 function delV(i){window._vj.splice(i,1);pintaV()}
 function calcPax(){
- var v=DB.viajes[window._vid];var c=cuenta(window._vj);
- var pnv=(v.precioN!=null&&v.precioN!=="")?+v.precioN:+v.precioA||0;
- var total=c.ad*(+v.precioA||0)+c.ni*pnv;
+ var v=DB.viajes[window._vid],c=cuenta(window._vj);
+ var total=c.ad*(+v.precioA||0)+c.ni*precioN(v);
  var senal=parseFloat(document.getElementById("p-senal").value)||0;
- var pend=Math.max(0,Math.round((total-senal)*100)/100);
- var t=totViaje(v);var pl=c.ad+c.ni;
- var aviso=t.cap&&(t.plazas+pl)>t.cap?'<div class="r" style="color:var(--red);font-weight:800">⚠️ Supera la capacidad del bus ('+t.cap+')</div>':"";
+ var pend=Math.max(0,Math.round((total-senal)*100)/100),t=totViaje(v),pl=c.ad+c.ni;
+ var prev=window._pid?plazasDe(v.pasajeros[window._pid]):0;
+ var av=(t.cap&&(t.plazas-prev+pl)>t.cap)?'<div class="r" style="color:var(--red);font-weight:800">⚠️ Supera la capacidad ('+t.cap+' plazas)</div>':"";
+ var g={};window._vj.forEach(function(x){if(x.tipo==="bebe")return;var r=(x.rec||"").trim()||window._rec;g[r]=(g[r]||0)+1});
+ var gk=Object.keys(g);
+ var rep=gk.length>1?'<div class="r" style="color:#1c5fa8;font-weight:800"><span>Reparto</span><span>'+gk.map(function(k){return g[k]+" en "+k}).join(" · ")+'</span></div>':"";
  document.getElementById("p-sum").innerHTML=
   '<div class="r"><span>'+c.ad+' adulto(s) + '+c.ni+' niño(s)'+(c.be?" + "+c.be+" bebé(s)":"")+'</span><b>'+money(total)+'</b></div>'+
-  '<div class="r"><span>Ocupa '+pl+' plaza(s)'+(c.be?" (bebés en brazos, sin plaza)":"")+'</span><span></span></div>'+
+  '<div class="r"><span>Ocupa '+pl+' plaza(s)'+(c.be?" · bebés en brazos":"")+'</span><span></span></div>'+rep+
   '<div class="r"><span>Señal pagada</span><span style="color:var(--green);font-weight:800">'+money(senal)+'</span></div>'+
-  '<div class="r big"><span>Pendiente (efectivo en bus)</span><span style="color:var(--amber)">'+money(pend)+'</span></div>'+aviso;
- window._pcalc={total:total,senal:senal,pend:pend,ad:c.ad,ni:c.ni,be:c.be,plazas:pl};
-}
+  '<div class="r big"><span>Pendiente en el bus</span><span style="color:var(--amber)">'+money(pend)+'</span></div>'+av;
+ window._pcalc={total:total,senal:senal,pend:pend,ad:c.ad,ni:c.ni,be:c.be,plazas:pl}}
 function autofill(){
  var tel=normTel(document.getElementById("p-tel").value),h=document.getElementById("p-hint");
  if(tel.length<6){h.textContent="";return}
- var found=null;
- Object.keys(DB.viajes).forEach(function(k){var v=DB.viajes[k];paxArr(v).forEach(function(p){if(normTel(p.tel)===tel&&p.nombre)found=p})});
- if(found){h.textContent="✓ Cliente conocido: "+found.nombre;
-  if(!window._vj[0].nombre){window._vj[0].nombre=found.nombre;pintaV()}}
- else h.textContent="";
-}
+ var c=DB.clientes&&DB.clientes[tel];
+ if(c){h.textContent="✓ Cliente: "+c.nombre+" · "+nViajes(c)+" viaje(s)"+(c.nota?" · 📝 "+c.nota:"");
+  if(!window._vj[0].nombre){window._vj[0].nombre=c.nombre;pintaV()}return}
+ var f=null;Object.keys(DB.viajes).forEach(function(k){paxArr(DB.viajes[k]).forEach(function(p){if(normTel(p.tel)===tel&&p.nombre)f=p})});
+ if(f){h.textContent="✓ Cliente conocido: "+f.nombre;if(!window._vj[0].nombre){window._vj[0].nombre=f.nombre;pintaV()}}else h.textContent=""}
 function guardarPax(vId,pId){
  calcPax();var c=window._pcalc;
- window._vj=window._vj.filter(function(x,i){return i===0||x.nombre.trim()||x.tipo!=="adulto"});
- if(!window._vj.length||!window._vj[0].nombre.trim()){toast("Pon al menos el nombre del titular");return}
+ window._vj=window._vj.filter(function(x,i){return i===0||(x.nombre||"").trim()||x.tipo!=="adulto"});
+ if(!window._vj.length||!(window._vj[0].nombre||"").trim()){toast("Falta el nombre del titular");return}
  if(c.plazas<1){toast("La reserva no ocupa ninguna plaza");return}
- var v=DB.viajes[vId];var id=pId||uid("p");var prev=pId?v.pasajeros[pId]:{};
- var p={id:id,nombre:window._vj[0].nombre.trim(),viajeros:window._vj,
-  tel:document.getElementById("p-tel").value.trim(),
-  adultos:c.ad,ninos:c.ni,bebes:c.be,plazas:c.plazas,
-  recogida:document.getElementById("p-rec").value.trim(),
-  senal:c.senal,pendiente:c.pend,nota:document.getElementById("p-nota").value.trim(),
-  embarcado:prev.embarcado||false,cobrado:prev.cobrado||false,ts:prev.ts||Date.now()};
- if(!v.pasajeros)v.pasajeros={};v.pasajeros[id]=p;wPax(vId,p);
- cerrar();render();toast(pId?"Reserva actualizada":"Reserva añadida");
-}
+ if(!window._mix)window._vj.forEach(function(x){x.rec=""});
+ var v=DB.viajes[vId],id=pId||uid("p"),prev=pId?v.pasajeros[pId]:{};
+ var p={id:id,nombre:window._vj[0].nombre.trim(),viajeros:window._vj,tel:document.getElementById("p-tel").value.trim(),
+  adultos:c.ad,ninos:c.ni,bebes:c.be,plazas:c.plazas,recogida:window._rec||"",
+  senal:c.senal,pendiente:c.pend,importe:c.total,nota:document.getElementById("p-nota").value.trim(),
+  embarcado:prev.embarcado||false,cobrado:prev.cobrado||false,ts:prev.ts||Date.now(),localizador:prev.localizador||""};
+ var fin=function(){if(!v.pasajeros)v.pasajeros={};v.pasajeros[id]=p;wPax(vId,p);syncCliente(v,p);
+  render();toast(pId?"Reserva actualizada":"Reserva "+p.localizador+" añadida");justificante(vId,id,true)};
+ if(p.localizador)fin();else nextNum("loc",1).then(function(n){p.localizador="VCS-"+pad(n,4);fin()})}
+function syncCliente(v,p){
+ var tel=normTel(p.tel);if(tel.length!==9)return;
+ var prev=(DB.clientes||{})[tel]||{};
+ var vj={};vj[v.id]={destino:v.destino||"",fecha:v.fecha||"",num:v.num||0,plazas:p.plazas,acomp:Math.max(0,p.plazas-1)+(p.bebes||0),localizador:p.localizador||""};
+ var c={tel:tel,nombre:p.nombre,ultimo:Date.now()};
+ if(!DB.clientes)DB.clientes={};
+ DB.clientes[tel]=Object.assign({nota:""},prev,c,{viajes:Object.assign({},prev.viajes||{},vj)});
+ wUpd("clientes/"+tel,c);wUpd("clientes/"+tel+"/viajes",vj)}
 
-/* ---------- Impresión ---------- */
+/* ---------- Justificante ---------- */
+var AVISO1="IMPORTANTE — EL PUNTO DE RECOGIDA NO SE PUEDE MODIFICAR.";
+var AVISO2="Si necesitas cambiarlo, avísanos con 2 DÍAS de antelación. No se aceptará ningún cambio de recogida en las últimas 48 horas: perjudica a los demás viajeros, que ya tienen su plaza asegurada, nos obliga a cambiarles de sitio y provoca retrasos importantes en los horarios de salida establecidos.";
+function textoJust(v,p){
+ var vjs=viajeros(p),c=cuenta(vjs),L=[],mx=mixto(p,v);
+ L.push("*JUSTIFICANTE DE VIAJE*");
+ L.push("Localizador: *"+(p.localizador||"—")+"*"+(v.num?"  ·  Viaje Nº "+v.num:""));
+ L.push("");
+ L.push("🚌 *MADRID → "+(v.destino||"").toUpperCase()+"*");
+ if(v.fecha)L.push("📅 "+fmtLargoMin(v.fecha));
+ if(!mx)L.push("📍 Recogida: *"+recBase(p,v)+"*"+(v.hora?"  ·  Salida "+v.hora:""));
+ else L.push("📍 *ATENCIÓN: recogidas distintas* (ver cada pasajero)"+(v.hora?"  ·  Salida "+v.hora:""));
+ L.push("⏰ Presentarse 15 minutos antes");
+ if(v.regreso)L.push("🔙 Regreso desde "+v.destino+": "+v.regreso);
+ L.push("");
+ L.push("*PASAJEROS ("+(c.ad+c.ni)+" plaza(s)"+(c.be?" + "+c.be+" bebé":"")+")*");
+ vjs.forEach(function(x,i){L.push((i+1)+". "+(x.nombre||"(sin nombre)")+
+  (x.tipo==="nino"?" — niño"+(x.edad?" "+x.edad+" años":""):x.tipo==="bebe"?" — bebé"+(x.edad?" "+x.edad:"")+" (en brazos, gratis)":"")+
+  (mx?"  ·  📍 "+recDe(p,x,v):""))});
+ L.push("");
+ L.push("*PAGO*");
+ L.push("Total del viaje: "+money(+p.importe||importe(v,vjs)));
+ L.push("Señal pagada: -"+money(+p.senal||0));
+ L.push("*PENDIENTE en metálico el día del viaje: "+money(+p.pendiente||0)+"*");
+ L.push("");
+ L.push("⚠️ *"+AVISO1+"*");
+ L.push(AVISO2);
+ L.push("");
+ L.push("_Presenta este justificante al subir al autobús. El autobús no espera: sé puntual. La señal no es reembolsable, pero es transferible avisando con 48 h._");
+ L.push("");
+ L.push(MARCA+"  ·  "+TEL_EMP);
+ return L.join("\n")}
+function justificante(vId,pId,auto){
+ var v=DB.viajes[vId],p=v.pasajeros[pId];if(!p)return;
+ var run=function(){
+  var tel=normTel(p.tel);
+  var wa="https://wa.me/"+(tel?"34"+tel:"")+"?text="+encodeURIComponent(textoJust(v,p));
+  var vjs=viajeros(p),c=cuenta(vjs),mx=mixto(p,v);
+  sheet('<h2>'+(auto?"✅ Reserva guardada":"🧾 Justificante")+'</h2><div class="loc" style="margin-top:5px">'+esc(p.localizador)+'</div>',
+   '<div class="sumbox"><div class="r"><span>Titular</span><b>'+esc(p.nombre)+'</b></div>'+
+   '<div class="r"><span>Viaje</span><b>'+(v.num?"Nº "+v.num+" · ":"")+esc(v.destino)+'</b></div>'+
+   '<div class="r"><span>Fecha</span><b>'+(v.fecha?fmtF(v.fecha):"—")+(v.hora?" · "+esc(v.hora):"")+'</b></div>'+
+   '<div class="r"><span>Recogida</span><b>'+(mx?"varios puntos":esc(recBase(p,v)))+'</b></div>'+
+   '<div class="r"><span>Pasajeros</span><b>'+(c.ad+c.ni)+' plaza(s)'+(c.be?" + "+c.be+" bebé":"")+'</b></div>'+
+   '<div class="r"><span>Señal</span><b style="color:var(--green)">'+money(+p.senal||0)+'</b></div>'+
+   '<div class="r big"><span>Pendiente</span><b style="color:var(--amber)">'+money(+p.pendiente||0)+'</b></div></div>'+
+   '<a class="btn bwa" style="margin-top:12px" href="'+wa+'" target="_blank" rel="noopener">💬 Enviar por WhatsApp'+(tel?"":" (elegir contacto)")+'</a>'+
+   '<button class="btn bp" style="margin-top:9px" onclick="imprimirJust(\''+vId+'\',\''+pId+'\')">🖨️ Imprimir / Guardar PDF</button>'+
+   '<button class="btn bg2" style="margin-top:9px" onclick="copiarJust(\''+vId+'\',\''+pId+'\')">📋 Copiar texto</button>'+
+   (tel?"":'<div class="note">Esta reserva no tiene teléfono: WhatsApp te pedirá elegir el contacto.</div>'),
+   '<button class="btn bg2" onclick="cerrar()">'+(auto?"Listo":"Cerrar")+'</button>')};
+ if(p.localizador)run();
+ else nextNum("loc",1).then(function(n){p.localizador="VCS-"+pad(n,4);wField("viajes/"+vId+"/pasajeros/"+pId+"/localizador",p.localizador);run()})}
+function copiarJust(vId,pId){var v=DB.viajes[vId],p=v.pasajeros[pId];
+ if(navigator.clipboard)navigator.clipboard.writeText(textoJust(v,p));toast("Justificante copiado")}
+function imprimirJust(vId,pId){
+ var v=DB.viajes[vId],p=v.pasajeros[pId],vjs=viajeros(p),c=cuenta(vjs),mx=mixto(p,v);
+ var filas=vjs.map(function(x,i){return '<div class="rw"><span>'+(i+1)+'. '+esc(x.nombre||"(sin nombre)")+
+  (x.tipo==="nino"?" · niño"+(x.edad?" "+x.edad+" años":""):x.tipo==="bebe"?" · bebé en brazos":"")+
+  (mx?' · 📍 '+esc(recDe(p,x,v)):"")+'</span><b>'+(x.tipo==="bebe"?"gratis":x.tipo==="nino"?money(precioN(v)):money(+v.precioA||0))+'</b></div>'}).join("");
+ document.getElementById("print-area").innerHTML='<div class="jst">'+
+  '<div class="hd"><div class="lc">'+esc(p.localizador||"")+'</div><h1>JUSTIFICANTE DE VIAJE</h1><div class="sub">'+MARCA+(v.num?"  ·  Viaje Nº "+v.num:"")+'</div></div>'+
+  '<div class="rw"><span>Trayecto</span><b>MADRID → '+esc((v.destino||"").toUpperCase())+'</b></div>'+
+  '<div class="rw"><span>Fecha</span><b>'+esc(fmtLargoMin(v.fecha))+'</b></div>'+
+  '<div class="rw"><span>Punto de recogida</span><b>'+(mx?"VARIOS (ver pasajeros)":esc(recBase(p,v)))+'</b></div>'+
+  '<div class="rw"><span>Hora de salida</span><b>'+esc(v.hora||"—")+'</b></div>'+
+  '<div class="rw"><span>Presentación</span><b>15 minutos antes</b></div>'+
+  (v.regreso?'<div class="rw"><span>Regreso desde '+esc(v.destino)+'</span><b>'+esc(v.regreso)+'</b></div>':"")+
+  '<h3>PASAJEROS ('+(c.ad+c.ni)+' plaza'+((c.ad+c.ni)===1?"":"s")+(c.be?" + "+c.be+" bebé":"")+')</h3>'+filas+
+  (p.nota?'<div class="rw"><span>Nota</span><b>'+esc(p.nota)+'</b></div>':"")+
+  '<div class="tot"><div class="rw"><span>Total del viaje</span><b>'+money(+p.importe||importe(v,vjs))+'</b></div>'+
+  '<div class="rw"><span>Señal pagada (confirmada)</span><b>- '+money(+p.senal||0)+'</b></div></div>'+
+  '<div class="pend"><span>PENDIENTE · en metálico el día del viaje</span><span>'+money(+p.pendiente||0)+'</span></div>'+
+  '<div class="avi"><b>⚠️ '+AVISO1+'</b><br>'+AVISO2+'</div>'+
+  '<div class="cond">· Presenta este justificante (impreso o en el móvil) al subir al autobús.<br>· El autobús no espera: preséntate 15 minutos antes en el punto indicado.<br>· La señal no es reembolsable, pero es transferible a otra persona o a otra excursión avisando con 48 h de antelación.<br>· La organización no se responsabiliza de objetos personales olvidados.</div>'+
+  '<div class="ft">RESERVAS E INFORMACIÓN · '+TEL_EMP+' · @viaja_con_sergio</div></div>';
+ window.print()}
+
+/* ---------- Listado impreso ---------- */
 function imprimir(vId){
  var v=DB.viajes[vId];if(!v)return;
- var lista=paxArr(v).sort(function(a,b){return (a.ts||0)-(b.ts||0)}).filter(function(p){return filtra(p)});
- var pl=0,se=0,pe=0;
- var filas=lista.map(function(p,i){
-  var vjs=viajeros(p),c=cuenta(vjs),n=c.ad+c.ni;pl+=n;se+=(+p.senal||0);pe+=(+p.pendiente||0);
-  var ac=vjs.slice(1).map(function(x){return esc(x.nombre||"(sin nombre)")+(x.tipo==="nino"?" (niño"+(x.edad?" "+x.edad:"")+")":x.tipo==="bebe"?" (bebé)":"")}).join(", ");
-  return '<tr><td>'+(i+1)+'</td><td><b>'+esc(vjs[0].nombre)+'</b>'+(ac?'<div class="acp">'+ac+'</div>':"")+(n===1?'<div class="acp"><b>» NO SENTAR SOLO «</b></div>':"")+'</td>'+
-   '<td>'+n+(c.be?"+"+c.be+"b":"")+'</td><td>'+esc(p.tel||"—")+'</td><td>'+esc(p.recogida||"")+'</td>'+
-   '<td>'+money(+p.senal||0)+'</td><td><b>'+money(+p.pendiente||0)+'</b></td><td><span class="sq"></span></td><td></td></tr>'}).join("");
+ var uno=FPT!=="__all";
+ var lista=paxArr(v).sort(function(a,b){return (a.ts||0)-(b.ts||0)}).filter(function(p){return filtra(p,v)});
+ var pl=0,se=0,pe=0,i=0,filas="";
+ lista.forEach(function(p){
+  var vjs=viajeros(p),mx=mixto(p,v);
+  var mios=uno?enPunto(p,FPT,v):vjs;
+  if(!mios.length)return;
+  var cm=cuenta(mios),n=cm.ad+cm.ni;pl+=n;
+  var titAqui=mios.indexOf(vjs[0])>=0;
+  var cobra=(!uno||titAqui);
+  if(cobra){se+=(+p.senal||0);pe+=(+p.pendiente||0)}
+  i++;
+  var tit=titAqui?vjs[0]:mios[0];
+  var resto=mios.filter(function(x){return x!==tit});
+  var ac=resto.map(function(x){return esc(x.nombre||"(sin nombre)")+
+   (x.tipo==="nino"?" (niño"+(x.edad?" "+x.edad:"")+")":x.tipo==="bebe"?" (bebé)":"")+
+   ((mx&&!uno)?" ["+esc(recDe(p,x,v))+"]":"")}).join(", ");
+  filas+='<tr><td class="ce">'+i+'</td><td><div class="nm">'+esc(tit.nombre||"(sin nombre)")+
+   ((mx&&!uno)?' ['+esc(recDe(p,tit,v))+']':"")+'</div>'+
+   (ac?'<div class="ac">'+ac+'</div>':"")+
+   (n===1?'<div class="so">» NO SENTAR SOLO «</div>':"")+
+   (!titAqui?'<div class="so">Paga con '+esc(vjs[0].nombre)+' en '+esc(recDe(p,vjs[0],v))+'</div>':"")+
+   (p.localizador?'<div class="lc">'+esc(p.localizador)+'</div>':"")+'</td>'+
+   '<td class="ce"><b>'+n+'</b>'+(cm.be?"<br>+"+cm.be+"b":"")+'</td>'+
+   '<td>'+esc(p.tel||"—")+'</td>'+
+   (uno?"":'<td>'+esc(mx?"varios":recBase(p,v))+'</td>')+
+   '<td class="ce">'+(cobra?money(+p.senal||0):"—")+'</td>'+
+   '<td class="pe">'+(cobra?money(+p.pendiente||0):"—")+'</td>'+
+   '<td class="ce"><span class="sq"></span></td><td></td></tr>'});
+ var vac=uno?Math.max(0,14-i):Math.max(0,6-i);
+ for(var k=0;k<vac;k++){i++;filas+='<tr><td class="ce" style="color:#aaa">'+i+'</td><td></td><td></td><td></td>'+(uno?"":"<td></td>")+'<td></td><td></td><td class="ce"><span class="sq"></span></td><td></td></tr>'}
  var t=totViaje(v);
+ var grids=busSel(v).map(function(b){
+  var c='<div class="gr-h"><span>RECUENTO DE SUBIDA — '+b.n.toUpperCase()+' ('+b.cap+' plazas)</span><span>Tachar un número por cada pasajero que sube</span></div><table class="gr">';
+  for(var x=1;x<=b.cap;){c+="<tr>";for(var y=0;y<33;y++){c+=x<=b.cap?"<td>"+x+"</td>":'<td style="background:#e6e9ef"></td>';x++}c+="</tr>"}
+  return c+'</table><div class="fir"><span>TOTAL SUBIDOS: __________</span><span>Firma: ______________________</span><span>Hora real: __________</span></div>'}).join("");
  document.getElementById("print-area").innerHTML=
-  '<h1>'+esc(v.destino)+(FPT==="__all"?"":" — "+esc(FPT))+'</h1>'+
-  '<div class="meta">'+(v.fecha?fmtF(v.fecha):"")+(v.hora?" · Salida "+esc(v.hora):"")+' · Reservas 614 599 790</div>'+
-  '<div class="buses-p">'+(t.cap?esc(busNames(v))+" — capacidad "+t.cap+" plazas · ocupadas "+t.plazas+" · libres "+t.libres:"Sin autobús asignado")+'</div>'+
-  '<table><thead><tr><th>Nº</th><th>Nombre(s)</th><th>Pax</th><th>Teléfono</th><th>Recogida</th><th>Señal</th><th>Pendiente</th><th>Sube</th><th>Cobrado en bus</th></tr></thead>'+
+  '<div class="lst-h"><h1>'+esc((v.destino||"").toUpperCase())+' · '+esc(fmtLargo(v.fecha))+'</h1>'+
+  '<div class="s1">'+MARCA+' · Organización '+TEL_EMP+(v.regreso?' · Regreso desde '+esc(v.destino)+' '+esc(v.regreso):"")+(v.num?' · Viaje Nº '+v.num:"")+'</div>'+
+  '<div class="s2">'+(uno?"RECOGIDA: "+esc(FPT).toUpperCase():"LISTADO COMPLETO")+(v.hora?' · SALIDA '+esc(v.hora):"")+' · '+pl+' PASAJEROS</div></div>'+
+  '<div class="lst-i"><span>Conductor: __________ Matrícula: _________ Hora real: ______ · Presentación 15 min antes</span><span class="rr">» NO SENTAR SOLO « = sentar junto a otro pasajero</span></div>'+
+  '<table class="lst"><thead><tr><th style="width:4%">Nº</th><th>NOMBRE(S)</th><th style="width:6%">PAX</th><th style="width:14%">TELÉFONO</th>'+
+  (uno?"":'<th style="width:13%">RECOGIDA</th>')+
+  '<th style="width:9%">SEÑAL</th><th style="width:10%">PDTE. €</th><th style="width:6%">SUBE</th><th style="width:11%">COBRADO</th></tr></thead>'+
   '<tbody>'+filas+'</tbody>'+
-  '<tfoot><tr><td colspan="2">TOTALES ('+lista.length+' reservas)</td><td>'+pl+'</td><td colspan="2"></td><td>'+money(se)+'</td><td>'+money(pe)+'</td><td colspan="2"></td></tr></tfoot></table>';
- window.print();
-}
-
-/* ---------- Overlay ---------- */
-function abrirOv(){document.getElementById("ov").classList.add("on")}
-function cerrar(){document.getElementById("ov").classList.remove("on")}
-document.getElementById("ov").addEventListener("click",function(e){if(e.target.id==="ov")cerrar()});
+  '<tfoot><tr><td colspan="2">TOTALES</td><td class="ce">'+pl+'</td><td'+(uno?'':' colspan="2"')+'></td><td class="ce">'+money(se)+'</td><td class="pe">'+money(pe)+'</td><td colspan="2"></td></tr></tfoot></table>'+
+  (t.cap?'<div style="font-size:9.5px;margin-top:5px">'+esc(busNames(v))+' — capacidad '+t.cap+' · ocupadas '+t.plazas+' · libres '+t.libres+'</div>':"")+grids;
+ window.print()}
 </script></body></html>
