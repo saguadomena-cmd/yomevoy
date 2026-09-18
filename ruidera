@@ -1,0 +1,1558 @@
+{
+ "viajes": {
+  "v_ruidera_2009": {
+   "id": "v_ruidera_2009",
+   "num": 102,
+   "destino": "Lagunas de Ruidera",
+   "fecha": "2026-09-20",
+   "hora": "07:15",
+   "regreso": "18:00",
+   "punto": "Plaza Elíptica",
+   "precioA": 25,
+   "precioN": 25,
+   "buses": {
+    "b97": true,
+    "b60a": true
+   },
+   "creado": 1789755292318,
+   "pasajeros": {
+    "p_r001": {
+     "id": "p_r001",
+     "nombre": "Angelo Jauregui",
+     "viajeros": [
+      {
+       "nombre": "Angelo Jauregui",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Liduska Molina",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Atocha",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 1,
+     "localizador": ""
+    },
+    "p_r002": {
+     "id": "p_r002",
+     "nombre": "Anita Hernandez",
+     "viajeros": [
+      {
+       "nombre": "Anita Hernandez",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Atocha",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 2,
+     "localizador": ""
+    },
+    "p_r003": {
+     "id": "p_r003",
+     "nombre": "Herminio Duarte Caceres",
+     "viajeros": [
+      {
+       "nombre": "Herminio Duarte Caceres",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Agustina Ozuna",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Atocha",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 3,
+     "localizador": ""
+    },
+    "p_r004": {
+     "id": "p_r004",
+     "nombre": "Horly Maryoli",
+     "viajeros": [
+      {
+       "nombre": "Horly Maryoli",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 4,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 4,
+     "recogida": "Atocha",
+     "senal": 50.0,
+     "pendiente": 50.0,
+     "importe": 100,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 4,
+     "localizador": ""
+    },
+    "p_r005": {
+     "id": "p_r005",
+     "nombre": "Janet Villegas",
+     "viajeros": [
+      {
+       "nombre": "Janet Villegas",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 1,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 1,
+     "recogida": "Atocha",
+     "senal": 0.0,
+     "pendiente": 25.0,
+     "importe": 25,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 5,
+     "localizador": ""
+    },
+    "p_r006": {
+     "id": "p_r006",
+     "nombre": "Jenifer Paola Tola",
+     "viajeros": [
+      {
+       "nombre": "Jenifer Paola Tola",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 1,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 1,
+     "recogida": "Atocha",
+     "senal": 0.0,
+     "pendiente": 25.0,
+     "importe": 25,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 6,
+     "localizador": ""
+    },
+    "p_r007": {
+     "id": "p_r007",
+     "nombre": "Jonathan Joel Mareno Barrientos",
+     "viajeros": [
+      {
+       "nombre": "Jonathan Joel Mareno Barrientos",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Norma Rubio",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Atocha",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 7,
+     "localizador": ""
+    },
+    "p_r008": {
+     "id": "p_r008",
+     "nombre": "Jose Manuel Piña",
+     "viajeros": [
+      {
+       "nombre": "Jose Manuel Piña",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Andrea Rojas",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Atocha",
+     "senal": 25.0,
+     "pendiente": 25.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 8,
+     "localizador": ""
+    },
+    "p_r009": {
+     "id": "p_r009",
+     "nombre": "Jose Ricardo Cosme",
+     "viajeros": [
+      {
+       "nombre": "Jose Ricardo Cosme",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Yeiden David Cosme",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Atocha",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 9,
+     "localizador": ""
+    },
+    "p_r010": {
+     "id": "p_r010",
+     "nombre": "Juanda",
+     "viajeros": [
+      {
+       "nombre": "Juanda",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 5,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 5,
+     "recogida": "Atocha",
+     "senal": 0.0,
+     "pendiente": 125.0,
+     "importe": 125,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 10,
+     "localizador": ""
+    },
+    "p_r011": {
+     "id": "p_r011",
+     "nombre": "Kevin Esmid Lucas",
+     "viajeros": [
+      {
+       "nombre": "Kevin Esmid Lucas",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Diana Moreno",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Cristian Felipe",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Atocha",
+     "senal": 75.0,
+     "pendiente": 0.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 11,
+     "localizador": ""
+    },
+    "p_r012": {
+     "id": "p_r012",
+     "nombre": "Nerza Daynely Urbina",
+     "viajeros": [
+      {
+       "nombre": "Nerza Daynely Urbina",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 1,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 1,
+     "recogida": "Atocha",
+     "senal": 25.0,
+     "pendiente": 0.0,
+     "importe": 25,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 12,
+     "localizador": ""
+    },
+    "p_r013": {
+     "id": "p_r013",
+     "nombre": "Pilar Del Rocio",
+     "viajeros": [
+      {
+       "nombre": "Pilar Del Rocio",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Atocha",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 13,
+     "localizador": ""
+    },
+    "p_r014": {
+     "id": "p_r014",
+     "nombre": "Rosana Campillo",
+     "viajeros": [
+      {
+       "nombre": "Rosana Campillo",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Kevin Campillo",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Cristian Viafara",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Atocha",
+     "senal": 75.0,
+     "pendiente": 0.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 14,
+     "localizador": ""
+    },
+    "p_r015": {
+     "id": "p_r015",
+     "nombre": "Rossi Julissa Celi",
+     "viajeros": [
+      {
+       "nombre": "Rossi Julissa Celi",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Ivonne Cecilia Garcia Reyes",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Atocha",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 15,
+     "localizador": ""
+    },
+    "p_r016": {
+     "id": "p_r016",
+     "nombre": "Amparo Fersho",
+     "viajeros": [
+      {
+       "nombre": "Amparo Fersho",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 75.0,
+     "pendiente": 0.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 16,
+     "localizador": ""
+    },
+    "p_r017": {
+     "id": "p_r017",
+     "nombre": "Angel Soto Birot",
+     "viajeros": [
+      {
+       "nombre": "Angel Soto Birot",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Jessica Vasquez",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Jorge Nuñez",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Maythe Soto",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 4,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 4,
+     "recogida": "Plaza Elíptica",
+     "senal": 50.0,
+     "pendiente": 50.0,
+     "importe": 100,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 17,
+     "localizador": ""
+    },
+    "p_r018": {
+     "id": "p_r018",
+     "nombre": "Claudia Castillo",
+     "viajeros": [
+      {
+       "nombre": "Claudia Castillo",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Smaih Cruz",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Claudia Patricia",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 75.0,
+     "pendiente": 0.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 18,
+     "localizador": ""
+    },
+    "p_r019": {
+     "id": "p_r019",
+     "nombre": "Cristina Pavon",
+     "viajeros": [
+      {
+       "nombre": "Cristina Pavon",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Alicia Acosta",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Marcia Alfonso",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Justo",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Roberto",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 6,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 6,
+     "recogida": "Plaza Elíptica",
+     "senal": 150.0,
+     "pendiente": 0.0,
+     "importe": 150,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 19,
+     "localizador": ""
+    },
+    "p_r020": {
+     "id": "p_r020",
+     "nombre": "Dora Fersho",
+     "viajeros": [
+      {
+       "nombre": "Dora Fersho",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 75.0,
+     "pendiente": 0.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 20,
+     "localizador": ""
+    },
+    "p_r021": {
+     "id": "p_r021",
+     "nombre": "Elvira",
+     "viajeros": [
+      {
+       "nombre": "Elvira",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 4,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 4,
+     "recogida": "Plaza Elíptica",
+     "senal": 100.0,
+     "pendiente": 0.0,
+     "importe": 100,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 21,
+     "localizador": ""
+    },
+    "p_r022": {
+     "id": "p_r022",
+     "nombre": "Emma",
+     "viajeros": [
+      {
+       "nombre": "Emma",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Nubia",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Damarys",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 45.0,
+     "pendiente": 30.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 22,
+     "localizador": ""
+    },
+    "p_r023": {
+     "id": "p_r023",
+     "nombre": "Felicita Margot",
+     "viajeros": [
+      {
+       "nombre": "Felicita Margot",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 14,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 14,
+     "recogida": "Plaza Elíptica",
+     "senal": 150.0,
+     "pendiente": 175.0,
+     "importe": 350,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 23,
+     "localizador": ""
+    },
+    "p_r024": {
+     "id": "p_r024",
+     "nombre": "Iris Monterrosa",
+     "viajeros": [
+      {
+       "nombre": "Iris Monterrosa",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 1,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 1,
+     "recogida": "Plaza Elíptica",
+     "senal": 25.0,
+     "pendiente": 0.0,
+     "importe": 25,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 24,
+     "localizador": ""
+    },
+    "p_r025": {
+     "id": "p_r025",
+     "nombre": "Ita Jacqueline",
+     "viajeros": [
+      {
+       "nombre": "Ita Jacqueline",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Carmen",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Plaza Elíptica",
+     "senal": 30.0,
+     "pendiente": 20.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 25,
+     "localizador": ""
+    },
+    "p_r026": {
+     "id": "p_r026",
+     "nombre": "Jose Luis Samana",
+     "viajeros": [
+      {
+       "nombre": "Jose Luis Samana",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Juan Lopez",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Patricia Janac",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Pilar",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Estela Alvali",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 5,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 5,
+     "recogida": "Plaza Elíptica",
+     "senal": 75.0,
+     "pendiente": 50.0,
+     "importe": 125,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 26,
+     "localizador": ""
+    },
+    "p_r027": {
+     "id": "p_r027",
+     "nombre": "Juan Carlos Escribano",
+     "viajeros": [
+      {
+       "nombre": "Juan Carlos Escribano",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Cristina",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Plaza Elíptica",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 27,
+     "localizador": ""
+    },
+    "p_r028": {
+     "id": "p_r028",
+     "nombre": "Lilibeth Eliza Cedeño",
+     "viajeros": [
+      {
+       "nombre": "Lilibeth Eliza Cedeño",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Silvia Blandon",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 75.0,
+     "pendiente": 0.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 28,
+     "localizador": ""
+    },
+    "p_r029": {
+     "id": "p_r029",
+     "nombre": "Lisbet Rivera",
+     "viajeros": [
+      {
+       "nombre": "Lisbet Rivera",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Jonathan Franco",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Nicolas Pechere Rivera",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 75.0,
+     "pendiente": 0.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 29,
+     "localizador": ""
+    },
+    "p_r030": {
+     "id": "p_r030",
+     "nombre": "Luz Lazo Fersho",
+     "viajeros": [
+      {
+       "nombre": "Luz Lazo Fersho",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 1,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 1,
+     "recogida": "Plaza Elíptica",
+     "senal": 25.0,
+     "pendiente": 0.0,
+     "importe": 25,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 30,
+     "localizador": ""
+    },
+    "p_r031": {
+     "id": "p_r031",
+     "nombre": "Maria Del Carmen Simpatica",
+     "viajeros": [
+      {
+       "nombre": "Maria Del Carmen Simpatica",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Pedro Pillado",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Isabel Singo",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 45.0,
+     "pendiente": 30.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 31,
+     "localizador": ""
+    },
+    "p_r032": {
+     "id": "p_r032",
+     "nombre": "Mary Sandra",
+     "viajeros": [
+      {
+       "nombre": "Mary Sandra",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 1,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 1,
+     "recogida": "Plaza Elíptica",
+     "senal": 25.0,
+     "pendiente": 0.0,
+     "importe": 25,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 32,
+     "localizador": ""
+    },
+    "p_r033": {
+     "id": "p_r033",
+     "nombre": "Masiel Alejandra",
+     "viajeros": [
+      {
+       "nombre": "Masiel Alejandra",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Jose Alberto",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Plaza Elíptica",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 33,
+     "localizador": ""
+    },
+    "p_r034": {
+     "id": "p_r034",
+     "nombre": "Miguelina Gimenez",
+     "viajeros": [
+      {
+       "nombre": "Miguelina Gimenez",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Rosana Beatriz",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Matias",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Lourdes",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Ulise",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 5,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 5,
+     "recogida": "Plaza Elíptica",
+     "senal": 75.0,
+     "pendiente": 50.0,
+     "importe": 125,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 34,
+     "localizador": ""
+    },
+    "p_r035": {
+     "id": "p_r035",
+     "nombre": "Xavier Enrique Ordoñez",
+     "viajeros": [
+      {
+       "nombre": "Xavier Enrique Ordoñez",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Edmon Lemus",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Ana Castañeda",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 75.0,
+     "pendiente": 0.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 35,
+     "localizador": ""
+    },
+    "p_r036": {
+     "id": "p_r036",
+     "nombre": "Ximena Castillo",
+     "viajeros": [
+      {
+       "nombre": "Ximena Castillo",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Plaza Elíptica",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 36,
+     "localizador": ""
+    },
+    "p_r037": {
+     "id": "p_r037",
+     "nombre": "Yenifer Reyes",
+     "viajeros": [
+      {
+       "nombre": "Yenifer Reyes",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Jise Gamboa",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "Samuel Gamboa",
+       "tipo": "nino",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 1,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Plaza Elíptica",
+     "senal": 45.0,
+     "pendiente": 25.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 37,
+     "localizador": ""
+    },
+    "p_r038": {
+     "id": "p_r038",
+     "nombre": "Karina Garcia",
+     "viajeros": [
+      {
+       "nombre": "Karina Garcia",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 3,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 3,
+     "recogida": "Puente de Vallecas",
+     "senal": 0.0,
+     "pendiente": 75.0,
+     "importe": 75,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 38,
+     "localizador": ""
+    },
+    "p_r039": {
+     "id": "p_r039",
+     "nombre": "Kimberly Jessica",
+     "viajeros": [
+      {
+       "nombre": "Kimberly Jessica",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 1,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 1,
+     "recogida": "Puente de Vallecas",
+     "senal": 25.0,
+     "pendiente": 0.0,
+     "importe": 25,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 39,
+     "localizador": ""
+    },
+    "p_r040": {
+     "id": "p_r040",
+     "nombre": "Yolibeth",
+     "viajeros": [
+      {
+       "nombre": "Yolibeth",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      },
+      {
+       "nombre": "",
+       "tipo": "adulto",
+       "edad": "",
+       "rec": ""
+      }
+     ],
+     "tel": "",
+     "adultos": 2,
+     "ninos": 0,
+     "bebes": 0,
+     "plazas": 2,
+     "recogida": "Puente de Vallecas",
+     "senal": 50.0,
+     "pendiente": 0.0,
+     "importe": 50,
+     "nota": "",
+     "vendedor": "Viaja Con Sergio",
+     "embarcado": false,
+     "cobrado": false,
+     "ts": 40,
+     "localizador": ""
+    }
+   }
+  }
+ }
+}
