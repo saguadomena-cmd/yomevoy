@@ -2,12 +2,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
 <title>Gestor de Embarque · Yo Me Voy</title>
+<link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-512.png"><link rel="icon" href="logo.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Embarque">
 <meta name="theme-color" content="#0D1F3C">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{--navy:#0D1F3C;--navy2:#16345f;--gold:#FFD400;--bg:#EEF3F8;--line:#DCE5EE;--muted:#5f7286;--green:#1E9E63;--greenbg:#E6F6EE;--amber:#B45309;--red:#E8323C;--rose:#D81B60;--wa:#25D366}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif}
@@ -122,6 +126,14 @@ textarea{min-height:76px;resize:vertical}
 .cli .m{font-size:11.5px;color:var(--muted);margin-top:2px}
 .cli .b{background:var(--gold);color:var(--navy);font-weight:800;font-size:12px;border-radius:20px;padding:4px 10px;flex-shrink:0}
 .note{background:#FFF9EA;border:1px solid #f0d7a8;border-radius:10px;padding:10px;font-size:12.5px;margin-top:9px}
+.imp{border:1px solid var(--line);border-radius:10px;padding:9px;margin-bottom:7px;background:#fff;font-size:12.5px}
+.imp.bad{border-color:#f0c9a8;background:#FFF9EA}
+.imp .n{font-weight:800}
+.imp .m{color:var(--muted);font-size:11.5px;margin-top:2px}
+.imp .w{color:var(--amber);font-size:11px;font-weight:700;margin-top:3px}
+.imp .x{float:right;border:1px solid var(--line);background:#fff;border-radius:7px;color:var(--red);font-weight:800;padding:3px 8px;cursor:pointer;font-size:12px}
+.drop{border:2px dashed var(--line);border-radius:13px;padding:22px 12px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;background:#fbfcfe}
+.drop b{display:block;color:var(--navy);font-size:14.5px;margin-bottom:3px}
 #print-area{display:none}
 @media print{
  @page{margin:8mm}
@@ -183,6 +195,7 @@ firebase.initializeApp({apiKey:"AIzaSyDI2vdwTHZxAbfw1HRim4S3QsH1yEygHtw",authDom
 var REF=firebase.database().ref("gestor_embarque");
 var TEL_EMP="614599790",MARCA="Viaja Con Sergio · Yo Me Voy Excursiones";
 var PTS=["Plaza Elíptica","Atocha","Puente de Vallecas"];
+var VEND=["Ariel","Viaja Con Sergio","Fersho","Dorian"];
 var DB={viajes:{},clientes:{},counters:{}},TAB="viajes",VIEW="lista",CUR=null,Q="",QC="",FPT="__all";
 var BUSES=[{id:"b97",n:"Bus grande",cap:97},{id:"b84",n:"Bus mediano",cap:84},{id:"b60a",n:"Bus pequeño A",cap:60},{id:"b60b",n:"Bus pequeño B",cap:60}];
 var tt;function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("s");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("s")},2600)}
@@ -253,7 +266,7 @@ function render(){
 
 function renderLista(){
  var vs=Object.keys(DB.viajes).map(function(k){return DB.viajes[k]}).sort(function(a,b){return (b.num||0)-(a.num||0)||(""+(b.fecha||"")).localeCompare(a.fecha||"")});
- var h='<h2>Viajes</h2>';
+ var h='<h2>Viajes</h2><button class="btn bg2" style="margin-bottom:11px" onclick="modalImport()">\ud83d\udce5 Importar listado (Excel · PDF)</button>';
  h+=vs.length?vs.map(function(v){var t=totViaje(v);
   var cap=t.cap?'<div class="cap"><div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;margin-bottom:6px;flex-wrap:wrap"><span>'+t.plazas+' / '+t.cap+' plazas</span><span style="color:'+(t.libres<0?"var(--red)":t.libres<=5?"var(--amber)":"var(--green)")+'">'+(t.libres<0?"SOBREVENTA "+Math.abs(t.libres):t.libres+" libres")+'</span></div><div class="bar '+(t.libres<0?"full":t.libres<=5?"warn":"")+'"><i style="width:'+Math.min(100,t.plazas/t.cap*100)+'%"></i></div><div class="bl">'+esc(busNames(v))+'</div></div>'
    :'<div class="cap"><div class="bl">⚠️ Sin autobús asignado — ábrelo y elige el bus</div></div>';
@@ -286,10 +299,11 @@ function renderDetalle(){
    '<div class="bl">'+esc(busNames(v))+(t.bebes?" · "+t.bebes+" bebé(s) sin plaza":"")+'</div>'
   :'<b style="font-size:13px">⚠️ Sin autobús asignado</b><div class="bl">No se pueden controlar las plazas libres.</div>')+
   '<button class="btn bg2" style="margin-top:9px;padding:10px;font-size:13.5px" onclick="modalBuses(\''+v.id+'\')">🚌 '+(t.cap?"Cambiar / añadir autobuses":"Elegir autobuses")+'</button></div>';
+ h+=ventasHTML(v);
  h+='<div class="search"><input id="q" placeholder="🔍 Nombre, acompañante, teléfono o localizador" value="'+esc(Q)+'" oninput="Q=this.value;renderDetalle();var e=document.getElementById(\'q\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
  h+='<div class="chips"><div class="chip '+(FPT==="__all"?"on":"")+'" onclick="FPT=\'__all\';renderDetalle()">Todos ('+t.plazas+')</div>';
  pts.forEach(function(r){h+='<div class="chip '+(FPT===r?"on":"")+'" onclick="FPT=\''+jsq(r)+'\';renderDetalle()">'+esc(r)+' ('+plazasPunto(v,r)+')</div>'});
- h+='</div><button class="btn bg2" style="margin-bottom:11px" onclick="imprimir(\''+v.id+'\')">🖨️ Imprimir listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button>';
+ h+='</div><button class="btn bg2" style="margin-bottom:8px" onclick="modalImport(\''+v.id+'\')">\ud83d\udce5 Importar reservas a este viaje (Excel · PDF)</button><button class="btn bg2" style="margin-bottom:11px" onclick="imprimir(\''+v.id+'\')">🖨️ Imprimir listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button>';
  h+=lista.length?lista.map(function(p){return paxRow(v,p)}).join(""):'<div class="empty">Ninguna reserva coincide.</div>';
  document.getElementById("app").innerHTML=h}
 
@@ -303,6 +317,7 @@ function paxRow(v,p){
   '<div class="n"><span class="titu">TITULAR</span>'+esc(vjs[0]?vjs[0].nombre:p.nombre)+(mx?' <span class="tag pt">'+esc(recDe(p,vjs[0],v))+'</span>':"")+'</div>'+
   (acom?'<div class="acom">'+acom+'</div>':"")+
   '<div class="mm">'+pl+' plaza(s)'+(c.be?" + "+c.be+" bebé":"")+(mx?' <span class="tag mix">RECOGIDAS DISTINTAS</span>':" · "+esc(recBase(p,v)))+(pl===1?' <span class="tag solo">no sentar solo</span>':"")+(p.nota?" · "+esc(p.nota):"")+'</div>'+
+  '<div class="mm">🧑‍💼 <b>'+esc(p.vendedor||"SIN VENDEDOR")+'</b></div>'+
   (p.localizador?'<div class="loc">'+esc(p.localizador)+'</div>':"")+
   '<div class="acts">'+
    (tel?'<button class="tel" onclick="menuTel(\''+tel+'\',\''+jsq(vjs[0]?vjs[0].nombre:p.nombre)+'\')">📞 '+esc(p.tel)+'</button>':"")+
@@ -311,6 +326,13 @@ function paxRow(v,p){
    '<button onclick="modalPax(\''+vId+'\',\''+p.id+'\')">✏️</button>'+
    '<button onclick="delPax(\''+vId+'\',\''+p.id+'\')">🗑️</button></div></div>'+
   '<div class="r"><div class="eur">'+money(+p.pendiente||0)+'</div><div class="cob-lbl">COBRADO</div></div></div>'}
+
+function ventasVend(v){var g={};paxArr(v).forEach(function(p){var k=(p.vendedor||"").trim()||"SIN VENDEDOR";
+ if(!g[k])g[k]={pl:0,se:0,pe:0,n:0};g[k].pl+=plazasDe(p);g[k].se+=(+p.senal||0);g[k].pe+=(+p.pendiente||0);g[k].n++});return g}
+function ventasHTML(v){var g=ventasVend(v),ks=Object.keys(g).sort(function(a,b){return g[b].pl-g[a].pl});
+ if(!ks.length)return "";
+ return '<div class="card" style="padding:12px"><div style="font-size:13px;font-weight:800;margin-bottom:7px">🧑‍💼 Plazas por vendedor</div>'+
+  ks.map(function(k){return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--line)"><span>'+esc(k)+' <small style="color:var(--muted)">('+g[k].n+' reservas)</small></span><b>'+g[k].pl+' plazas · '+money(g[k].se)+'</b></div>'}).join("")+'</div>'}
 
 /* ---------- Clientes ---------- */
 function nViajes(c){return Object.keys(c.viajes||{}).length}
@@ -391,6 +413,334 @@ function ptabs(cur,fn){
  var otro=cur&&PTS.indexOf(cur)<0;
  return o+'<div class="ptab '+(otro?"on":"")+'" onclick="'+fn+'(\'__otro\')">Otro'+(otro?": "+esc(cur):"")+'</div>'}
 
+function vtabs(cur,fn){
+ var o=VEND.map(function(x){return '<div class="ptab '+(cur===x?"on":"")+'" onclick="'+fn+'(\''+jsq(x)+'\')">'+esc(x)+'</div>'}).join("");
+ var otro=cur&&VEND.indexOf(cur)<0;
+ return o+'<div class="ptab '+(otro?"on":"")+'" onclick="'+fn+'(\'__otro\')">Otro'+(otro?": "+esc(cur):"")+'</div>'}
+
+/* ---------- Importar: utilidades ---------- */
+var IMP=[],IMPinfo="",IMPmeta={},IMPdest="",IMPupd=false;
+var MESES=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+function norm(x){return (""+(x==null?"":x)).toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim()}
+function numero(x){if(x==null||x==="")return 0;var s=(""+x).replace(/[^0-9,.\-]/g,"").replace(",",".");var n=parseFloat(s);return isNaN(n)?0:n}
+function puntoDe(txt){var t=norm(txt);if(!t)return "";
+ var c=[["Plaza Elíptica",Math.max(t.lastIndexOf("ELIPT"),t.lastIndexOf("ELIPIT"))],["Atocha",t.lastIndexOf("ATOCHA")],
+  ["Puente de Vallecas",Math.max(t.lastIndexOf("VALLECAS"),/^PUENTE\b|\bPUENTE$/.test(t)?t.lastIndexOf("PUENTE"):-1)]];
+ c.sort(function(a,b){return b[1]-a[1]});return c[0][1]>=0?c[0][0]:""}
+function titulo(s){return (""+s).toLowerCase().replace(/(^|[\s\-(])([a-zà-ÿñ])/g,function(m,a,b){return a+b.toUpperCase()}).replace(/\b(De|La|Las|Del|Los|El|Y)\b/g,function(m,x,i){return i?m.toLowerCase():m})}
+function claveNom(n){return norm(n).replace(/[^A-Z ]/g,"").split(" ").filter(Boolean).slice(0,2).join(" ")}
+
+/* una persona a partir de un trozo de texto: "Luis (niño 6) [Atocha]" */
+function persona(tok){
+ var t=(""+tok).trim(),tipo="adulto",edad="",rec="";
+ var b=t.match(/\[([^\]]*)\]/);if(b){rec=puntoDe(b[1]);t=t.replace(b[0],"")}
+ var n=t.match(/\(\s*ni[ñn][oa]s?\s*(\d+)?[^)]*\)/i);if(n){tipo="nino";edad=n[1]||"";t=t.replace(n[0],"")}
+ var e=t.match(/\(\s*beb[eé][^)]*\)/i);if(e){tipo="bebe";t=t.replace(e[0],"")}
+ if(/^\s*ni[ñn][oa]\s*$/i.test(t))t="";
+ t=t.replace(/\(.*?\)/g,"").replace(/\s+/g," ").replace(/^[,\s·-]+|[,\s·-]+$/g,"");
+ return {nombre:t,tipo:tipo,edad:edad,rec:rec}}
+function limpiaSinNombre(s){return (""+s).replace(/\+?\s*\d+\s+acompa[ñn]antes?\s+sin\s+nombre/gi,"").replace(/\(sin nombre\)/gi,"").replace(/\s+/g," ").trim()}
+function partes(s){return limpiaSinNombre(s).split(/\s*,\s*|\s+[Yy]\s+|\s*\/\s*/).map(function(x){return x.trim()}).filter(function(x){return x&&!/^[,.\-·]+$/.test(x)})}
+/* monta la lista de viajeros respetando las plazas */
+function montaViajeros(tit,resto,pax,bebes){
+ var vj=[];
+ if(tit!=null){var p0=persona(tit);vj.push(p0)}
+ (resto||[]).forEach(function(t){var p=persona(t);if(p.nombre||p.tipo!=="adulto")vj.push(p)});
+ if(!vj.length)vj.push({nombre:"",tipo:"adulto",edad:"",rec:""});
+ function ocupa(){return vj.filter(function(x){return x.tipo!=="bebe"}).length}
+ /* si hay más huecos que plazas: quita los "sin nombre" sobrantes; un niño sin nombre pasa su tipo al último nombrado */
+ while(ocupa()>pax){
+  var ia=-1,ino=-1;for(var q=vj.length-1;q>0;q--){if(!vj[q].nombre&&vj[q].tipo==="adulto"&&ia<0)ia=q;if(!vj[q].nombre&&vj[q].tipo==="nino"&&ino<0)ino=q}
+  if(ia>0){vj.splice(ia,1);continue}
+  if(ino>0){var ed=vj[ino].edad;vj.splice(ino,1);
+   for(var z=vj.length-1;z>=0;z--)if(vj[z].tipo==="adulto"&&vj[z].nombre){vj[z].tipo="nino";vj[z].edad=vj[z].edad||ed;break}
+   continue}
+  break}
+ for(var k=ocupa();k<pax;k++)vj.push({nombre:"",tipo:"adulto",edad:"",rec:""});
+ var be=vj.filter(function(x){return x.tipo==="bebe"}).length;
+ for(var j=be;j<(bebes||0);j++)vj.push({nombre:"",tipo:"bebe",edad:"",rec:""});
+ return vj}
+function troceaNombres(nom,pax){var ps=partes(nom);return montaViajeros(ps[0]||nom,ps.slice(1),pax,0)}
+
+/* destino y fecha a partir de los primeros textos del archivo */
+function detectaMeta(textos){
+ var m={destino:"",fecha:""};
+ textos.slice(0,12).forEach(function(L){var t=norm(L);if(!t)return;
+  if(!m.fecha){var d=t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+   if(d)m.fecha=d[3]+"-"+("0"+d[2]).slice(-2)+"-"+("0"+d[1]).slice(-2);
+   else{var e=t.match(new RegExp("(\\d{1,2})\\s+(?:DE\\s+)?("+MESES.join("|")+")(?:\\s+(?:DE\\s+)?(\\d{4}))?"));
+    if(e)m.fecha=(e[3]||new Date().getFullYear())+"-"+("0"+(MESES.indexOf(e[2])+1)).slice(-2)+"-"+("0"+e[1]).slice(-2)}}
+  if(!m.destino){var v=t.match(/VIAJE\s+A\s+(.+?)\s+EL\b/);
+   if(v)m.destino=v[1];
+   else if(/^[A-Z]/.test(t)&&!/^(LISTADO|SALIDA|VIAJA CON|CONDUCTOR|RECOGIDA|N|NOMBRE)/.test(t)){
+    var c=t.split("·")[0].replace(/\b(LUNES|MARTES|MIERCOLES|JUEVES|VIERNES|SABADO|DOMINGO)\b.*$/,"").replace(/\s\d.*$/,"").trim();
+    if(c.length>=3&&c.length<40)m.destino=c}}});
+ if(m.destino)m.destino=titulo(m.destino);
+ return m}
+
+/* ---------- Excel / CSV ---------- */
+function mapCols(fila){
+ var m={};fila.forEach(function(c,i){var t=norm(c);
+  if(m.nombre==null&&t.indexOf("NOMBRE")>=0)m.nombre=i;
+  else if(m.pax==null&&(t.indexOf("CANT")>=0||t.indexOf("PERSONA")>=0||t==="PAX"||t==="PLAZAS"))m.pax=i;
+  else if(m.se==null&&(t.indexOf("RESERVA")>=0||t.indexOf("SENAL")>=0||t.indexOf("PAGA")>=0||t.indexOf("PAGO")>=0))m.se=i;
+  else if(m.pe==null&&(t.indexOf("PENDIENTE")>=0||t.indexOf("PDTE")>=0||t.indexOf("DEBE")>=0))m.pe=i;
+  else if(m.tel==null&&(t.indexOf("TELEF")>=0||t.indexOf("MOVIL")>=0||t.indexOf("WHATS")>=0))m.tel=i;
+  else if(m.rec==null&&(t.indexOf("RECOGIDA")>=0||t.indexOf("PUNTO")>=0||t.indexOf("PARADA")>=0))m.rec=i});
+ return m}
+function esBasura(n){var t=norm(n);
+ return !t||/^(LISTADO|SALIDA|TOTAL|NOMBRES?|NOMBRE\(S\))\b/.test(t)}
+function leerExcel(ab){
+ var wb=XLSX.read(new Uint8Array(ab),{type:"array"}),out=[],textos=[];
+ wb.SheetNames.forEach(function(sn){
+  var f=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,blankrows:false,defval:""});
+  var pHoja=puntoDe(sn),m=null;
+  f.forEach(function(r){
+   if(!r||!r.length)return;
+   if(!m){ textos.push(r.join(" "));
+     if(r.some(function(c){return norm(c).indexOf("NOMBRE")>=0})){m=mapCols(r)}
+     else{var p=puntoDe(r.join(" "));if(p)pHoja=p}
+     return}
+   var nom=r[m.nombre];
+   if(esBasura(nom))return;
+   var pax=m.pax!=null?Math.round(numero(r[m.pax])):0;
+   var ps=partes(nom);
+   if(!pax)pax=Math.max(1,ps.length);
+   var tel=m.tel!=null?(""+(r[m.tel]||"")).replace(/\D/g,"").slice(-9):"";
+   out.push({vj:montaViajeros(ps[0]||(""+nom).trim(),ps.slice(1),pax,0),pax:pax,
+    se:m.se!=null?numero(r[m.se]):0, pe:m.pe!=null?numero(r[m.pe]):0, tel:tel,
+    rec:(m.rec!=null?puntoDe(r[m.rec]):"")||pHoja})});
+ });
+ IMPmeta=detectaMeta(textos);
+ return out}
+
+/* ---------- PDF (lectura por columnas) ---------- */
+function leerPDF(ab){
+ if(typeof pdfjsLib==="undefined")return Promise.reject(new Error("el lector de PDF no se ha cargado (revisa la conexión)"));
+ try{pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}catch(e){}
+ return pdfjsLib.getDocument({data:new Uint8Array(ab)}).promise.then(function(doc){
+  var t=[];for(var i=1;i<=doc.numPages;i++)t.push(doc.getPage(i).then(function(pg){return pg.getTextContent()}));
+  return Promise.all(t)}).then(function(pags){
+  var out=[],textos=[],raros=0,total=0,st={H:null,pDef:"",cur:null,primera:true};
+  pags.forEach(function(tc){
+   tc.items.forEach(function(it){var s=it.str||"";total+=s.length;raros+=(s.match(/[\u0000-\u001f]/g)||[]).length});
+   leePagina(tc,out,textos,st);st.primera=false});
+  if(st.cur){var rf=construye(st.cur,st.pDef);if(rf)out.push(rf);st.cur=null}
+  if(total&&raros/total>0.25)throw new Error("este PDF no tiene texto legible (se exportó como imagen). Vuelve a exportarlo desde la app o pásalo a Excel.");
+  IMPmeta=detectaMeta(textos);
+  return out})}
+function leePagina(tc,out,textos,st){
+ var its=tc.items.filter(function(it){return it.str&&it.str.trim()}).map(function(it){
+  return {x:it.transform[4],y:it.transform[5],w:it.width||0,s:it.str.trim(),f:it.fontName||""}});
+ its.sort(function(a,b){return b.y-a.y||a.x-b.x});
+ var L=[];its.forEach(function(it){var l=L[L.length-1];
+  if(l&&Math.abs(l.y-it.y)<=2.5)l.it.push(it);else L.push({y:it.y,it:[it]})});
+ L.forEach(function(l){l.it.sort(function(a,b){return a.x-b.x});l.t=l.it.map(function(o){return o.s}).join(" ").replace(/\s+/g," ")});
+ /* fuera las líneas que añade el navegador al imprimir */
+ L=L.filter(function(l){return !/HTTPS?:|PAGINA \d+ DE \d+|^GESTOR DE EMBARQUE|^\d{1,2}\/\d{1,2}\/\d{2},/.test(norm(l.t))});
+ var hi=-1,H={},previos=[];
+ for(var i=0;i<L.length;i++){
+  var tt=norm(L[i].t);
+  if(tt.indexOf("NOMBRE")>=0&&/\bPAX\b/.test(tt)){hi=i;break}
+  previos.push(L[i].t)}
+ if(st.primera)previos.forEach(function(x){textos.push(x)});
+ previos.forEach(function(x){var n=norm(x);if(/RECOGIDA\s*:/.test(n)){var p=puntoDe(n.split("RECOGIDA")[1]);if(p){
+  if(st.cur){var r0=construye(st.cur,st.pDef);if(r0)out.push(r0);st.cur=null}
+  st.pDef=p}}});
+ if(hi<0){ if(!st.H)return; H=st.H; hi=-1 }
+ else L[hi].it.forEach(function(o){var t=norm(o.s),cx=o.x+o.w/2;
+  if(/^N[º°O]?$|^NO$/.test(t)&&H.num==null)H.num=o.x;
+  else if(t.indexOf("NOMBRE")>=0)H.nombre=o.x;
+  else if(t==="PAX"||t==="PLAZAS")H.pax=cx;
+  else if(t.indexOf("TELEF")>=0)H.tel=cx;
+  else if(t.indexOf("RECOGIDA")>=0)H.rec=cx;
+  else if(t.indexOf("SENAL")>=0)H.se=cx;
+  else if(t.indexOf("PDTE")>=0||t.indexOf("PENDIENTE")>=0)H.pe=cx;
+  else if(t==="SUBE")H.sube=cx;
+  else if(t.indexOf("COBRAD")>=0)H.cob=cx});
+ if(hi>=0){st.H=H;st.fin=false}
+ else if(st.fin)return;
+ var cols=["pax","tel","rec","se","pe","sube","cob"].filter(function(k){return H[k]!=null});
+ if(H.pax==null)return;
+ function col(o){
+  if(H.num!=null&&Math.abs(o.x-H.num)<10&&/^\d{1,3}$/.test(o.s))return "num";
+  if(o.x<H.pax-10)return "nom";
+  var cx=o.x+o.w/2,best=null,bd=1e9;cols.forEach(function(k){var d=Math.abs(cx-H[k]);if(d<bd){bd=d;best=k}});return best}
+ function cierra(){if(!st.cur)return;var r=construye(st.cur,st.pDef);if(r)out.push(r);st.cur=null}
+ for(var j=hi+1;j<L.length;j++){
+  var l=L[j],nt=norm(l.t);
+  if(/^TOTAL|RECUENTO DE SUBIDA|^BUS (GRANDE|MEDIANO|PEQUENO)|^CAPACIDAD|^NOTAS?\b/.test(nt)){cierra();st.fin=true;break}
+  var g={num:[],nom:[],pax:[],tel:[],rec:[],se:[],pe:[]};
+  l.it.forEach(function(o){var c=col(o);if(g[c])g[c].push(o)});
+  var paxN=g.pax.length&&/^\d{1,3}/.test(g.pax[0].s);
+  var inicio=paxN&&(H.num==null||g.num.length);
+  if(inicio){cierra();st.cur={nom:[],pax:[],tel:[],rec:[],se:[],pe:[]}}
+  else if(g.num.length&&!g.pax.length){cierra();continue}
+  if(!st.cur)continue;
+  if(g.nom.length)st.cur.nom.push({t:g.nom.map(function(o){return o.s}).join(" "),f:g.nom[0].f});
+  ["pax","tel","rec","se","pe"].forEach(function(k){g[k].forEach(function(o){st.cur[k].push(o.s)})})}
+}
+function construye(c,pDef){
+ var lineas=c.nom.filter(function(x){var t=norm(x.t);
+  return !/NO SENTAR SOLO|ALTA NUEVA|REVISAR IMPORTE|^\(!\)|^PAGA CON/.test(t)}).map(function(x){
+  return {t:x.t.replace(/VCS-\d+/gi,"").replace(/·?\s*vend:.*$/i,"").replace(/^[\s·]+|[\s·]+$/g,""),f:x.f}}).filter(function(x){return x.t});
+ var segs=[];lineas.forEach(function(x){var s=segs[segs.length-1];if(s&&s.f===x.f)s.t+=" "+x.t;else segs.push({t:x.t,f:x.f})});
+ segs=segs.map(function(x){return {t:limpiaSinNombre(x.t).replace(/^[,\s]+|[,\s]+$/g,""),f:x.f,orig:x.t}}).filter(function(x){return x.t});
+ var tit,resto;
+ if(segs.length>1){tit=limpiaSinNombre(segs[0].t);resto=partes(segs.slice(1).map(function(s){return s.t}).join(", "))}
+ else{var ps=partes(segs.length?segs[0].t:"");tit=ps[0]||"";resto=ps.slice(1)}
+ if(!tit)return null;
+ var pt=c.pax.join(" "),pax=parseInt(pt,10)||1,bm=pt.match(/\+\s*(\d+)\s*b/i);
+ var vj=montaViajeros(tit,resto,pax,bm?parseInt(bm[1],10):0);
+ var recTxt=c.rec.join(" "),rec=/VARIOS/i.test(recTxt)?"":puntoDe(recTxt);
+ if(!rec){var cnt={};vj.forEach(function(x){if(x.rec)cnt[x.rec]=(cnt[x.rec]||0)+1});
+  rec=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]})[0]||pDef}
+ vj.forEach(function(x){if(x.rec===rec)x.rec=""});
+ var tel=(c.tel.join("").match(/\d{9}/)||[""])[0];
+ function dinero(a){for(var i=0;i<a.length;i++)if(/\d/.test(a[i]))return numero(a[i]);return 0}
+ return {vj:vj,pax:pax,se:dinero(c.se),pe:dinero(c.pe),tel:tel,rec:rec}}
+
+/* ---------- Importar: pantallas ---------- */
+function modalImport(destId){
+ IMP=[];IMPinfo="";IMPmeta={};IMPdest=destId||"";IMPupd=false;
+ var v=destId&&DB.viajes[destId];
+ sheet('<h2>📥 Importar listado</h2><div style="font-size:12.5px;color:var(--muted)">'+(v?"A: "+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):""):"Excel, CSV, PDF o JSON")+'</div>',
+  '<div class="drop" onclick="document.getElementById(\'fich\').click()"><b>Elegir archivo</b>Excel (.xlsx) · CSV · PDF · JSON</div>'+
+  '<input type="file" id="fich" accept=".xlsx,.xls,.csv,.pdf,.json" style="display:none" onchange="cargarFichero(this)">'+
+  '<div id="impmsg" style="font-size:12.5px;margin-top:10px;color:var(--muted)"></div>'+
+  '<div class="note">Lee nombres, plazas, teléfono, recogida, señal y pendiente. Reconoce el destino y la fecha del archivo y, si ese viaje ya existe, mete las reservas en él. Las reservas que ya estén se detectan y no se duplican.</div>',
+  '<button class="btn bg2" onclick="cerrar()">Cancelar</button>')}
+function cargarFichero(inp){
+ var f=inp.files&&inp.files[0];if(!f)return;
+ var msg=document.getElementById("impmsg");msg.textContent="Leyendo "+f.name+"…";
+ var ext=(f.name.split(".").pop()||"").toLowerCase();
+ var fr=new FileReader();
+ fr.onload=function(){
+  try{
+   if(ext==="json"){
+    var o=JSON.parse(fr.result);var vs=o.viajes||o,n=0,np=0;
+    Object.keys(vs).forEach(function(k){var v=vs[k];if(!v||!v.destino)return;
+     v.id=v.id||k;DB.viajes[v.id]=v;np+=Object.keys(v.pasajeros||{}).length;n++;
+     REF.child("viajes/"+v.id).set(v).catch(fail)});
+    cerrar();render();toast(n+" viaje(s) y "+np+" reservas importadas");return}
+   if(ext==="pdf"){
+    leerPDF(fr.result).then(function(r){IMP=r;IMPinfo=f.name;previsualiza()})
+     .catch(function(e){msg.textContent="No se pudo leer el PDF: "+e.message});return}
+   if(ext==="csv"){
+    var wb=XLSX.read(fr.result,{type:"string"});
+    IMP=leerExcel(XLSX.write(wb,{type:"array",bookType:"xlsx"}))}
+   else IMP=leerExcel(fr.result);
+   IMPinfo=f.name;previsualiza();
+  }catch(e){msg.textContent="Error leyendo el archivo: "+e.message}};
+ fr.onerror=function(){msg.textContent="No se pudo abrir el archivo"};
+ if(ext==="json"||ext==="csv")fr.readAsText(f);else fr.readAsArrayBuffer(f)}
+
+/* viaje existente que encaja con el archivo (misma fecha y/o destino) */
+function buscaViaje(meta){
+ var stop={"DE":1,"LA":1,"LAS":1,"EL":1,"LOS":1,"DEL":1,"VIAJE":1,"EXCURSION":1};
+ var pal=norm(meta.destino||"").replace(/[^A-Z ]/g," ").split(" ").filter(function(w){return w.length>=4&&!stop[w]}).map(function(w){return w.replace(/S$/,"")});
+ var mejor="",pts=0;
+ Object.keys(DB.viajes).forEach(function(k){var v=DB.viajes[k],s=0,d=norm(v.destino);
+  if(meta.fecha&&v.fecha===meta.fecha)s+=2;
+  if(pal.some(function(w){return d.indexOf(w)>=0}))s+=1;
+  if(s>pts){pts=s;mejor=k}});
+ return pts>=2?mejor:""}
+function marcaDup(){
+ var sel=(document.getElementById("imp-dest")||{}).value||"",v=DB.viajes[sel];
+ var ex={};if(v)paxArr(v).forEach(function(p){var t=viajeros(p)[0];ex["N"+claveNom(t?t.nombre:p.nombre)]=p.id;var tl=normTel(p.tel);if(tl.length===9)ex["T"+tl]=p.id});
+ IMP.forEach(function(r){r.dup="";if(!v)return;
+  var k="N"+claveNom(r.vj[0].nombre);if(ex[k])r.dup=ex[k];else if(r.tel&&ex["T"+r.tel])r.dup=ex["T"+r.tel]})}
+function previsualiza(){
+ if(!IMP.length){document.getElementById("impmsg").textContent="No se ha reconocido ninguna reserva en el archivo.";return}
+ var dest=IMPdest||buscaViaje(IMPmeta),auto=!IMPdest&&!!dest;
+ var opts=Object.keys(DB.viajes).map(function(k){return DB.viajes[k]}).sort(function(a,b){return (""+(b.fecha||"")).localeCompare(a.fecha||"")}).map(function(v){
+  return '<option value="'+v.id+'"'+(v.id===dest?" selected":"")+'>'+(v.num?"Nº "+v.num+" · ":"")+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):"")+'</option>'}).join("");
+ sheet('<h2>Revisar importación</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(IMPinfo)+'</div>',
+  '<div class="sumbox" id="imp-sum"></div>'+
+  '<label>Viaje donde se integran</label>'+
+  (auto?'<div class="hint" style="margin:-2px 0 6px">✓ Detectado automáticamente por destino y fecha</div>':"")+
+  '<select id="imp-dest" onchange="cambiaDest()"><option value="__new"'+(dest?"":" selected")+'>➕ Crear un viaje nuevo</option>'+opts+'</select>'+
+  '<div id="imp-nuevo" style="display:'+(dest?"none":"")+'">'+
+   '<div class="row2"><div><label>Destino</label><input id="i-dest" value="'+esc(IMPmeta.destino||"")+'" placeholder="Lagunas de Ruidera"></div>'+
+   '<div><label>Fecha</label><input id="i-fecha" type="date" value="'+(IMPmeta.fecha||"")+'"></div></div>'+
+   '<div class="row2"><div><label>Hora salida</label><input id="i-hora" placeholder="07:15"></div>'+
+   '<div><label>Regreso</label><input id="i-reg" placeholder="18:00"></div></div>'+
+   '<div class="row2"><div><label>Precio adulto €</label><input id="i-pa" type="number" inputmode="decimal" placeholder="25" oninput="pintaImp()"></div>'+
+   '<div><label>Precio niño €</label><input id="i-pn" type="number" inputmode="decimal" placeholder="25"></div></div></div>'+
+  '<div class="sw" id="sw-upd" style="display:none" onclick="togUpd()"><div class="bx"></div><div><b>Actualizar las reservas que ya existen</b><small>Señal, pendiente, recogida y teléfono. Si no, se saltan.</small></div></div>'+
+  '<label>Vendedor de estas reservas</label><div class="ptabs" id="imp-vnd">'+vtabs(window._ivend||"","setIVend")+'</div>'+
+  '<label>Reservas detectadas</label><div id="imp-list"></div>',
+  '<button class="btn bg2" onclick="modalImport(IMPdest)">‹ Atrás</button><button class="btn bp" onclick="confirmarImport()">Importar</button>');
+ window._ivend=window._ivend||"";
+ cambiaDest()}
+function setIVend(x){if(x==="__otro"){var t=prompt("Nombre del vendedor:",window._ivend||"");if(t===null)return;window._ivend=t.trim()}else window._ivend=x;
+ document.getElementById("imp-vnd").innerHTML=vtabs(window._ivend,"setIVend")}
+function cambiaDest(){var v=document.getElementById("imp-dest").value;
+ document.getElementById("imp-nuevo").style.display=(v==="__new")?"":"none";
+ marcaDup();pintaImp()}
+function togUpd(){IMPupd=!IMPupd;pintaImp()}
+function pintaImp(){
+ var sel=document.getElementById("imp-dest").value,v=DB.viajes[sel];
+ var pa=v?(+v.precioA||0):(parseFloat((document.getElementById("i-pa")||{}).value)||0);
+ var pn=v?precioN(v):pa;
+ var ndup=IMP.filter(function(r){return r.dup}).length;
+ var sw=document.getElementById("sw-upd");sw.style.display=ndup?"":"none";sw.classList.toggle("on",IMPupd);sw.querySelector(".bx").textContent=IMPupd?"✓":"";
+ var nuevos=IMP.filter(function(r){return !r.dup});
+ var pax=nuevos.reduce(function(a,b){return a+b.pax},0),se=nuevos.reduce(function(a,b){return a+b.se},0),pe=nuevos.reduce(function(a,b){return a+b.pe},0);
+ var pts={};nuevos.forEach(function(r){r.vj.forEach(function(x){if(x.tipo==="bebe")return;var k=x.rec||r.rec||"(sin punto)";pts[k]=(pts[k]||0)+1})});
+ document.getElementById("imp-sum").innerHTML=
+  '<div class="r"><span>Reservas nuevas</span><b>'+nuevos.length+(ndup?' <span style="color:var(--muted);font-weight:600">· '+ndup+' ya estaban</span>':"")+'</b></div>'+
+  '<div class="r"><span>Plazas</span><b>'+pax+'</b></div>'+
+  '<div class="r"><span>Señal</span><b style="color:var(--green)">'+money(se)+'</b></div>'+
+  '<div class="r"><span>Pendiente</span><b style="color:var(--amber)">'+money(pe)+'</b></div>'+
+  Object.keys(pts).map(function(k){return '<div class="r"><span>'+esc(k)+'</span><span>'+pts[k]+' plazas</span></div>'}).join("")+
+  (v&&capacidad(v)?'<div class="r big"><span>Plazas libres tras importar</span><span style="color:'+((capacidad(v)-totViaje(v).plazas-pax)<0?"var(--red)":"var(--green)")+'">'+(capacidad(v)-totViaje(v).plazas-pax)+'</span></div>':"");
+ document.getElementById("imp-list").innerHTML=IMP.map(function(r,i){
+  var c=cuenta(r.vj),tot=c.ad*pa+c.ni*pn,mal=pa&&Math.abs(r.se+r.pe-tot)>0.5;
+  var acomp=r.vj.slice(1).map(function(x){return (x.nombre||"(sin nombre)")+(x.tipo==="nino"?" (niño"+(x.edad?" "+x.edad:"")+")":x.tipo==="bebe"?" (bebé)":"")+(x.rec?" ["+x.rec+"]":"")}).join(", ");
+  return '<div class="imp '+(mal&&!r.dup?"bad":"")+'" style="'+(r.dup&&!IMPupd?"opacity:.5":"")+'"><button class="x" onclick="quitaImp('+i+')">✕</button>'+
+   '<div class="n">'+esc(r.vj[0].nombre||"(sin nombre)")+(r.dup?' <span class="tag">'+(IMPupd?"se actualiza":"ya está · se salta")+'</span>':"")+'</div>'+
+   (acomp?'<div class="m">'+esc(acomp)+'</div>':"")+
+   '<div class="m">'+r.pax+' plaza(s)'+(c.be?" + "+c.be+" bebé":"")+' · '+esc(r.rec||"sin punto")+' · señal '+money(r.se)+' · pdte '+money(r.pe)+(r.tel?' · '+esc(r.tel):"")+'</div>'+
+   (mal&&!r.dup?'<div class="w">⚠️ No cuadra con el precio ('+money(tot)+')</div>':"")+'</div>'}).join("")}
+function quitaImp(i){IMP.splice(i,1);if(!IMP.length){modalImport(IMPdest);return}pintaImp()}
+function confirmarImport(){
+ var sel=document.getElementById("imp-dest").value,v;
+ if(sel==="__new"){
+  var dest=document.getElementById("i-dest").value.trim();
+  if(!dest){toast("Pon el destino del viaje");return}
+  var pa=parseFloat(document.getElementById("i-pa").value)||0;
+  var pnv=document.getElementById("i-pn").value, pn=pnv===""?pa:(parseFloat(pnv)||0);
+  var pts={};IMP.forEach(function(r){if(r.rec)pts[r.rec]=(pts[r.rec]||0)+r.pax});
+  var principal=Object.keys(pts).sort(function(a,b){return pts[b]-pts[a]})[0]||PTS[0];
+  nextNum("viaje",100).then(function(num){
+   var vid=uid("v");
+   v={id:vid,num:num,destino:dest,fecha:document.getElementById("i-fecha").value,
+      hora:document.getElementById("i-hora").value.trim(),regreso:document.getElementById("i-reg").value.trim(),
+      punto:principal,precioA:pa,precioN:pn,buses:{},creado:Date.now()};
+   DB.viajes[vid]=Object.assign({pasajeros:{}},v);wViaje(v);
+   volcar(DB.viajes[vid])})
+ }else{v=DB.viajes[sel];if(!v){toast("Viaje no encontrado");return}volcar(v)}}
+function volcar(v){
+ var ven=window._ivend||"",n=0,u=0,s=0,ts=Date.now();
+ if(!v.pasajeros)v.pasajeros={};
+ IMP.forEach(function(r,i){
+  if(r.dup){
+   var p0=v.pasajeros[r.dup];
+   if(!IMPupd||!p0){s++;return}
+   var ch={senal:r.se,pendiente:r.pe};
+   if(r.rec)ch.recogida=r.rec;
+   if(r.tel&&!normTel(p0.tel))ch.tel=r.tel;
+   Object.assign(p0,ch);wUpd("viajes/"+v.id+"/pasajeros/"+p0.id,ch);u++;return}
+  var vj=r.vj,c=cuenta(vj),id=uid("p");
+  var p={id:id,nombre:vj[0].nombre||"(sin nombre)",viajeros:vj,tel:r.tel||"",
+   adultos:c.ad,ninos:c.ni,bebes:c.be,plazas:c.ad+c.ni,recogida:r.rec||v.punto||"",
+   senal:r.se,pendiente:r.pe,importe:importe(v,vj),nota:"",vendedor:ven,
+   embarcado:false,cobrado:false,ts:ts+i,localizador:""};
+  v.pasajeros[id]=p;wPax(v.id,p);syncCliente(v,p);n++});
+ cerrar();CUR=v.id;VIEW="detalle";TAB="viajes";FPT="__all";Q="";render();
+ toast(n+" reservas nuevas en "+v.destino+(u?" · "+u+" actualizadas":"")+(s?" · "+s+" ya estaban":""))}
+
 /* ---------- Modal viaje ---------- */
 function modalViaje(id){
  var v=id?DB.viajes[id]:{buses:{}};window._bus=Object.assign({},v.buses||{});window._conOcup=!!id;
@@ -435,7 +785,9 @@ function modalPax(vId,pId){
  window._vid=vId;window._pid=pId||"";
  window._rec=recBase(p,v);
  window._mix=mixto(p,v);
+ window._vend=p.vendedor||"";
  sheet('<h2>'+(pId?"Editar reserva":"Nueva reserva")+'</h2>'+(p.localizador?'<div class="loc" style="margin-top:4px">'+esc(p.localizador)+'</div>':""),
+  '<label>Vendedor <span style="color:var(--red)">*obligatorio</span></label><div class="ptabs" id="vnd">'+vtabs(window._vend,"setVend")+'</div>'+
   '<label>Punto de recogida del grupo</label><div class="ptabs" id="rpt">'+ptabs(window._rec,"setRec")+'</div>'+
   '<div class="sw '+(window._mix?"on":"")+'" id="swmix" onclick="togMix()"><div class="bx">'+(window._mix?"✓":"")+'</div><div><b>Cada pasajero en un punto distinto</b><small>Para grupos que suben en paradas diferentes</small></div></div>'+
   '<label>Titular y acompañantes</label><div id="vjs"></div><button class="addv" onclick="addV()">+ Añadir acompañante</button>'+
@@ -446,6 +798,8 @@ function modalPax(vId,pId){
   '<div class="sumbox" id="p-sum"></div>',
   '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" onclick="guardarPax(\''+vId+'\',\''+(pId||"")+'\')">'+(pId?"Guardar":"Añadir")+'</button>');
  pintaV()}
+function setVend(x){if(x==="__otro"){var t=prompt("Nombre del vendedor:",window._vend||"");if(t===null)return;window._vend=t.trim()}else window._vend=x;
+ document.getElementById("vnd").innerHTML=vtabs(window._vend,"setVend")}
 function setRec(x){if(x==="__otro"){var t=prompt("Escribe el punto de recogida:",window._rec||"");if(t===null)return;window._rec=t.trim()}else window._rec=x;
  document.getElementById("rpt").innerHTML=ptabs(window._rec,"setRec");pintaV()}
 function togMix(){window._mix=!window._mix;
@@ -494,12 +848,13 @@ function autofill(){
 function guardarPax(vId,pId){
  calcPax();var c=window._pcalc;
  window._vj=window._vj.filter(function(x,i){return i===0||(x.nombre||"").trim()||x.tipo!=="adulto"});
+ if(!(window._vend||"").trim()){toast("Elige el VENDEDOR antes de guardar");return}
  if(!window._vj.length||!(window._vj[0].nombre||"").trim()){toast("Falta el nombre del titular");return}
  if(c.plazas<1){toast("La reserva no ocupa ninguna plaza");return}
  if(!window._mix)window._vj.forEach(function(x){x.rec=""});
  var v=DB.viajes[vId],id=pId||uid("p"),prev=pId?v.pasajeros[pId]:{};
  var p={id:id,nombre:window._vj[0].nombre.trim(),viajeros:window._vj,tel:document.getElementById("p-tel").value.trim(),
-  adultos:c.ad,ninos:c.ni,bebes:c.be,plazas:c.plazas,recogida:window._rec||"",
+  adultos:c.ad,ninos:c.ni,bebes:c.be,plazas:c.plazas,recogida:window._rec||"",vendedor:window._vend||"",
   senal:c.senal,pendiente:c.pend,importe:c.total,nota:document.getElementById("p-nota").value.trim(),
   embarcado:prev.embarcado||false,cobrado:prev.cobrado||false,ts:prev.ts||Date.now(),localizador:prev.localizador||""};
  var fin=function(){if(!v.pasajeros)v.pasajeros={};v.pasajeros[id]=p;wPax(vId,p);syncCliente(v,p);
@@ -617,7 +972,7 @@ function imprimir(vId){
    (ac?'<div class="ac">'+ac+'</div>':"")+
    (n===1?'<div class="so">» NO SENTAR SOLO «</div>':"")+
    (!titAqui?'<div class="so">Paga con '+esc(vjs[0].nombre)+' en '+esc(recDe(p,vjs[0],v))+'</div>':"")+
-   (p.localizador?'<div class="lc">'+esc(p.localizador)+'</div>':"")+'</td>'+
+   '<div class="lc">'+esc(p.localizador||"")+(p.vendedor?" · vend: "+esc(p.vendedor):"")+'</div></td>'+
    '<td class="ce"><b>'+n+'</b>'+(cm.be?"<br>+"+cm.be+"b":"")+'</td>'+
    '<td>'+esc(p.tel||"—")+'</td>'+
    (uno?"":'<td>'+esc(mx?"varios":recBase(p,v))+'</td>')+
