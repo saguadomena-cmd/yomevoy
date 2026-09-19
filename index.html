@@ -193,9 +193,10 @@ textarea{min-height:76px;resize:vertical}
 <script>
 firebase.initializeApp({apiKey:"AIzaSyDI2vdwTHZxAbfw1HRim4S3QsH1yEygHtw",authDomain:"yo-me-voy-reservas.firebaseapp.com",databaseURL:"https://yo-me-voy-reservas-default-rtdb.europe-west1.firebasedatabase.app",projectId:"yo-me-voy-reservas",storageBucket:"yo-me-voy-reservas.firebasestorage.app",messagingSenderId:"250466590178",appId:"1:250466590178:web:e1d916ce49be57bd592dbb"});
 var REF=firebase.database().ref("gestor_embarque");
-var TEL_EMP="614599790",MARCA="Viaja Con Sergio · Yo Me Voy Excursiones";
+var TEL_EMP="614599790",MARCA="Yo Me Voy Excursiones",TELS="663 413 151 · 614 599 790";
 var PTS=["Plaza Elíptica","Atocha","Puente de Vallecas"];
-var VEND=["Ariel","Viaja Con Sergio","Fersho","Dorian"];
+var VEND=["Ariel","Sergio","Fersho","Dorian"];
+function nomVend(x){return /viaja\s*con\s*sergio/i.test(x||"")?"Sergio":(x||"")}
 var DB={viajes:{},clientes:{},counters:{}},TAB="viajes",VIEW="lista",CUR=null,Q="",QC="",FPT="__all";
 var BUSES=[{id:"b97",n:"Bus grande",cap:97},{id:"b84",n:"Bus mediano",cap:84},{id:"b60a",n:"Bus pequeño A",cap:60},{id:"b60b",n:"Bus pequeño B",cap:60}];
 var tt;function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("s");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("s")},2600)}
@@ -213,6 +214,7 @@ function fmtLargoMin(iso){var s=fmtLargo(iso);return s?s.charAt(0)+s.slice(1).to
 
 /* ---------- Firebase ---------- */
 REF.on("value",function(s){var d=s.val()||{};DB={viajes:d.viajes||{},clientes:d.clientes||{},counters:d.counters||{}};
+ Object.keys(DB.viajes).forEach(function(k){var ps=DB.viajes[k].pasajeros||{};Object.keys(ps).forEach(function(i){if(ps[i].vendedor)ps[i].vendedor=nomVend(ps[i].vendedor)})});
  document.getElementById("dot").classList.remove("off");render()},
  function(){document.getElementById("dot").classList.add("off")});
 function fail(){toast("Sin conexión: cambio no guardado");document.getElementById("dot").classList.add("off")}
@@ -583,7 +585,7 @@ function leePagina(tc,out,textos,st){
 function construye(c,pDef){
  var lineas=c.nom.filter(function(x){var t=norm(x.t);
   return !/NO SENTAR SOLO|ALTA NUEVA|REVISAR IMPORTE|^\(!\)|^PAGA CON/.test(t)}).map(function(x){
-  return {t:x.t.replace(/VCS-\d+/gi,"").replace(/·?\s*vend:.*$/i,"").replace(/^[\s·]+|[\s·]+$/g,""),f:x.f}}).filter(function(x){return x.t});
+  return {t:x.t.replace(/(VCS|YMV)-\d+/gi,"").replace(/·?\s*vend:.*$/i,"").replace(/^[\s·]+|[\s·]+$/g,""),f:x.f}}).filter(function(x){return x.t});
  var segs=[];lineas.forEach(function(x){var s=segs[segs.length-1];if(s&&s.f===x.f)s.t+=" "+x.t;else segs.push({t:x.t,f:x.f})});
  segs=segs.map(function(x){return {t:limpiaSinNombre(x.t).replace(/^[,\s]+|[,\s]+$/g,""),f:x.f,orig:x.t}}).filter(function(x){return x.t});
  var tit,resto;
@@ -859,7 +861,7 @@ function guardarPax(vId,pId){
   embarcado:prev.embarcado||false,cobrado:prev.cobrado||false,ts:prev.ts||Date.now(),localizador:prev.localizador||""};
  var fin=function(){if(!v.pasajeros)v.pasajeros={};v.pasajeros[id]=p;wPax(vId,p);syncCliente(v,p);
   render();toast(pId?"Reserva actualizada":"Reserva "+p.localizador+" añadida");justificante(vId,id,true)};
- if(p.localizador)fin();else nextNum("loc",1).then(function(n){p.localizador="VCS-"+pad(n,4);fin()})}
+ if(p.localizador)fin();else nextNum("loc",1).then(function(n){p.localizador="YMV-"+pad(n,4);fin()})}
 function syncCliente(v,p){
  var tel=normTel(p.tel);if(tel.length!==9)return;
  var prev=(DB.clientes||{})[tel]||{};
@@ -871,6 +873,8 @@ function syncCliente(v,p){
 
 /* ---------- Justificante ---------- */
 var AVISO1="IMPORTANTE — EL PUNTO DE RECOGIDA NO SE PUEDE MODIFICAR.";
+var ASIENTO1="ASIENTOS: POR ORDEN DE LLEGADA Y FIJOS TODO EL VIAJE.";
+var ASIENTO2="Los asientos se asignan por orden de llegada al autobús y son intransferibles: el asiento que ocupes a la ida es obligatoriamente el mismo durante todo el viaje, también a la vuelta. Las plazas de la planta de abajo tienen prioridad para mujeres embarazadas, personas con movilidad reducida y personas mayores.";
 var AVISO2="Si necesitas cambiarlo, avísanos con 2 DÍAS de antelación. No se aceptará ningún cambio de recogida en las últimas 48 horas: perjudica a los demás viajeros, que ya tienen su plaza asegurada, nos obliga a cambiarles de sitio y provoca retrasos importantes en los horarios de salida establecidos.";
 function textoJust(v,p){
  var vjs=viajeros(p),c=cuenta(vjs),L=[],mx=mixto(p,v);
@@ -897,9 +901,12 @@ function textoJust(v,p){
  L.push("⚠️ *"+AVISO1+"*");
  L.push(AVISO2);
  L.push("");
+ L.push("💺 *"+ASIENTO1+"*");
+ L.push(ASIENTO2);
+ L.push("");
  L.push("_Presenta este justificante al subir al autobús. El autobús no espera: sé puntual. La señal no es reembolsable, pero es transferible avisando con 48 h._");
  L.push("");
- L.push(MARCA+"  ·  "+TEL_EMP);
+ L.push(MARCA+"  ·  📞 "+TELS);
  return L.join("\n")}
 function justificante(vId,pId,auto){
  var v=DB.viajes[vId],p=v.pasajeros[pId];if(!p)return;
@@ -921,7 +928,7 @@ function justificante(vId,pId,auto){
    (tel?"":'<div class="note">Esta reserva no tiene teléfono: WhatsApp te pedirá elegir el contacto.</div>'),
    '<button class="btn bg2" onclick="cerrar()">'+(auto?"Listo":"Cerrar")+'</button>')};
  if(p.localizador)run();
- else nextNum("loc",1).then(function(n){p.localizador="VCS-"+pad(n,4);wField("viajes/"+vId+"/pasajeros/"+pId+"/localizador",p.localizador);run()})}
+ else nextNum("loc",1).then(function(n){p.localizador="YMV-"+pad(n,4);wField("viajes/"+vId+"/pasajeros/"+pId+"/localizador",p.localizador);run()})}
 function copiarJust(vId,pId){var v=DB.viajes[vId],p=v.pasajeros[pId];
  if(navigator.clipboard)navigator.clipboard.writeText(textoJust(v,p));toast("Justificante copiado")}
 function imprimirJust(vId,pId){
@@ -943,8 +950,9 @@ function imprimirJust(vId,pId){
   '<div class="rw"><span>Señal pagada (confirmada)</span><b>- '+money(+p.senal||0)+'</b></div></div>'+
   '<div class="pend"><span>PENDIENTE · en metálico el día del viaje</span><span>'+money(+p.pendiente||0)+'</span></div>'+
   '<div class="avi"><b>⚠️ '+AVISO1+'</b><br>'+AVISO2+'</div>'+
+  '<div class="avi"><b>💺 '+ASIENTO1+'</b><br>'+ASIENTO2+'</div>'+
   '<div class="cond">· Presenta este justificante (impreso o en el móvil) al subir al autobús.<br>· El autobús no espera: preséntate 15 minutos antes en el punto indicado.<br>· La señal no es reembolsable, pero es transferible a otra persona o a otra excursión avisando con 48 h de antelación.<br>· La organización no se responsabiliza de objetos personales olvidados.</div>'+
-  '<div class="ft">RESERVAS E INFORMACIÓN · '+TEL_EMP+' · @viaja_con_sergio</div></div>';
+  '<div class="ft">YO ME VOY EXCURSIONES · Reservas e información: '+TELS+'</div></div>';
  window.print()}
 
 /* ---------- Listado impreso ---------- */
@@ -988,7 +996,7 @@ function imprimir(vId){
   return c+'</table><div class="fir"><span>TOTAL SUBIDOS: __________</span><span>Firma: ______________________</span><span>Hora real: __________</span></div>'}).join("");
  document.getElementById("print-area").innerHTML=
   '<div class="lst-h"><h1>'+esc((v.destino||"").toUpperCase())+' · '+esc(fmtLargo(v.fecha))+'</h1>'+
-  '<div class="s1">'+MARCA+' · Organización '+TEL_EMP+(v.regreso?' · Regreso desde '+esc(v.destino)+' '+esc(v.regreso):"")+(v.num?' · Viaje Nº '+v.num:"")+'</div>'+
+  '<div class="s1">'+MARCA+' · '+TELS+(v.regreso?' · Regreso desde '+esc(v.destino)+' '+esc(v.regreso):"")+(v.num?' · Viaje Nº '+v.num:"")+'</div>'+
   '<div class="s2">'+(uno?"RECOGIDA: "+esc(FPT).toUpperCase():"LISTADO COMPLETO")+(v.hora?' · SALIDA '+esc(v.hora):"")+' · '+pl+' PASAJEROS</div></div>'+
   '<div class="lst-i"><span>Conductor: __________ Matrícula: _________ Hora real: ______ · Presentación 15 min antes</span><span class="rr">» NO SENTAR SOLO « = sentar junto a otro pasajero</span></div>'+
   '<table class="lst"><thead><tr><th style="width:4%">Nº</th><th>NOMBRE(S)</th><th style="width:6%">PAX</th><th style="width:14%">TELÉFONO</th>'+
