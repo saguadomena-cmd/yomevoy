@@ -134,6 +134,12 @@ textarea{min-height:76px;resize:vertical}
 .imp .x{float:right;border:1px solid var(--line);background:#fff;border-radius:7px;color:var(--red);font-weight:800;padding:3px 8px;cursor:pointer;font-size:12px}
 .drop{border:2px dashed var(--line);border-radius:13px;padding:22px 12px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;background:#fbfcfe}
 .drop b{display:block;color:var(--navy);font-size:14.5px;margin-bottom:3px}
+.cnt{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;background:#fff}
+.cnt .t b{font-size:14px;display:block}.cnt .t small{font-size:11.5px;color:var(--muted);font-weight:600}
+.cnt .c{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.cnt .c button{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:22px;font-weight:800;color:var(--navy);cursor:pointer}
+.cnt .c button.pl{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cnt .c span{min-width:34px;text-align:center;font-size:20px;font-weight:800}
 #print-area{display:none}
 @media print{
  @page{margin:8mm}
@@ -309,11 +315,15 @@ function renderDetalle(){
  h+=lista.length?lista.map(function(p){return paxRow(v,p)}).join(""):'<div class="empty">Ninguna reserva coincide.</div>';
  document.getElementById("app").innerHTML=h}
 
+function snTxt(c){var a=[];if(c.adulto)a.push("+"+c.adulto+" adulto"+(c.adulto>1?"s":""));if(c.nino)a.push("+"+c.nino+" niño"+(c.nino>1?"s":""));if(c.bebe)a.push("+"+c.bebe+" bebé"+(c.bebe>1?"s":""));return a.join(", ")}
+function splitSN(list,cond){var named=[],sn={adulto:0,nino:0,bebe:0};list.forEach(function(x){if(cond&&!(x.nombre||"").trim()&&!x.edad)sn[x.tipo||"adulto"]++;else named.push(x)});return {named:named,sn:sn}}
 function paxRow(v,p){
  var vId=v.id,vjs=viajeros(p),c=cuenta(vjs),pl=c.ad+c.ni,tel=normTel(p.tel),mx=mixto(p,v);
- var acom=vjs.slice(1).map(function(x){
+ var sp=splitSN(vjs.slice(1),!mx),snt=snTxt(sp.sn);
+ var acom=sp.named.map(function(x){
   var tg=x.tipo==="nino"?'<span class="tag n">niño'+(x.edad?" "+x.edad+"a":"")+'</span>':x.tipo==="bebe"?'<span class="tag b">bebé'+(x.edad?" "+x.edad:"")+'</span>':"";
   return tg+esc(x.nombre||"(sin nombre)")+(mx?' <span class="tag pt">'+esc(recDe(p,x,v))+'</span>':"")}).join(" · ");
+ if(snt)acom+=(acom?" · ":"")+'<span class="tag">'+snt+' sin nombre</span>';
  return '<div class="pax '+(p.embarcado?"emb":"")+' '+(p.cobrado?"cob":"")+'">'+
   '<div class="chk" onclick="toggleEmb(\''+vId+'\',\''+p.id+'\')">'+(p.embarcado?"✓":"")+'</div><div class="i">'+
   '<div class="n"><span class="titu">TITULAR</span>'+esc(vjs[0]?vjs[0].nombre:p.nombre)+(mx?' <span class="tag pt">'+esc(recDe(p,vjs[0],v))+'</span>':"")+'</div>'+
@@ -788,11 +798,17 @@ function modalPax(vId,pId){
  window._rec=recBase(p,v);
  window._mix=mixto(p,v);
  window._vend=p.vendedor||"";
+ window._modo="ind";window._g={ad:1,ni:0,be:0};window._gnom="";
  sheet('<h2>'+(pId?"Editar reserva":"Nueva reserva")+'</h2>'+(p.localizador?'<div class="loc" style="margin-top:4px">'+esc(p.localizador)+'</div>':""),
+  (pId?"":'<div class="ptabs" id="modo" style="margin-top:11px">'+modoTabs()+'</div>')+
   '<label>Vendedor <span style="color:var(--red)">*obligatorio</span></label><div class="ptabs" id="vnd">'+vtabs(window._vend,"setVend")+'</div>'+
   '<label>Punto de recogida del grupo</label><div class="ptabs" id="rpt">'+ptabs(window._rec,"setRec")+'</div>'+
-  '<div class="sw '+(window._mix?"on":"")+'" id="swmix" onclick="togMix()"><div class="bx">'+(window._mix?"✓":"")+'</div><div><b>Cada pasajero en un punto distinto</b><small>Para grupos que suben en paradas diferentes</small></div></div>'+
-  '<label>Titular y acompañantes</label><div id="vjs"></div><button class="addv" onclick="addV()">+ Añadir acompañante</button>'+
+  '<div id="bl-ind"><div class="sw '+(window._mix?"on":"")+'" id="swmix" onclick="togMix()"><div class="bx">'+(window._mix?"✓":"")+'</div><div><b>Cada pasajero en un punto distinto</b><small>Para grupos que suben en paradas diferentes</small></div></div>'+
+  '<label>Titular y acompañantes</label><div id="vjs"></div><button class="addv" onclick="addV()">+ Añadir acompañante</button></div>'+
+  '<div id="bl-grp" style="display:none"><label>Titular de la reserva</label><input id="g-nom" placeholder="Nombre y apellidos del titular" oninput="window._gnom=this.value">'+
+  '<label>Personas del grupo</label>'+
+  cntRow("ad","Adultos","Ocupan plaza")+cntRow("ni","Niños (3 a 9 años)","Ocupan plaza")+cntRow("be","Bebés (0 a 3 años)","No ocupan plaza")+
+  '<div class="note">Solo el titular lleva nombre y teléfono. El resto se cuenta como acompañantes sin nombre.</div></div>'+
   '<label>Teléfono del titular</label><input id="p-tel" type="tel" inputmode="tel" value="'+esc(p.tel||"")+'" placeholder="6XX XXX XXX" oninput="autofill()">'+
   '<div class="hint" id="p-hint"></div>'+
   '<div class="row2"><div><label>Señal pagada €</label><input id="p-senal" type="number" inputmode="decimal" value="'+(p.senal!=null?p.senal:0)+'" oninput="calcPax()"></div>'+
@@ -800,6 +816,30 @@ function modalPax(vId,pId){
   '<div class="sumbox" id="p-sum"></div>',
   '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" onclick="guardarPax(\''+vId+'\',\''+(pId||"")+'\')">'+(pId?"Guardar":"Añadir")+'</button>');
  pintaV()}
+function modoTabs(){var m=window._modo;return '<div class="ptab '+(m==="ind"?"on":"")+'" onclick="setModo(\'ind\')">👤 Individual</div><div class="ptab '+(m==="grp"?"on":"")+'" onclick="setModo(\'grp\')">👥 Añadir grupo</div>'}
+function cntRow(k,t,s){return '<div class="cnt"><div class="t"><b>'+t+'</b><small>'+s+'</small></div><div class="c"><button onclick="gSet(\''+k+'\',-1)">−</button><span id="gc_'+k+'">'+window._g[k]+'</span><button class="pl" onclick="gSet(\''+k+'\',1)">+</button></div></div>'}
+function buildGrp(){
+ var g=window._g,nom=(window._gnom||"").trim(),vj=[{nombre:nom,tipo:"adulto",edad:"",rec:""}],i;
+ for(i=1;i<g.ad;i++)vj.push({nombre:"",tipo:"adulto",edad:"",rec:""});
+ for(i=0;i<g.ni;i++)vj.push({nombre:"",tipo:"nino",edad:"",rec:""});
+ for(i=0;i<g.be;i++)vj.push({nombre:"",tipo:"bebe",edad:"",rec:""});
+ window._vj=vj}
+function gSet(k,d){var g=window._g,n=g[k]+d;if(k==="ad"&&n<1)n=1;if(n<0)n=0;if(n>80)n=80;g[k]=n;
+ document.getElementById("gc_"+k).textContent=n;calcPax()}
+function setModo(m){
+ if(m===window._modo)return;
+ if(m==="grp"){var c=cuenta(window._vj);window._g={ad:Math.max(1,c.ad),ni:c.ni,be:c.be};
+  window._gnom=(window._vj[0]&&window._vj[0].nombre)||"";window._mix=false;
+  window._vj.forEach(function(x){x.rec=""});
+  window._modo="grp";
+  ["ad","ni","be"].forEach(function(k){document.getElementById("gc_"+k).textContent=window._g[k]});
+  document.getElementById("g-nom").value=window._gnom;
+  var e=document.getElementById("swmix");e.classList.remove("on");e.querySelector(".bx").textContent="";
+  calcPax()}
+ else{buildGrp();window._modo="ind";pintaV()}
+ document.getElementById("bl-ind").style.display=(m==="grp")?"none":"";
+ document.getElementById("bl-grp").style.display=(m==="grp")?"":"none";
+ document.getElementById("modo").innerHTML=modoTabs()}
 function setVend(x){if(x==="__otro"){var t=prompt("Nombre del vendedor:",window._vend||"");if(t===null)return;window._vend=t.trim()}else window._vend=x;
  document.getElementById("vnd").innerHTML=vtabs(window._vend,"setVend")}
 function setRec(x){if(x==="__otro"){var t=prompt("Escribe el punto de recogida:",window._rec||"");if(t===null)return;window._rec=t.trim()}else window._rec=x;
@@ -824,6 +864,7 @@ function addV(){window._vj.push({nombre:"",tipo:"adulto",edad:"",rec:""});pintaV
  var n=document.querySelectorAll("#vjs .nm");if(n.length)n[n.length-1].focus()}
 function delV(i){window._vj.splice(i,1);pintaV()}
 function calcPax(){
+ if(window._modo==="grp")buildGrp();
  var v=DB.viajes[window._vid],c=cuenta(window._vj);
  var total=c.ad*(+v.precioA||0)+c.ni*precioN(v);
  var senal=parseFloat(document.getElementById("p-senal").value)||0;
@@ -844,12 +885,15 @@ function autofill(){
  if(tel.length<6){h.textContent="";return}
  var c=DB.clientes&&DB.clientes[tel];
  if(c){h.textContent="✓ Cliente: "+c.nombre+" · "+nViajes(c)+" viaje(s)"+(c.nota?" · 📝 "+c.nota:"");
-  if(!window._vj[0].nombre){window._vj[0].nombre=c.nombre;pintaV()}return}
+  setNomTit(c.nombre);return}
  var f=null;Object.keys(DB.viajes).forEach(function(k){paxArr(DB.viajes[k]).forEach(function(p){if(normTel(p.tel)===tel&&p.nombre)f=p})});
- if(f){h.textContent="✓ Cliente conocido: "+f.nombre;if(!window._vj[0].nombre){window._vj[0].nombre=f.nombre;pintaV()}}else h.textContent=""}
+ if(f){h.textContent="✓ Cliente conocido: "+f.nombre;setNomTit(f.nombre)}else h.textContent=""}
+function setNomTit(n){
+ if(window._modo==="grp"){var e=document.getElementById("g-nom");if(e&&!e.value.trim()){e.value=n;window._gnom=n}}
+ else if(!window._vj[0].nombre){window._vj[0].nombre=n;pintaV()}}
 function guardarPax(vId,pId){
  calcPax();var c=window._pcalc;
- window._vj=window._vj.filter(function(x,i){return i===0||(x.nombre||"").trim()||x.tipo!=="adulto"});
+ if(window._modo!=="grp")window._vj=window._vj.filter(function(x,i){return i===0||(x.nombre||"").trim()||x.tipo!=="adulto"});
  if(!(window._vend||"").trim()){toast("Elige el VENDEDOR antes de guardar");return}
  if(!window._vj.length||!(window._vj[0].nombre||"").trim()){toast("Falta el nombre del titular");return}
  if(c.plazas<1){toast("La reserva no ocupa ninguna plaza");return}
@@ -972,9 +1016,11 @@ function imprimir(vId){
   i++;
   var tit=titAqui?vjs[0]:mios[0];
   var resto=mios.filter(function(x){return x!==tit});
-  var ac=resto.map(function(x){return esc(x.nombre||"(sin nombre)")+
+  var sp=splitSN(resto,!(mx&&!uno)),snt=snTxt(sp.sn);
+  var ac=sp.named.map(function(x){return esc(x.nombre||"(sin nombre)")+
    (x.tipo==="nino"?" (niño"+(x.edad?" "+x.edad:"")+")":x.tipo==="bebe"?" (bebé)":"")+
    ((mx&&!uno)?" ["+esc(recDe(p,x,v))+"]":"")}).join(", ");
+  if(snt)ac+=(ac?", ":"")+snt;
   filas+='<tr><td class="ce">'+i+'</td><td><div class="nm">'+esc(tit.nombre||"(sin nombre)")+
    ((mx&&!uno)?' ['+esc(recDe(p,tit,v))+']':"")+'</div>'+
    (ac?'<div class="ac">'+ac+'</div>':"")+
