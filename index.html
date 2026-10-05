@@ -893,7 +893,7 @@ function setNomTit(n){
  else if(!window._vj[0].nombre){window._vj[0].nombre=n;pintaV()}}
 function guardarPax(vId,pId){
  calcPax();var c=window._pcalc;
- if(window._modo!=="grp")window._vj=window._vj.filter(function(x,i){return i===0||(x.nombre||"").trim()||x.tipo!=="adulto"});
+ if(window._modo!=="grp"&&!pId)window._vj=window._vj.filter(function(x,i){return i===0||(x.nombre||"").trim()||x.tipo!=="adulto"});
  if(!(window._vend||"").trim()){toast("Elige el VENDEDOR antes de guardar");return}
  if(!window._vj.length||!(window._vj[0].nombre||"").trim()){toast("Falta el nombre del titular");return}
  if(c.plazas<1){toast("La reserva no ocupa ninguna plaza");return}
