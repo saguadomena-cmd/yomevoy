@@ -221,8 +221,15 @@ function fmtLargoMin(iso){var s=fmtLargo(iso);return s?s.charAt(0)+s.slice(1).to
 /* ---------- Firebase ---------- */
 REF.on("value",function(s){var d=s.val()||{};DB={viajes:d.viajes||{},clientes:d.clientes||{},counters:d.counters||{}};
  Object.keys(DB.viajes).forEach(function(k){var ps=DB.viajes[k].pasajeros||{};Object.keys(ps).forEach(function(i){if(ps[i].vendedor)ps[i].vendedor=nomVend(ps[i].vendedor)})});
- document.getElementById("dot").classList.remove("off");render()},
+ document.getElementById("dot").classList.remove("off");render();publicaResumen()},
  function(){document.getElementById("dot").classList.add("off")});
+/* Resumen público (solo viajes y nº de viajeros, sin nombres ni dinero) para vendedor.html */
+var RES=firebase.database().ref("resumen_publico"),_resLast="";
+function publicaResumen(){
+ var o={};Object.keys(DB.viajes).forEach(function(k){var v=DB.viajes[k],t=totViaje(v);
+  o[k]={num:v.num||0,destino:v.destino||"",fecha:v.fecha||"",hora:v.hora||"",plazas:t.plazas,cap:t.cap||0,bebes:t.bebes||0}});
+ var j=JSON.stringify(o);if(j===_resLast)return;_resLast=j;
+ o._upd=Date.now();RES.set(o).catch(function(){_resLast=""})}
 function fail(){toast("Sin conexión: cambio no guardado");document.getElementById("dot").classList.add("off")}
 function wViaje(v){var c=Object.assign({},v);delete c.pasajeros;return REF.child("viajes/"+v.id).update(c).catch(fail)}
 function wPax(vId,p){return REF.child("viajes/"+vId+"/pasajeros/"+p.id).update(p).catch(fail)}

@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Viajes · Yo Me Voy</title>
+<meta name="theme-color" content="#0D1F3C">
+<meta name="robots" content="noindex,nofollow">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{--navy:#0D1F3C;--gold:#FFD400;--bg:#EEF3F8;--line:#DCE5EE;--muted:#5f7286;--green:#1E9E63;--amber:#B45309;--red:#E8323C}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif}
+body{background:var(--bg);color:#12202f;font-size:15px;line-height:1.4;padding-bottom:30px}
+.top{background:var(--navy);color:#fff;border-bottom:3px solid var(--gold);padding:calc(env(safe-area-inset-top) + 12px) 14px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0}
+.top b{font-size:15px;display:block}.top small{font-size:10px;letter-spacing:.8px;color:#AEC6DC;text-transform:uppercase}
+.dot{margin-left:auto;width:10px;height:10px;border-radius:50%;background:#7CFAB8}.dot.off{background:var(--red)}
+.wrap{max-width:700px;margin:0 auto;padding:13px 12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px;margin-bottom:10px}
+.vnum{display:inline-block;background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;margin-right:6px}
+.d{font-weight:800;font-size:16px}.m{font-size:12.5px;color:var(--muted);margin-top:3px}
+.row{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;gap:8px}
+.n b{font-size:26px}.n span{font-size:12px;color:var(--muted);margin-left:4px}
+.lib{font-weight:800;font-size:13px}
+.bar{height:9px;border-radius:6px;background:#d7e0ea;overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;background:var(--green)}.bar.warn i{background:var(--amber)}.bar.full i{background:var(--red)}
+.empty{text-align:center;color:var(--muted);padding:40px 14px}
+.foot{text-align:center;font-size:11.5px;color:var(--muted);margin-top:8px}
+</style></head><body>
+<div class="top"><div><b>Viajes disponibles</b><small>Yo Me Voy Excursiones</small></div><div class="dot off" id="dot"></div></div>
+<div class="wrap" id="app"><div class="empty">Cargando…</div></div>
+<script>
+firebase.initializeApp({apiKey:"AIzaSyDI2vdwTHZxAbfw1HRim4S3QsH1yEygHtw",authDomain:"yo-me-voy-reservas.firebaseapp.com",databaseURL:"https://yo-me-voy-reservas-default-rtdb.europe-west1.firebasedatabase.app",projectId:"yo-me-voy-reservas",storageBucket:"yo-me-voy-reservas.firebasestorage.app",messagingSenderId:"250466590178",appId:"1:250466590178:web:e1d916ce49be57bd592dbb"});
+function esc(s){return (""+(s||"")).replace(/[<>&"]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]})}
+function fmtF(i){var a=(i||"").split("-");return a[2]?a[2]+"/"+a[1]+"/"+a[0]:i}
+var DIAS=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+function dia(i){var d=new Date(i+"T12:00:00");return isNaN(d)?"":DIAS[d.getDay()]}
+firebase.database().ref("resumen_publico").on("value",function(s){
+ document.getElementById("dot").classList.remove("off");
+ var d=s.val()||{},upd=d._upd,hoy=new Date();hoy.setHours(0,0,0,0);
+ var hs=hoy.getFullYear()+"-"+("0"+(hoy.getMonth()+1)).slice(-2)+"-"+("0"+hoy.getDate()).slice(-2);
+ var vs=Object.keys(d).filter(function(k){return k.charAt(0)!=="_"&&d[k]&&d[k].destino&&(!d[k].fecha||d[k].fecha>=hs)})
+  .map(function(k){return d[k]}).sort(function(a,b){return (a.fecha||"9").localeCompare(b.fecha||"9")});
+ var h=vs.map(function(v){var lib=v.cap?v.cap-v.plazas:null,pc=v.cap?Math.min(100,v.plazas/v.cap*100):0;
+  return '<div class="card">'+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+'<span class="d">🚌 '+esc(v.destino)+'</span>'+
+   '<div class="m">'+(v.fecha?dia(v.fecha)+" "+fmtF(v.fecha):"sin fecha")+(v.hora?" · salida "+esc(v.hora):"")+'</div>'+
+   '<div class="row"><div class="n"><b>'+v.plazas+'</b><span>viajeros'+(v.bebes?" (+"+v.bebes+" bebé)":"")+'</span></div>'+
+   (lib!==null?'<div class="lib" style="color:'+(lib<0?"var(--red)":lib<=5?"var(--amber)":"var(--green)")+'">'+(lib<0?"Completo":lib+" libres")+'</div>':"")+'</div>'+
+   (v.cap?'<div class="bar '+(lib<0?"full":lib<=5?"warn":"")+'"><i style="width:'+pc+'%"></i></div>':"")+'</div>'}).join("");
+ document.getElementById("app").innerHTML=(h||'<div class="empty">No hay viajes próximos.</div>')+
+  (upd?'<div class="foot">Actualizado '+new Date(upd).toLocaleString("es-ES",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+'</div>':"")},
+ function(){document.getElementById("dot").classList.add("off");document.getElementById("app").innerHTML='<div class="empty">Sin conexión</div>'});
+</script></body></html>
