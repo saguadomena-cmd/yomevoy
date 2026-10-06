@@ -1121,16 +1121,19 @@ function genPdf(o){
  if(!o.html){toast("Nada que generar");return}
  toast("Generando PDF…");
  var host=document.getElementById("pdf-area");host.style.width=o.ancho+"px";host.innerHTML=o.html;
- html2pdf().set({margin:[8,8,8,8],filename:o.nombre,image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:o.ancho},
+ var sy=window.pageYOffset||0,sx=window.pageXOffset||0;window.scrollTo(0,0);
+ var vuelve=function(){host.innerHTML="";window.scrollTo(sx,sy)};
+ setTimeout(function(){
+ html2pdf().set({margin:[8,8,8,8],filename:o.nombre,image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:o.ancho,scrollX:0,scrollY:0,x:0,y:0},
   jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".gr-h",".fir",".avi",".tot",".pend",".qr"]}})
   .from(host).outputPdf("blob").then(function(blob){
-   host.innerHTML="";_pdf={blob:blob,nombre:o.nombre};
+   vuelve();_pdf={blob:blob,nombre:o.nombre};
    sheet('<h2>📄 '+o.titulo+'</h2><div style="font-size:12.5px;color:var(--muted)">'+(o.sub||"")+'</div>',
     '<div class="sumbox"><div class="r"><span>Archivo</span><b>'+esc(o.nombre)+'</b></div></div>'+
     '<button class="btn bwa" style="margin-top:12px" onclick="compartirPdf()">📤 Compartir (WhatsApp, etc.)</button>'+
     '<button class="btn bp" style="margin-top:9px" onclick="descargarPdf()">⬇️ Descargar PDF</button>',
     '<button class="btn bg2" onclick="'+o.volver+'">‹ Volver</button><button class="btn bg2" onclick="cerrar()">Cerrar</button>')})
-  .catch(function(e){host.innerHTML="";toast("No se pudo generar el PDF: "+(e&&e.message||e))})}
+  .catch(function(e){vuelve();toast("No se pudo generar el PDF: "+(e&&e.message||e))})},250)}
 function descargarPdf(){if(!_pdf)return;var a=document.createElement("a");a.href=URL.createObjectURL(_pdf.blob);a.download=_pdf.nombre;
  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000);toast("PDF descargado")}
 function compartirPdf(){if(!_pdf)return;
