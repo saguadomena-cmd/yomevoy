@@ -251,6 +251,7 @@ var TEL_EMP="614599790",MARCA="Yo Me Voy Excursiones",TELS="663 413 151 · 614 5
 var PTS=["Plaza Elíptica","Atocha","Puente de Vallecas"];
 var VEND=["Ariel","Sergio","Fersho","Dorian"];
 function nomVend(x){return /viaja\s*con\s*sergio/i.test(x||"")?"Sergio":(x||"")}
+var FC="todos",_cliAuto=false;
 var DB={viajes:{},clientes:{},counters:{}},TAB="viajes",VIEW="lista",CUR=null,Q="",QC="",FPT="__all";
 var BUSES=[{id:"b97",n:"Bus grande",cap:97},{id:"b84",n:"Bus mediano",cap:84},{id:"b60a",n:"Bus pequeño A",cap:60},{id:"b60b",n:"Bus pequeño B",cap:60}];
 var tt;function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("s");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("s")},2600)}
@@ -269,7 +270,7 @@ function fmtLargoMin(iso){var s=fmtLargo(iso);return s?s.charAt(0)+s.slice(1).to
 /* ---------- Firebase ---------- */
 REF.on("value",function(s){var d=s.val()||{};DB={viajes:d.viajes||{},clientes:d.clientes||{},counters:d.counters||{}};
  Object.keys(DB.viajes).forEach(function(k){var ps=DB.viajes[k].pasajeros||{};Object.keys(ps).forEach(function(i){if(ps[i].vendedor)ps[i].vendedor=nomVend(ps[i].vendedor)})});
- document.getElementById("dot").classList.remove("off");render();publicaResumen()},
+ document.getElementById("dot").classList.remove("off");render();publicaResumen();if(!_cliAuto){_cliAuto=true;setTimeout(function(){sincClientes(true)},1500)}},
  function(){document.getElementById("dot").classList.add("off")});
 /* Resumen público (solo viajes y nº de viajeros, sin nombres ni dinero) para vendedor.html */
 var RES=firebase.database().ref("resumen_publico"),_resLast="";
@@ -409,21 +410,25 @@ function renderClientes(){
  var cs=Object.keys(DB.clientes||{}).map(function(k){return DB.clientes[k]}).filter(function(c){
   if(!QC)return true;var q=QC.toLowerCase();
   return (c.nombre||"").toLowerCase().indexOf(q)>=0||(""+(c.tel||"")).indexOf(q.replace(/\D/g,""))>=0})
+  .filter(function(c){return FC==="todos"||(FC==="repiten"?nViajes(c)>=2:nViajes(c)<2)})
   .sort(function(a,b){return nViajes(b)-nViajes(a)||(a.nombre||"").localeCompare(b.nombre||"")});
- var tot=Object.keys(DB.clientes||{}).length;
+ var all=Object.keys(DB.clientes||{}).map(function(k){return DB.clientes[k]}),tot=all.length;
+ var nrep=all.filter(function(c){return nViajes(c)>=2}).length;
  var h='<h2>Clientes ('+tot+')</h2>';
+ h+='<button class="btn bg2" style="margin-bottom:10px;padding:11px;font-size:13.5px" onclick="sincClientes(false)">🔄 Sincronizar clientes con todas las reservas</button>';
  h+='<div class="search"><input id="qc" placeholder="🔍 Buscar cliente por nombre o teléfono" value="'+esc(QC)+'" oninput="QC=this.value;renderClientes();var e=document.getElementById(\'qc\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
+ h+='<div class="chips"><div class="chip '+(FC==="todos"?"on":"")+'" onclick="FC=\'todos\';renderClientes()">Todos ('+tot+')</div><div class="chip '+(FC==="repiten"?"on":"")+'" onclick="FC=\'repiten\';renderClientes()">🔁 Repiten ('+nrep+')</div><div class="chip '+(FC==="nuevos"?"on":"")+'" onclick="FC=\'nuevos\';renderClientes()">Nuevos ('+(tot-nrep)+')</div></div>';
  h+=cs.length?cs.map(function(c){var n=nViajes(c);
   return '<div class="cli" onclick="abrirCliente(\''+c.tel+'\')"><div class="av">'+esc((c.nombre||"?").trim().charAt(0).toUpperCase())+'</div>'+
    '<div class="i"><div class="n">'+esc(c.nombre)+'</div><div class="m">'+esc(c.tel)+' · '+totPlazas(c)+' plazas'+(c.nota?' · 📝':"")+'</div></div>'+
-   '<div class="b">'+n+' viaje'+(n===1?"":"s")+'</div></div>'}).join("")
+   (n>=2?'<div class="b" style="background:var(--green);color:#fff">🔁 Repite · '+n+' viajes</div>':'<div class="b">Nuevo · '+n+' viaje'+(n===1?"":"s")+'</div>')+'</div>'}).join("")
   :'<div class="empty">'+(tot?"Ningún cliente coincide.":"Aún no hay clientes.<br>Se crean solos al guardar reservas con teléfono.")+'</div>';
  document.getElementById("app").innerHTML=h}
 function abrirCliente(tel){
  var c=DB.clientes[tel];if(!c)return;
  var vs=Object.keys(c.viajes||{}).map(function(k){return c.viajes[k]}).sort(function(a,b){return (""+(b.fecha||"")).localeCompare(a.fecha||"")});
  var wa="https://wa.me/34"+c.tel+"?text="+encodeURIComponent("Hola "+c.nombre+", te escribo de "+MARCA+".");
- sheet('<h2>'+esc(c.nombre)+'</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(c.tel)+' · '+nViajes(c)+' viaje(s) · '+totPlazas(c)+' plazas</div>',
+ sheet('<h2>'+esc(c.nombre)+'</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(c.tel)+' · '+nViajes(c)+' viaje(s) · '+totPlazas(c)+' plazas</div><div style="margin-top:6px;font-weight:800;font-size:13px;color:'+(nViajes(c)>=2?"var(--green)":"var(--muted)")+'">'+(nViajes(c)>=2?"🔁 Cliente que repite ("+nViajes(c)+" viajes)":"Cliente nuevo · primer viaje")+'</div>',
   '<label>Historial de viajes</label>'+
   (vs.length?vs.map(function(x){return '<div class="card" style="padding:10px;margin-bottom:7px"><b style="font-size:13.5px">'+(x.num?"Nº "+x.num+" · ":"")+esc(x.destino)+'</b><div style="font-size:12px;color:var(--muted)">'+fmtF(x.fecha)+' · '+x.plazas+' plaza(s)'+(x.acomp?" · "+x.acomp+" acompañante(s)":"")+(x.localizador?' · '+esc(x.localizador):"")+'</div></div>'}).join(""):'<div class="empty">Sin viajes registrados.</div>')+
   '<label>Comentario sobre el cliente</label><textarea id="c-nota" placeholder="Ej. paga siempre en efectivo · pide asiento delante…">'+esc(c.nota||"")+'</textarea>'+
@@ -1016,6 +1021,47 @@ function guardarPax(vId,pId){
  var fin=function(){if(!v.pasajeros)v.pasajeros={};v.pasajeros[id]=p;wPax(vId,p);syncCliente(v,p);
   render();toast(pId?"Reserva actualizada":"Reserva "+p.localizador+" añadida");justificante(vId,id,true)};
  if(p.localizador)fin();else nextNum("loc",1).then(function(n){p.localizador="YMV-"+pad(n,4);fin()})}
+function sincClientes(silencioso){
+ var nuevos=0,act=0,sinTel=0,skip=0,vistos={},nCli=0;
+ if(!DB.clientes)DB.clientes={};
+ var tels={};
+ Object.keys(DB.viajes).forEach(function(vk){var v=DB.viajes[vk];
+  paxArr(v).forEach(function(p){
+   var tel=normTel(p.tel);
+   if(tel.length!==9){sinTel++;return}
+   var t=tels[tel]||(tels[tel]={nombre:"",ts:0,vj:{}});
+   var nom=(p.nombre||"").trim();
+   if(nom&&nom!=="(sin nombre)"&&(+p.ts||0)>=t.ts){t.nombre=nom;t.ts=+p.ts||t.ts}
+   var pl=plazasDe(p),ac=Math.max(0,pl-1)+(cuenta(viajeros(p)).be||0),e=t.vj[v.id];
+   if(e){e.plazas+=pl;e.acomp+=ac}
+   else t.vj[v.id]={destino:v.destino||"",fecha:v.fecha||"",num:v.num||0,plazas:pl,acomp:ac,localizador:p.localizador||""}})});
+ Object.keys(tels).forEach(function(tel){
+  var t=tels[tel],prev=DB.clientes[tel],dif=false,ch;
+  if(!prev){dif=true;nuevos++}
+  else{var pv=prev.viajes||{};
+   Object.keys(t.vj).forEach(function(k){var a=pv[k],b=t.vj[k];
+    if(!a||a.plazas!==b.plazas||a.destino!==b.destino||a.fecha!==b.fecha||(a.localizador||"")!==(b.localizador||"")){dif=true}});
+   if(!prev.nombre&&t.nombre)dif=true;
+   if(dif)act++}
+  if(!dif){return}
+  ch={tel:tel,nombre:(prev&&prev.nombre)||t.nombre||"(sin nombre)"};
+  if(!prev||!prev.ultimo)ch.ultimo=t.ts||Date.now();
+  DB.clientes[tel]=Object.assign({nota:""},prev||{},ch,{viajes:Object.assign({},(prev&&prev.viajes)||{},t.vj)});
+  wUpd("clientes/"+tel,ch);wUpd("clientes/"+tel+"/viajes",t.vj)});
+ var todos=Object.keys(DB.clientes).map(function(k){return DB.clientes[k]});
+ var rep=todos.filter(function(c){return nViajes(c)>=2});
+ if(silencioso){if(nuevos||act)toast("Clientes sincronizados: "+nuevos+" nuevos, "+act+" actualizados");if(TAB==="clientes")render();return}
+ render();
+ var top=rep.sort(function(a,b){return nViajes(b)-nViajes(a)}).slice(0,15);
+ sheet('<h2>🔄 Clientes sincronizados</h2>',
+  '<div class="sumbox"><div class="r"><span>Clientes en total</span><b>'+todos.length+'</b></div>'+
+  '<div class="r"><span>Añadidos ahora</span><b style="color:var(--green)">'+nuevos+'</b></div>'+
+  '<div class="r"><span>Actualizados</span><b>'+act+'</b></div>'+
+  '<div class="r"><span>🔁 Repiten (2 o más viajes)</span><b style="color:var(--green)">'+rep.length+'</b></div>'+
+  '<div class="r"><span>Reservas sin teléfono (no se pueden registrar)</span><b style="color:var(--amber)">'+sinTel+'</b></div></div>'+
+  (top.length?'<label>Los que más repiten</label>'+top.map(function(c){return '<div class="imp"><b>'+esc(c.nombre)+'</b> · '+nViajes(c)+' viajes<div class="m">'+esc(c.tel)+' · '+Object.keys(c.viajes||{}).map(function(k){return esc(c.viajes[k].destino)}).join(", ")+'</div></div>'}).join(""):"")+
+  '<div class="note">Solo se registran reservas con teléfono de 9 cifras. Nunca se borra el historial que ya tenía cada cliente.</div>',
+  '<button class="btn bp" onclick="cerrar()">Cerrar</button>')}
 function syncCliente(v,p){
  var tel=normTel(p.tel);if(tel.length!==9)return;
  var prev=(DB.clientes||{})[tel]||{};
