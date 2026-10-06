@@ -12,6 +12,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{--navy:#0D1F3C;--navy2:#16345f;--gold:#FFD400;--bg:#EEF3F8;--line:#DCE5EE;--muted:#5f7286;--green:#1E9E63;--greenbg:#E6F6EE;--amber:#B45309;--red:#E8323C;--rose:#D81B60;--wa:#25D366}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif}
@@ -140,6 +143,48 @@ textarea{min-height:76px;resize:vertical}
 .cnt .c button{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:22px;font-weight:800;color:var(--navy);cursor:pointer}
 .cnt .c button.pl{background:var(--navy);color:#fff;border-color:var(--navy)}
 .cnt .c span{min-width:34px;text-align:center;font-size:20px;font-weight:800}
+#pdf-wrap{position:fixed;left:-10000px;top:0}
+#pdf-area{width:700px;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;padding:0}
+#pdf-area .jst{border:2px solid #0D1F3C;border-radius:10px;padding:16px;max-width:640px;margin:0 auto}
+#pdf-area .jst .hd{background:#0D1F3C;color:#fff;margin:-16px -16px 12px;padding:12px 16px;border-radius:7px 7px 0 0;overflow:hidden}
+#pdf-area .jst .hd h1{color:#fff;font-size:19px;margin:0}
+#pdf-area .jst .hd .sub{font-size:11px;color:#c8d6e6}
+#pdf-area .jst .lc{float:right;background:#FFD400;color:#0D1F3C;padding:5px 10px;border-radius:5px;font-weight:bold;font-size:13px}
+#pdf-area .jst .rw{display:flex;justify-content:space-between;border-bottom:1px dotted #bbb;padding:5px 0;font-size:12.5px}
+#pdf-area .jst .rw b{text-align:right}
+#pdf-area .jst h3{font-size:12px;margin:13px 0 5px;color:#0D1F3C;border-bottom:2px solid #FFD400;display:inline-block;padding-bottom:2px}
+#pdf-area .jst .tot{background:#f2f6fb;border-radius:8px;padding:10px;margin-top:10px}
+#pdf-area .jst .pend{background:#FFF4CC;border-radius:7px;padding:9px;margin-top:7px;font-weight:bold;display:flex;justify-content:space-between}
+#pdf-area .jst .avi{border:1.5px solid #B45309;background:#FFF9EA;border-radius:7px;padding:9px;margin-top:10px;font-size:10.5px;line-height:1.5}
+#pdf-area .jst .avi b{color:#B45309}
+#pdf-area .jst .cond{font-size:9.5px;color:#555;margin-top:10px;line-height:1.5}
+#pdf-area .jst .ft{margin-top:12px;border-top:2px solid #FFD400;padding-top:8px;font-size:11px;text-align:center;font-weight:bold}
+#pdf-area .lst-h{background:#0D1F3C;color:#fff;padding:9px 11px;border-radius:6px 6px 0 0}
+#pdf-area .lst-h h1{font-size:16px;margin:0;color:#fff}
+#pdf-area .lst-h .s1{font-size:9.5px;color:#c8d6e6;margin-top:1px}
+#pdf-area .lst-h .s2{font-size:12px;color:#FFD400;font-weight:bold;margin-top:3px}
+#pdf-area .lst-i{background:#EEF3F8;border:1px solid #999;border-top:none;padding:5px 8px;font-size:9px;display:flex;justify-content:space-between;gap:8px}
+#pdf-area .lst-i .rr{color:#D81B60;font-weight:bold}
+#pdf-area table.lst{width:100%;border-collapse:collapse;font-size:10.5px;border:1.4px solid #0D1F3C}
+#pdf-area table.lst th{background:#0D1F3C;color:#fff;padding:5px 4px;font-size:9px;text-align:left;border:1px solid #4a627f}
+#pdf-area table.lst td{border:1px solid #97a6b8;padding:5px 4px;vertical-align:top}
+#pdf-area table.lst tr:nth-child(even) td{background:#F4F7FB}
+#pdf-area table.lst .nm{font-weight:bold;font-size:11px}
+#pdf-area table.lst .ac{font-size:9px;color:#33465c}
+#pdf-area table.lst .so{font-size:8.5px;color:#D81B60;font-weight:bold}
+#pdf-area table.lst .lc{font-size:8px;color:#5f7286}
+#pdf-area table.lst .ce{text-align:center}
+#pdf-area table.lst .pe{font-weight:bold;color:#B45309;text-align:right}
+#pdf-area table.lst .sq{display:inline-block;width:12px;height:12px;border:1.4px solid #0D1F3C}
+#pdf-area table.lst tfoot td{background:#FFD400;font-weight:bold;border:1.4px solid #0D1F3C;font-size:11px}
+#pdf-area .gr-h{background:#0D1F3C;color:#fff;padding:4px 8px;font-size:9.5px;font-weight:bold;margin-top:9px;display:flex;justify-content:space-between}
+#pdf-area table.gr{width:100%;border-collapse:collapse;font-size:7.5px}
+#pdf-area table.gr td{border:1px solid #97a6b8;text-align:center;padding:3px 0;width:3%}
+#pdf-area .fir{background:#FFF9EA;border:1.4px solid #0D1F3C;border-top:none;padding:5px 8px;font-size:9.5px;display:flex;justify-content:space-between;font-weight:bold}
+#pdf-area .jst .qr{text-align:center;margin-top:12px}
+#pdf-area .jst .qr img{width:130px;height:130px;image-rendering:pixelated}
+#pdf-area .jst .qr div{font-size:10px;color:#333;margin-top:3px}
+#qr-reader video{width:100%!important;border-radius:12px}
 #print-area{display:none}
 @media print{
  @page{margin:8mm}
@@ -181,6 +226,9 @@ textarea{min-height:76px;resize:vertical}
  .jst .pend{background:#FFF4CC;border-radius:7px;padding:9px;margin-top:7px;font-weight:bold;display:flex;justify-content:space-between}
  .jst .avi{border:1.5px solid #B45309;background:#FFF9EA;border-radius:7px;padding:9px;margin-top:10px;font-size:10.5px;line-height:1.5}
  .jst .avi b{color:#B45309}
+ .jst .qr{text-align:center;margin-top:12px}
+ .jst .qr img{width:130px;height:130px;image-rendering:pixelated}
+ .jst .qr div{font-size:10px;color:#555;margin-top:3px}
  .jst .cond{font-size:9.5px;color:#555;margin-top:10px;line-height:1.5}
  .jst .ft{margin-top:12px;border-top:2px solid #FFD400;padding-top:8px;font-size:11px;text-align:center;font-weight:bold}
 }
@@ -195,7 +243,7 @@ textarea{min-height:76px;resize:vertical}
 <button class="fab" id="fab" onclick="fabAction()">+ Nuevo viaje</button>
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
-<div id="print-area"></div>
+<div id="print-area"></div><div id="pdf-wrap"><div id="pdf-area"></div></div>
 <script>
 firebase.initializeApp({apiKey:"AIzaSyDI2vdwTHZxAbfw1HRim4S3QsH1yEygHtw",authDomain:"yo-me-voy-reservas.firebaseapp.com",databaseURL:"https://yo-me-voy-reservas-default-rtdb.europe-west1.firebasedatabase.app",projectId:"yo-me-voy-reservas",storageBucket:"yo-me-voy-reservas.firebasestorage.app",messagingSenderId:"250466590178",appId:"1:250466590178:web:e1d916ce49be57bd592dbb"});
 var REF=firebase.database().ref("gestor_embarque");
@@ -315,10 +363,11 @@ function renderDetalle(){
   :'<b style="font-size:13px">⚠️ Sin autobús asignado</b><div class="bl">No se pueden controlar las plazas libres.</div>')+
   '<button class="btn bg2" style="margin-top:9px;padding:10px;font-size:13.5px" onclick="modalBuses(\''+v.id+'\')">🚌 '+(t.cap?"Cambiar / añadir autobuses":"Elegir autobuses")+'</button></div>';
  h+=ventasHTML(v);
+ h+='<button class="btn bp" style="margin-bottom:10px;background:var(--green)" onclick="modalScan()">📷 Escanear QR de embarque</button>';
  h+='<div class="search"><input id="q" placeholder="🔍 Nombre, acompañante, teléfono o localizador" value="'+esc(Q)+'" oninput="Q=this.value;renderDetalle();var e=document.getElementById(\'q\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
  h+='<div class="chips"><div class="chip '+(FPT==="__all"?"on":"")+'" onclick="FPT=\'__all\';renderDetalle()">Todos ('+t.plazas+')</div>';
  pts.forEach(function(r){h+='<div class="chip '+(FPT===r?"on":"")+'" onclick="FPT=\''+jsq(r)+'\';renderDetalle()">'+esc(r)+' ('+plazasPunto(v,r)+')</div>'});
- h+='</div><button class="btn bg2" style="margin-bottom:8px" onclick="modalImport(\''+v.id+'\')">\ud83d\udce5 Importar reservas a este viaje (Excel · PDF)</button><button class="btn bg2" style="margin-bottom:11px" onclick="imprimir(\''+v.id+'\')">🖨️ Imprimir listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button>';
+ h+='</div><button class="btn bg2" style="margin-bottom:8px" onclick="modalImport(\''+v.id+'\')">\ud83d\udce5 Importar reservas a este viaje (Excel · PDF)</button><button class="btn bp" style="margin-bottom:8px" onclick="pdfListado(\''+v.id+'\')">📄 PDF del listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button><button class="btn bg2" style="margin-bottom:11px" onclick="imprimir(\''+v.id+'\')">🖨️ Imprimir listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button>';
  h+=lista.length?lista.map(function(p){return paxRow(v,p)}).join(""):'<div class="empty">Ninguna reserva coincide.</div>';
  document.getElementById("app").innerHTML=h}
 
@@ -405,8 +454,62 @@ function delPax(vId,pId){if(confirm("¿Eliminar esta reserva?")){delete DB.viaje
 function sheet(head,body,foot){document.getElementById("sheet").innerHTML=
  '<div class="sh-h">'+head+'</div><div class="sh-b">'+body+'</div><div class="sh-f">'+(foot||"")+'</div>';
  document.getElementById("ov").classList.add("on")}
-function cerrar(){document.getElementById("ov").classList.remove("on")}
+function cerrar(){stopScan();document.getElementById("ov").classList.remove("on")}
 document.getElementById("ov").addEventListener("click",function(e){if(e.target.id==="ov")cerrar()});
+
+/* ---------- Escáner de embarque ---------- */
+var _sc=null,_scBusy=false,_scLast=0;
+function scMsg(t,c){var e=document.getElementById("scmsg");if(e){e.textContent=t;e.style.color=c||"var(--muted)"}}
+function modalScan(){
+ var v=DB.viajes[CUR];if(!v)return;
+ var t=totViaje(v);
+ sheet('<h2>📷 Escanear embarque</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+' · embarcados '+t.emb+'/'+t.plazas+'</div>',
+  '<div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px;margin-top:8px"></div>'+
+  '<div id="scmsg" style="font-size:13px;font-weight:700;margin-top:9px;text-align:center;color:var(--muted)">Apunta al QR del justificante</div>',
+  '<button class="btn bg2" onclick="cerrar()">Cerrar</button>');
+ startScan()}
+function startScan(){
+ if(typeof Html5Qrcode==="undefined"){scMsg("No cargó el lector de QR (revisa la conexión)","var(--red)");return}
+ _scBusy=false;_sc=new Html5Qrcode("qr-reader");
+ _sc.start({facingMode:"environment"},{fps:10,qrbox:function(w,h){var m=Math.floor(Math.min(w,h)*.7);return {width:m,height:m}}},onScan,function(){})
+  .catch(function(e){_sc=null;scMsg("No se pudo abrir la cámara. Permite el acceso a la cámara en el navegador y vuelve a intentarlo.","var(--red)")})}
+function stopScan(cb){
+ if(!_sc){if(cb)cb();return}
+ var s=_sc;_sc=null;
+ s.stop().then(function(){try{s.clear()}catch(e){}if(cb)cb()}).catch(function(){if(cb)cb()})}
+function onScan(txt){
+ if(_scBusy)return;
+ var m=/^YMV:([^:]+):([^:]+)$/.exec((txt||"").trim());
+ if(!m){var n=Date.now();if(n-_scLast>1500){_scLast=n;scMsg("QR no válido para este sistema","var(--red)")}return}
+ _scBusy=true;if(navigator.vibrate)navigator.vibrate(80);
+ stopScan(function(){resultadoScan(m[1],m[2])})}
+function resultadoScan(vId,pId){
+ var v=DB.viajes[vId],p=v&&v.pasajeros&&v.pasajeros[pId];
+ var otro=function(msg){sheet('<h2>⚠️ '+msg+'</h2>','<div class="note">Comprueba que sea el justificante correcto.</div>','<button class="btn bg2" onclick="cerrar()">Cerrar</button><button class="btn bp" onclick="modalScan()">Escanear otro</button>')};
+ if(!v||!p)return otro("Reserva no encontrada (puede haberse eliminado)");
+ if(vId!==CUR)return otro("Este QR es de otro viaje: "+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):""));
+ var vjs=viajeros(p),c=cuenta(vjs),pend=+p.pendiente||0,ya=!!p.embarcado,cob=!!p.cobrado,debe=!cob&&pend>0;
+ var btns="";
+ if(!ya&&debe)btns+='<button class="btn bp" style="background:var(--green)" onclick="anotaScan(\''+vId+'\',\''+pId+'\',true,true)">✅ Subió y pagó '+money(pend)+'</button>'+
+   '<button class="btn bg2" style="margin-top:9px" onclick="anotaScan(\''+vId+'\',\''+pId+'\',true,false)">Subió · cobrar después</button>';
+ else if(!ya)btns+='<button class="btn bp" style="background:var(--green)" onclick="anotaScan(\''+vId+'\',\''+pId+'\',true,false)">✅ Marcar que ha subido</button>';
+ else if(debe)btns+='<button class="btn bp" style="background:var(--green)" onclick="anotaScan(\''+vId+'\',\''+pId+'\',false,true)">💶 Cobrar '+money(pend)+'</button>';
+ sheet('<h2>'+(ya?"⚠️ YA HABÍA SUBIDO":"Reserva encontrada")+'</h2><div class="loc" style="margin-top:5px">'+esc(p.localizador||"")+'</div>',
+  '<div class="sumbox"><div class="r"><span>Titular</span><b>'+esc(p.nombre)+'</b></div>'+
+  '<div class="r"><span>Plazas</span><b>'+(c.ad+c.ni)+' ('+c.ad+' adulto(s)'+(c.ni?" + "+c.ni+" niño(s)":"")+')'+(c.be?" + "+c.be+" bebé":"")+'</b></div>'+
+  '<div class="r"><span>Recogida</span><b>'+(mixto(p,v)?"varios puntos":esc(recBase(p,v)))+'</b></div>'+
+  '<div class="r"><span>Total</span><b>'+money(+p.importe||0)+'</b></div>'+
+  '<div class="r"><span>Señal ya pagada</span><b style="color:var(--green)">'+money(+p.senal||0)+'</b></div>'+
+  '<div class="r big"><span>A cobrar ahora</span><b style="color:'+(debe?"var(--amber)":"var(--green)")+'">'+(debe?money(pend):(cob?"Cobrado ✓":"Nada pendiente"))+'</b></div></div>'+
+  (p.nota?'<div class="note">📝 '+esc(p.nota)+'</div>':"")+
+  '<div style="margin-top:12px">'+btns+'</div>',
+  '<button class="btn bg2" onclick="cerrar()">Cerrar</button><button class="btn bp" onclick="modalScan()">📷 Escanear siguiente</button>')}
+function anotaScan(vId,pId,emb,cob){
+ var p=DB.viajes[vId].pasajeros[pId];
+ if(emb){p.embarcado=true;wField("viajes/"+vId+"/pasajeros/"+pId+"/embarcado",true)}
+ if(cob){p.cobrado=true;wField("viajes/"+vId+"/pasajeros/"+pId+"/cobrado",true)}
+ toast("✓ Anotado: "+p.nombre+(cob?" · "+money(+p.pendiente||0)+" cobrados":""));
+ render();modalScan()}
 
 /* ---------- Autobuses ---------- */
 function busOps(sel){return BUSES.map(function(x){return '<div class="busop '+(sel[x.id]?"on":"")+'" id="bo_'+x.id+'" onclick="togBus(\''+x.id+'\')"><div class="bx">'+(sel[x.id]?"✓":"")+'</div><div><b>'+x.n+'</b><small>'+x.cap+' plazas</small></div></div>'}).join("")}
@@ -974,7 +1077,8 @@ function justificante(vId,pId,auto){
    '<div class="r"><span>Señal</span><b style="color:var(--green)">'+money(+p.senal||0)+'</b></div>'+
    '<div class="r big"><span>Pendiente</span><b style="color:var(--amber)">'+money(+p.pendiente||0)+'</b></div></div>'+
    '<a class="btn bwa" style="margin-top:12px" href="'+wa+'" target="_blank" rel="noopener">💬 Enviar por WhatsApp'+(tel?"":" (elegir contacto)")+'</a>'+
-   '<button class="btn bp" style="margin-top:9px" onclick="imprimirJust(\''+vId+'\',\''+pId+'\')">🖨️ Imprimir / Guardar PDF</button>'+
+   '<button class="btn bp" style="margin-top:9px" onclick="pdfJust(\''+vId+'\',\''+pId+'\')">📄 Generar PDF</button>'+
+   '<button class="btn bg2" style="margin-top:9px" onclick="imprimirJust(\''+vId+'\',\''+pId+'\')">🖨️ Imprimir</button>'+
    '<button class="btn bg2" style="margin-top:9px" onclick="copiarJust(\''+vId+'\',\''+pId+'\')">📋 Copiar texto</button>'+
    (tel?"":'<div class="note">Esta reserva no tiene teléfono: WhatsApp te pedirá elegir el contacto.</div>'),
    '<button class="btn bg2" onclick="cerrar()">'+(auto?"Listo":"Cerrar")+'</button>')};
@@ -982,12 +1086,14 @@ function justificante(vId,pId,auto){
  else nextNum("loc",1).then(function(n){p.localizador="YMV-"+pad(n,4);wField("viajes/"+vId+"/pasajeros/"+pId+"/localizador",p.localizador);run()})}
 function copiarJust(vId,pId){var v=DB.viajes[vId],p=v.pasajeros[pId];
  if(navigator.clipboard)navigator.clipboard.writeText(textoJust(v,p));toast("Justificante copiado")}
-function imprimirJust(vId,pId){
- var v=DB.viajes[vId],p=v.pasajeros[pId],vjs=viajeros(p),c=cuenta(vjs),mx=mixto(p,v);
+function qrData(vId,pId){try{if(typeof qrcode==="undefined")return "";var q=qrcode(0,"M");q.addData("YMV:"+vId+":"+pId);q.make();return q.createDataURL(6,8)}catch(e){return ""}}
+function qrBloque(v,p){var u=qrData(v.id,p.id);return u?'<div class="qr"><img src="'+u+'"><div>Código de embarque · enséñalo al subir al autobús</div></div>':""}
+function htmlJust(v,p){
+ var vjs=viajeros(p),c=cuenta(vjs),mx=mixto(p,v);
  var filas=vjs.map(function(x,i){return '<div class="rw"><span>'+(i+1)+'. '+esc(x.nombre||"(sin nombre)")+
   (x.tipo==="nino"?" · niño"+(x.edad?" "+x.edad+" años":""):x.tipo==="bebe"?" · bebé en brazos":"")+
   (mx?' · 📍 '+esc(recDe(p,x,v)):"")+'</span><b>'+(x.tipo==="bebe"?"gratis":x.tipo==="nino"?money(precioN(v)):money(+v.precioA||0))+'</b></div>'}).join("");
- document.getElementById("print-area").innerHTML='<div class="jst">'+
+ return '<div class="jst">'+
   '<div class="hd"><div class="lc">'+esc(p.localizador||"")+'</div><h1>JUSTIFICANTE DE VIAJE</h1><div class="sub">'+MARCA+(v.num?"  ·  Viaje Nº "+v.num:"")+'</div></div>'+
   '<div class="rw"><span>Trayecto</span><b>MADRID → '+esc((v.destino||"").toUpperCase())+'</b></div>'+
   '<div class="rw"><span>Fecha</span><b>'+esc(fmtLargoMin(v.fecha))+'</b></div>'+
@@ -1002,13 +1108,39 @@ function imprimirJust(vId,pId){
   '<div class="pend"><span>PENDIENTE · en metálico el día del viaje</span><span>'+money(+p.pendiente||0)+'</span></div>'+
   '<div class="avi"><b>⚠️ '+AVISO1+'</b><br>'+AVISO2+'</div>'+
   '<div class="avi"><b>💺 '+ASIENTO1+'</b><br>'+ASIENTO2+'</div>'+
-  '<div class="cond">· Presenta este justificante (impreso o en el móvil) al subir al autobús.<br>· El autobús no espera: preséntate 15 minutos antes en el punto indicado.<br>· La señal no es reembolsable, pero es transferible a otra persona o a otra excursión avisando con 48 h de antelación.<br>· La organización no se responsabiliza de objetos personales olvidados.</div>'+
-  '<div class="ft">YO ME VOY EXCURSIONES · Reservas e información: '+TELS+'</div></div>';
- window.print()}
+  qrBloque(v,p)+'<div class="cond">· Presenta este justificante (impreso o en el móvil) al subir al autobús.<br>· El autobús no espera: preséntate 15 minutos antes en el punto indicado.<br>· La señal no es reembolsable, pero es transferible a otra persona o a otra excursión avisando con 48 h de antelación.<br>· La organización no se responsabiliza de objetos personales olvidados.</div>'+
+  '<div class="ft">YO ME VOY EXCURSIONES · Reservas e información: '+TELS+'</div></div>'}
+function imprimirJust(vId,pId){var v=DB.viajes[vId],p=v.pasajeros[pId];document.getElementById("print-area").innerHTML=htmlJust(v,p);window.print()}
+var _pdf=null;
+function pdfJust(vId,pId){
+ var v=DB.viajes[vId],p=v.pasajeros[pId];if(!p)return;
+ genPdf({html:htmlJust(v,p),nombre:"Justificante-"+(p.localizador||"reserva")+".pdf",ancho:700,titulo:"PDF listo",
+  sub:esc(p.nombre),volver:"justificante('"+vId+"','"+pId+"')"})}
+function genPdf(o){
+ if(typeof html2pdf==="undefined"){toast("No cargó el generador de PDF (revisa la conexión)");return}
+ if(!o.html){toast("Nada que generar");return}
+ toast("Generando PDF…");
+ var host=document.getElementById("pdf-area");host.style.width=o.ancho+"px";host.innerHTML=o.html;
+ html2pdf().set({margin:[8,8,8,8],filename:o.nombre,image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:o.ancho},
+  jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".gr-h",".fir",".avi",".tot",".pend",".qr"]}})
+  .from(host).outputPdf("blob").then(function(blob){
+   host.innerHTML="";_pdf={blob:blob,nombre:o.nombre};
+   sheet('<h2>📄 '+o.titulo+'</h2><div style="font-size:12.5px;color:var(--muted)">'+(o.sub||"")+'</div>',
+    '<div class="sumbox"><div class="r"><span>Archivo</span><b>'+esc(o.nombre)+'</b></div></div>'+
+    '<button class="btn bwa" style="margin-top:12px" onclick="compartirPdf()">📤 Compartir (WhatsApp, etc.)</button>'+
+    '<button class="btn bp" style="margin-top:9px" onclick="descargarPdf()">⬇️ Descargar PDF</button>',
+    '<button class="btn bg2" onclick="'+o.volver+'">‹ Volver</button><button class="btn bg2" onclick="cerrar()">Cerrar</button>')})
+  .catch(function(e){host.innerHTML="";toast("No se pudo generar el PDF: "+(e&&e.message||e))})}
+function descargarPdf(){if(!_pdf)return;var a=document.createElement("a");a.href=URL.createObjectURL(_pdf.blob);a.download=_pdf.nombre;
+ document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000);toast("PDF descargado")}
+function compartirPdf(){if(!_pdf)return;
+ var f=new File([_pdf.blob],_pdf.nombre,{type:"application/pdf"});
+ if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:_pdf.nombre}).catch(function(e){if(e&&e.name!=="AbortError")descargarPdf()});
+ else descargarPdf()}
 
 /* ---------- Listado impreso ---------- */
-function imprimir(vId){
- var v=DB.viajes[vId];if(!v)return;
+function htmlListado(vId){
+ var v=DB.viajes[vId];if(!v)return "";
  var uno=FPT!=="__all";
  var lista=paxArr(v).sort(function(a,b){return (a.ts||0)-(b.ts||0)}).filter(function(p){return filtra(p,v)});
  var pl=0,se=0,pe=0,i=0,filas="";
@@ -1047,8 +1179,7 @@ function imprimir(vId){
   var c='<div class="gr-h"><span>RECUENTO DE SUBIDA — '+b.n.toUpperCase()+' ('+b.cap+' plazas)</span><span>Tachar un número por cada pasajero que sube</span></div><table class="gr">';
   for(var x=1;x<=b.cap;){c+="<tr>";for(var y=0;y<33;y++){c+=x<=b.cap?"<td>"+x+"</td>":'<td style="background:#e6e9ef"></td>';x++}c+="</tr>"}
   return c+'</table><div class="fir"><span>TOTAL SUBIDOS: __________</span><span>Firma: ______________________</span><span>Hora real: __________</span></div>'}).join("");
- document.getElementById("print-area").innerHTML=
-  '<div class="lst-h"><h1>'+esc((v.destino||"").toUpperCase())+' · '+esc(fmtLargo(v.fecha))+'</h1>'+
+ return '<div class="lst-h"><h1>'+esc((v.destino||"").toUpperCase())+' · '+esc(fmtLargo(v.fecha))+'</h1>'+
   '<div class="s1">'+MARCA+' · '+TELS+(v.regreso?' · Regreso desde '+esc(v.destino)+' '+esc(v.regreso):"")+(v.num?' · Viaje Nº '+v.num:"")+'</div>'+
   '<div class="s2">'+(uno?"RECOGIDA: "+esc(FPT).toUpperCase():"LISTADO COMPLETO")+(v.hora?' · SALIDA '+esc(v.hora):"")+' · '+pl+' PASAJEROS</div></div>'+
   '<div class="lst-i"><span>Conductor: __________ Matrícula: _________ Hora real: ______ · Presentación 15 min antes</span><span class="rr">» NO SENTAR SOLO « = sentar junto a otro pasajero</span></div>'+
@@ -1057,6 +1188,9 @@ function imprimir(vId){
   '<th style="width:9%">SEÑAL</th><th style="width:10%">PDTE. €</th><th style="width:6%">SUBE</th><th style="width:11%">COBRADO</th></tr></thead>'+
   '<tbody>'+filas+'</tbody>'+
   '<tfoot><tr><td colspan="2">TOTALES</td><td class="ce">'+pl+'</td><td'+(uno?'':' colspan="2"')+'></td><td class="ce">'+money(se)+'</td><td class="pe">'+money(pe)+'</td><td colspan="2"></td></tr></tfoot></table>'+
-  (t.cap?'<div style="font-size:9.5px;margin-top:5px">'+esc(busNames(v))+' — capacidad '+t.cap+' · ocupadas '+t.plazas+' · libres '+t.libres+'</div>':"")+grids;
- window.print()}
+  (t.cap?'<div style="font-size:9.5px;margin-top:5px">'+esc(busNames(v))+' — capacidad '+t.cap+' · ocupadas '+t.plazas+' · libres '+t.libres+'</div>':"")+grids}
+function imprimir(vId){var h=htmlListado(vId);if(!h)return;document.getElementById("print-area").innerHTML=h;window.print()}
+function pdfListado(vId){var v=DB.viajes[vId];if(!v)return;
+ genPdf({html:htmlListado(vId),nombre:"Listado-"+(v.num?v.num+"-":"")+(v.destino||"viaje").replace(/[^A-Za-z0-9]+/g,"_")+(FPT==="__all"?"":"-"+FPT.replace(/[^A-Za-z0-9]+/g,"_"))+".pdf",ancho:780,
+  titulo:"Listado",sub:esc(v.destino)+(FPT==="__all"?"":" · "+esc(FPT)),volver:"cerrar()"})}
 </script></body></html>
