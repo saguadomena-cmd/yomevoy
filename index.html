@@ -307,8 +307,8 @@ function capacidad(v){var t=0;BUSES.forEach(function(b){if(v.buses&&v.buses[b.id
 function busSel(v){return BUSES.filter(function(b){return v.buses&&v.buses[b.id]})}
 function busNames(v){return busSel(v).map(function(b){return b.n+" ("+b.cap+")"}).join(" + ")}
 function totViaje(v){var p=paxArr(v),plazas=0,emb=0,senal=0,pend=0,cobBus=0,be=0;
- p.forEach(function(x){var pl=plazasDe(x);plazas+=pl;if(x.embarcado)emb+=pl;senal+=(+x.senal||0);pend+=(+x.pendiente||0);
-  if(x.cobrado)cobBus+=(+x.pendiente||0);be+=cuenta(viajeros(x)).be});
+ p.forEach(function(x){var pl=plazasDe(x);plazas+=pl;emb+=embPlazas(x);senal+=(+x.senal||0);pend+=(+x.pendiente||0);
+  cobBus+=cobPax(x);be+=cuenta(viajeros(x)).be});
  var cap=capacidad(v);
  return {plazas:plazas,emb:emb,senal:senal,pend:pend,cobBus:cobBus,cobrado:senal+cobBus,porcobrar:pend-cobBus,
   ngrupos:p.length,cap:cap,libres:cap-plazas,bebes:be}}
@@ -379,19 +379,20 @@ function paxRow(v,p){
  var sp=splitSN(vjs.slice(1),!mx),snt=snTxt(sp.sn);
  var acom=sp.named.map(function(x){
   var tg=x.tipo==="nino"?'<span class="tag n">niño'+(x.edad?" "+x.edad+"a":"")+'</span>':x.tipo==="bebe"?'<span class="tag b">bebé'+(x.edad?" "+x.edad:"")+'</span>':"";
-  return tg+esc(x.nombre||"(sin nombre)")+(mx?' <span class="tag pt">'+esc(recDe(p,x,v))+'</span>':"")}).join(" · ");
+  return tg+((x.emb&&!p.embarcado)?"✅ ":"")+esc(x.nombre||"(sin nombre)")+(mx?' <span class="tag pt">'+esc(recDe(p,x,v))+'</span>':"")}).join(" · ");
  if(snt)acom+=(acom?" · ":"")+'<span class="tag">'+snt+' sin nombre</span>';
  return '<div class="pax '+(p.embarcado?"emb":"")+' '+(p.cobrado?"cob":"")+'">'+
   '<div class="chk" onclick="toggleEmb(\''+vId+'\',\''+p.id+'\')">'+(p.embarcado?"✓":"")+'</div><div class="i">'+
-  '<div class="n"><span class="titu">TITULAR</span>'+esc(vjs[0]?vjs[0].nombre:p.nombre)+(mx?' <span class="tag pt">'+esc(recDe(p,vjs[0],v))+'</span>':"")+'</div>'+
+  '<div class="n"><span class="titu">TITULAR</span>'+((vjs[0]&&vjs[0].emb&&!p.embarcado)?"✅ ":"")+esc(vjs[0]?vjs[0].nombre:p.nombre)+(mx?' <span class="tag pt">'+esc(recDe(p,vjs[0],v))+'</span>':"")+'</div>'+
   (acom?'<div class="acom">'+acom+'</div>':"")+
-  '<div class="mm">'+pl+' plaza(s)'+(c.be?" + "+c.be+" bebé":"")+(mx?' <span class="tag mix">RECOGIDAS DISTINTAS</span>':" · "+esc(recBase(p,v)))+(pl===1?' <span class="tag solo">no sentar solo</span>':"")+(p.nota?" · "+esc(p.nota):"")+'</div>'+
+  '<div class="mm">'+pl+' plaza(s)'+(c.be?" + "+c.be+" bebé":"")+(function(){var ne=embPlazas(p);return (ne>0&&ne<pl)?' · <b style="color:var(--green)">'+ne+'/'+pl+' subidos</b>':""})()+(mx?' <span class="tag mix">RECOGIDAS DISTINTAS</span>':" · "+esc(recBase(p,v)))+(pl===1?' <span class="tag solo">no sentar solo</span>':"")+(p.nota?" · "+esc(p.nota):"")+'</div>'+
   '<div class="mm">🧑‍💼 <b>'+esc(p.vendedor||"SIN VENDEDOR")+'</b></div>'+
   (p.localizador?'<div class="loc">'+esc(p.localizador)+'</div>':"")+
   '<div class="acts">'+
    (tel?'<button class="tel" onclick="menuTel(\''+tel+'\',\''+jsq(vjs[0]?vjs[0].nombre:p.nombre)+'\')">📞 '+esc(p.tel)+'</button>':"")+
    '<button class="just" onclick="justificante(\''+vId+'\',\''+p.id+'\')">🧾 Justificante</button>'+
-   '<button class="bc" onclick="toggleCob(\''+vId+'\',\''+p.id+'\')">'+(p.cobrado?"✓ Cobrado":"Cobrar "+(+p.pendiente||0)+"€")+'</button>'+
+   '<button class="just" onclick="billetes(\''+vId+'\',\''+p.id+'\')">🎟️ Billetes QR</button>'+
+   '<button class="bc" onclick="toggleCob(\''+vId+'\',\''+p.id+'\')">'+(p.cobrado?"✓ Cobrado":(cobPax(p)>0?"Cobrar "+r2((+p.pendiente||0)-cobPax(p))+"€ (cobrado "+cobPax(p)+"€)":"Cobrar "+(+p.pendiente||0)+"€"))+'</button>'+
    '<button onclick="modalPax(\''+vId+'\',\''+p.id+'\')">✏️</button>'+
    '<button onclick="delPax(\''+vId+'\',\''+p.id+'\')">🗑️</button></div></div>'+
   '<div class="r"><div class="eur">'+money(+p.pendiente||0)+'</div><div class="cob-lbl">COBRADO</div></div></div>'}
@@ -451,8 +452,10 @@ function copiar(t){if(navigator.clipboard)navigator.clipboard.writeText(t);toast
 /* ---------- Acciones ---------- */
 function abrir(id){CUR=id;VIEW="detalle";Q="";FPT="__all";render()}
 function fabAction(){VIEW==="lista"?modalViaje():modalPax(CUR)}
-function toggleEmb(vId,pId){var p=DB.viajes[vId].pasajeros[pId];p.embarcado=!p.embarcado;wField("viajes/"+vId+"/pasajeros/"+pId+"/embarcado",p.embarcado);render()}
-function toggleCob(vId,pId){var p=DB.viajes[vId].pasajeros[pId];p.cobrado=!p.cobrado;wField("viajes/"+vId+"/pasajeros/"+pId+"/cobrado",p.cobrado);render()}
+function toggleEmb(vId,pId){var p=DB.viajes[vId].pasajeros[pId];p.embarcado=!p.embarcado;wField("viajes/"+vId+"/pasajeros/"+pId+"/embarcado",p.embarcado);
+ if(p.viajeros&&p.viajeros.length){p.viajeros.forEach(function(x){if(x.tipo!=="bebe")x.emb=p.embarcado});wField("viajes/"+vId+"/pasajeros/"+pId+"/viajeros",p.viajeros)}render()}
+function toggleCob(vId,pId){var p=DB.viajes[vId].pasajeros[pId];p.cobrado=!p.cobrado;wField("viajes/"+vId+"/pasajeros/"+pId+"/cobrado",p.cobrado);
+ if(!p.cobrado&&p.viajeros&&p.viajeros.length){p.viajeros.forEach(function(x){x.cob=0});wField("viajes/"+vId+"/pasajeros/"+pId+"/viajeros",p.viajeros)}render()}
 function delPax(vId,pId){if(confirm("¿Eliminar esta reserva?")){delete DB.viajes[vId].pasajeros[pId];wDel("viajes/"+vId+"/pasajeros/"+pId);render()}}
 
 /* ---------- Sheet ---------- */
@@ -463,16 +466,37 @@ function cerrar(){stopScan();document.getElementById("ov").classList.remove("on"
 document.getElementById("ov").addEventListener("click",function(e){if(e.target.id==="ov")cerrar()});
 
 /* ---------- Escáner de embarque ---------- */
-var _sc=null,_scBusy=false,_scLast=0;
+var _sc=null,_scBusy=false,_scLast=0,_busPt="";
 function scMsg(t,c){var e=document.getElementById("scmsg");if(e){e.textContent=t;e.style.color=c||"var(--muted)"}}
+function scPtHTML(){return PTS.map(function(pt){return '<div class="ptab '+(_busPt===pt?"on":"")+'" style="padding:9px 4px;font-size:12.5px" onclick="setBusPt(\''+jsq(pt)+'\')">'+esc(pt)+'</div>'}).join("")}
+function setBusPt(x){_busPt=(_busPt===x)?"":x;var e=document.getElementById("scpt");if(e)e.innerHTML=scPtHTML();scInfo()}
+function scInfo(){
+ var e=document.getElementById("scinfo"),v=DB.viajes[CUR];if(!e||!v)return;
+ var t=totViaje(v);
+ if(!_busPt){e.innerHTML='Elige en qué punto estás: así queda registrado dónde sube cada uno.';return}
+ var asig=plazasPunto(v,_busPt),sub=0;
+ paxArr(v).forEach(function(p){viajeros(p).forEach(function(x){if(x.tipo!=="bebe"&&(p.embarcado||x.emb)&&recDe(p,x,v)===_busPt)sub++})});
+ e.innerHTML='<b>'+esc(_busPt)+'</b>: subidos '+sub+' de '+asig+' asignados · total viaje '+t.emb+'/'+t.plazas}
 function modalScan(){
  var v=DB.viajes[CUR];if(!v)return;
- var t=totViaje(v);
- sheet('<h2>📷 Escanear embarque</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+' · embarcados '+t.emb+'/'+t.plazas+'</div>',
-  '<div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px;margin-top:8px"></div>'+
-  '<div id="scmsg" style="font-size:13px;font-weight:700;margin-top:9px;text-align:center;color:var(--muted)">Apunta al QR del justificante</div>',
+ sheet('<h2>📷 Escanear embarque</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+'</div>',
+  '<label style="margin-top:6px">Punto donde estás ahora</label><div class="ptabs" id="scpt">'+scPtHTML()+'</div>'+
+  '<div id="scinfo" style="font-size:12.5px;margin-top:7px;color:var(--navy)"></div>'+
+  '<div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:230px;margin-top:9px"></div>'+
+  '<div id="scmsg" style="font-size:13px;font-weight:700;margin-top:9px;text-align:center;color:var(--muted)">Apunta al QR del billete</div>'+
+  '<label>¿QR ilegible? Busca por nombre o localizador</label><input id="scq" placeholder="Nombre, titular o YMV-0001" oninput="scBuscar(this.value)"><div id="scres"></div>',
   '<button class="btn bg2" onclick="cerrar()">Cerrar</button>');
- startScan()}
+ scInfo();startScan()}
+function scBuscar(q){
+ var v=DB.viajes[CUR],e=document.getElementById("scres");if(!e||!v)return;
+ q=(q||"").trim().toLowerCase();if(q.length<2){e.innerHTML="";return}
+ var out=[];
+ paxArr(v).forEach(function(p){var vj=viajeros(p),tit=((vj[0]||{}).nombre||p.nombre||"");
+  vj.forEach(function(x,i){if(x.tipo==="bebe")return;
+   var nm=nomPers(p,x,i);
+   if(nm.toLowerCase().indexOf(q)>=0||tit.toLowerCase().indexOf(q)>=0||(p.localizador||"").toLowerCase().indexOf(q)>=0)out.push({p:p,i:i,nm:nm,tit:tit,ok:!!(p.embarcado||x.emb)})})});
+ e.innerHTML=out.slice(0,8).map(function(o){return '<div class="imp" style="cursor:pointer;padding:10px" onclick="scElige(\''+o.p.id+'\','+o.i+')"><b>'+(o.ok?"✅ ":"")+esc(o.nm)+'</b><div class="m">'+esc(o.tit)+' · '+esc(o.p.localizador||"")+'</div></div>'}).join("")||'<div class="empty" style="padding:12px">Sin resultados</div>'}
+function scElige(pId,i){var p=aseguraIds(CUR,pId);stopScan(function(){resultadoPersona(CUR,pId,p.viajeros[i].uid)})}
 function startScan(){
  if(typeof Html5Qrcode==="undefined"){scMsg("No cargó el lector de QR (revisa la conexión)","var(--red)");return}
  _scBusy=false;_sc=new Html5Qrcode("qr-reader");
@@ -484,37 +508,75 @@ function stopScan(cb){
  s.stop().then(function(){try{s.clear()}catch(e){}if(cb)cb()}).catch(function(){if(cb)cb()})}
 function onScan(txt){
  if(_scBusy)return;
- var m=/^YMV:([^:]+):([^:]+)$/.exec((txt||"").trim());
+ var m=/^YMV:([^:]+):([^:]+)(?::([^:]+))?$/.exec((txt||"").trim());
  if(!m){var n=Date.now();if(n-_scLast>1500){_scLast=n;scMsg("QR no válido para este sistema","var(--red)")}return}
  _scBusy=true;if(navigator.vibrate)navigator.vibrate(80);
- stopScan(function(){resultadoScan(m[1],m[2])})}
+ stopScan(function(){if(m[3])resultadoPersona(m[1],m[2],m[3]);else resultadoScan(m[1],m[2])})}
+function otroScan(msg){sheet('<h2>⚠️ '+msg+'</h2>','<div class="note">Comprueba que sea el billete correcto.</div>','<button class="btn bg2" onclick="cerrar()">Cerrar</button><button class="btn bp" onclick="modalScan()">Escanear otro</button>')}
+function pieScan(){return '<button class="btn bg2" onclick="cerrar()">Cerrar</button><button class="btn bp" onclick="modalScan()">📷 Escanear siguiente</button>'}
+/* --- QR individual --- */
+function resultadoPersona(vId,pId,uidp){
+ var v=DB.viajes[vId],p=v&&v.pasajeros&&v.pasajeros[pId];
+ if(!v||!p)return otroScan("Reserva no encontrada (puede haberse eliminado)");
+ if(vId!==CUR)return otroScan("Este QR es de otro viaje: "+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):""));
+ var f=buscaPers(p,uidp);if(!f)return otroScan("Persona no encontrada en la reserva (¿se editó?)");
+ var x=f.x,i=f.i,ya=!!(p.embarcado||x.emb);
+ var cuota=cuotaPend(v,p,x),pagado=p.cobrado?cuota:(+x.cob||0),debe=Math.max(0,r2(cuota-pagado)),precio=precioPers(v,x);
+ var plan=recDe(p,x,v),dif=_busPt&&_busPt!==plan;
+ var subidos=embPlazas(p),tot=plazasDe(p),A='\''+vId+'\',\''+pId+'\',\''+uidp+'\'';
+ var btns="";
+ if(!ya&&debe>0)btns='<button class="btn bp" style="background:var(--green)" onclick="anotaPersona('+A+',true,true)">✅ Sube y paga</button><button class="btn bg2" style="margin-top:9px" onclick="anotaPersona('+A+',true,false)">Sube · cobrar después</button>';
+ else if(!ya)btns='<button class="btn bp" style="background:var(--green)" onclick="anotaPersona('+A+',true,false)">✅ Marcar que ha subido</button>';
+ else if(debe>0)btns='<button class="btn bp" style="background:var(--green)" onclick="anotaPersona('+A+',false,true)">💶 Cobrar ahora</button>';
+ sheet('<h2>'+(ya?"⚠️ YA HABÍA SUBIDO":"Pasajero encontrado")+'</h2><div class="loc" style="margin-top:5px">'+esc((p.localizador||"")+"-"+(i+1))+'</div>',
+  '<div class="sumbox"><div class="r"><span>Pasajero</span><b>'+esc(nomPers(p,x,i))+'</b></div>'+
+  '<div class="r"><span>Tipo</span><b>'+esc(tipoTxt(x))+'</b></div>'+
+  '<div class="r"><span>Reserva de</span><b>'+esc((viajeros(p)[0]||{}).nombre||p.nombre)+' ('+subidos+'/'+tot+' subidos)</b></div>'+
+  '<div class="r"><span>Su recogida</span><b>'+esc(plan)+'</b></div>'+
+  '<div class="r"><span>Billete</span><b>'+money(precio)+'</b></div>'+
+  '<div class="r"><span>Ya pagado</span><b style="color:var(--green)">'+money(r2(precio-debe))+'</b></div>'+
+  '<div class="r big"><span>A cobrar ahora</span><b style="color:'+(debe>0?"var(--amber)":"var(--green)")+'">'+(debe>0?money(debe):"Nada pendiente ✓")+'</b></div></div>'+
+  (dif&&!ya?'<div class="note">📍 Su recogida era <b>'+esc(plan)+'</b> y estás en <b>'+esc(_busPt)+'</b>: se registrará que sube aquí.</div>':"")+
+  (debe>0?'<label>Importe que paga ahora (€)</label><input id="sc-monto" type="number" inputmode="decimal" value="'+debe+'">':"")+
+  '<div style="margin-top:12px">'+btns+'</div>',pieScan())}
+function anotaPersona(vId,pId,uidp,emb,cob){
+ var v=DB.viajes[vId],p=v.pasajeros[pId],f=buscaPers(p,uidp);if(!f)return;var x=f.x;
+ if(emb){x.emb=true;x.t=Date.now();if(_busPt){x.subeEn=_busPt;x.rec=(_busPt===recBase(p,v))?"":_busPt}}
+ var m=0;
+ if(cob){var e=document.getElementById("sc-monto");m=e?(parseFloat(e.value)||0):cuotaPend(v,p,x);x.cob=r2((+x.cob||0)+m)}
+ recalcRes(vId,pId);
+ toast("✓ "+nomPers(p,x,f.i)+(emb?" sube":"")+(m?" · "+money(m)+" cobrados":""));
+ render();modalScan()}
+/* --- QR de reserva (grupo, billetes antiguos) --- */
 function resultadoScan(vId,pId){
  var v=DB.viajes[vId],p=v&&v.pasajeros&&v.pasajeros[pId];
- var otro=function(msg){sheet('<h2>⚠️ '+msg+'</h2>','<div class="note">Comprueba que sea el justificante correcto.</div>','<button class="btn bg2" onclick="cerrar()">Cerrar</button><button class="btn bp" onclick="modalScan()">Escanear otro</button>')};
- if(!v||!p)return otro("Reserva no encontrada (puede haberse eliminado)");
- if(vId!==CUR)return otro("Este QR es de otro viaje: "+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):""));
- var vjs=viajeros(p),c=cuenta(vjs),pend=+p.pendiente||0,ya=!!p.embarcado,cob=!!p.cobrado,debe=!cob&&pend>0;
- var btns="";
- if(!ya&&debe)btns+='<button class="btn bp" style="background:var(--green)" onclick="anotaScan(\''+vId+'\',\''+pId+'\',true,true)">✅ Subió y pagó '+money(pend)+'</button>'+
-   '<button class="btn bg2" style="margin-top:9px" onclick="anotaScan(\''+vId+'\',\''+pId+'\',true,false)">Subió · cobrar después</button>';
- else if(!ya)btns+='<button class="btn bp" style="background:var(--green)" onclick="anotaScan(\''+vId+'\',\''+pId+'\',true,false)">✅ Marcar que ha subido</button>';
- else if(debe)btns+='<button class="btn bp" style="background:var(--green)" onclick="anotaScan(\''+vId+'\',\''+pId+'\',false,true)">💶 Cobrar '+money(pend)+'</button>';
- sheet('<h2>'+(ya?"⚠️ YA HABÍA SUBIDO":"Reserva encontrada")+'</h2><div class="loc" style="margin-top:5px">'+esc(p.localizador||"")+'</div>',
+ if(!v||!p)return otroScan("Reserva no encontrada (puede haberse eliminado)");
+ if(vId!==CUR)return otroScan("Este QR es de otro viaje: "+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):""));
+ var vjs=viajeros(p),c=cuenta(vjs),pend=+p.pendiente||0,cp=cobPax(p),resto=Math.max(0,r2(pend-cp)),ya=!!p.embarcado,debe=!p.cobrado&&resto>0;
+ var sub=embPlazas(p),A='\''+vId+'\',\''+pId+'\'',btns="";
+ if(!ya&&debe)btns='<button class="btn bp" style="background:var(--green)" onclick="anotaScan('+A+',true,true)">✅ Suben todos y pagan '+money(resto)+'</button><button class="btn bg2" style="margin-top:9px" onclick="anotaScan('+A+',true,false)">Suben · cobrar después</button>';
+ else if(!ya)btns='<button class="btn bp" style="background:var(--green)" onclick="anotaScan('+A+',true,false)">✅ Suben todos'+(sub?" los que faltan":"")+'</button>';
+ else if(debe)btns='<button class="btn bp" style="background:var(--green)" onclick="anotaScan('+A+',false,true)">💶 Cobrar '+money(resto)+'</button>';
+ sheet('<h2>'+(ya?"⚠️ YA HABÍAN SUBIDO":"Reserva encontrada")+'</h2><div class="loc" style="margin-top:5px">'+esc(p.localizador||"")+'</div>',
   '<div class="sumbox"><div class="r"><span>Titular</span><b>'+esc(p.nombre)+'</b></div>'+
   '<div class="r"><span>Plazas</span><b>'+(c.ad+c.ni)+' ('+c.ad+' adulto(s)'+(c.ni?" + "+c.ni+" niño(s)":"")+')'+(c.be?" + "+c.be+" bebé":"")+'</b></div>'+
+  (sub&&!ya?'<div class="r"><span>Ya han subido</span><b>'+sub+' de '+(c.ad+c.ni)+'</b></div>':"")+
   '<div class="r"><span>Recogida</span><b>'+(mixto(p,v)?"varios puntos":esc(recBase(p,v)))+'</b></div>'+
   '<div class="r"><span>Total</span><b>'+money(+p.importe||0)+'</b></div>'+
   '<div class="r"><span>Señal ya pagada</span><b style="color:var(--green)">'+money(+p.senal||0)+'</b></div>'+
-  '<div class="r big"><span>A cobrar ahora</span><b style="color:'+(debe?"var(--amber)":"var(--green)")+'">'+(debe?money(pend):(cob?"Cobrado ✓":"Nada pendiente"))+'</b></div></div>'+
+  '<div class="r big"><span>A cobrar ahora</span><b style="color:'+(debe?"var(--amber)":"var(--green)")+'">'+(debe?money(resto):"Cobrado ✓")+'</b></div></div>'+
   (p.nota?'<div class="note">📝 '+esc(p.nota)+'</div>':"")+
-  '<div style="margin-top:12px">'+btns+'</div>',
-  '<button class="btn bg2" onclick="cerrar()">Cerrar</button><button class="btn bp" onclick="modalScan()">📷 Escanear siguiente</button>')}
+  '<div class="note">Si no suben todos juntos o pagan cada uno lo suyo, usa los <b>billetes individuales</b> (🎟️) de esta reserva.</div>'+
+  '<div style="margin-top:12px">'+btns+'</div>',pieScan())}
 function anotaScan(vId,pId,emb,cob){
- var p=DB.viajes[vId].pasajeros[pId];
- if(emb){p.embarcado=true;wField("viajes/"+vId+"/pasajeros/"+pId+"/embarcado",true)}
- if(cob){p.cobrado=true;wField("viajes/"+vId+"/pasajeros/"+pId+"/cobrado",true)}
- toast("✓ Anotado: "+p.nombre+(cob?" · "+money(+p.pendiente||0)+" cobrados":""));
+ var v=DB.viajes[vId],p=v.pasajeros[pId];
+ if(emb){p.embarcado=true;if(p.viajeros)p.viajeros.forEach(function(x){if(x.tipo!=="bebe"&&!x.emb){x.emb=true;x.t=Date.now();if(_busPt){x.subeEn=_busPt;x.rec=(_busPt===recBase(p,v))?"":_busPt}}})}
+ if(cob)p.cobrado=true;
+ var b="viajes/"+vId+"/pasajeros/"+pId+"/";
+ wField(b+"embarcado",!!p.embarcado);wField(b+"cobrado",!!p.cobrado);if(p.viajeros)wField(b+"viajeros",p.viajeros);
+ toast("✓ Anotado: "+p.nombre+(cob?" · cobrado":""));
  render();modalScan()}
+
 
 /* ---------- Autobuses ---------- */
 function busOps(sel){return BUSES.map(function(x){return '<div class="busop '+(sel[x.id]?"on":"")+'" id="bo_'+x.id+'" onclick="togBus(\''+x.id+'\')"><div class="bx">'+(sel[x.id]?"✓":"")+'</div><div><b>'+x.n+'</b><small>'+x.cap+' plazas</small></div></div>'}).join("")}
@@ -1071,6 +1133,57 @@ function syncCliente(v,p){
  DB.clientes[tel]=Object.assign({nota:""},prev,c,{viajes:Object.assign({},prev.viajes||{},vj)});
  wUpd("clientes/"+tel,c);wUpd("clientes/"+tel+"/viajes",vj)}
 
+/* ---------- Control individual (QR por persona) ---------- */
+function r2(n){return Math.round(n*100)/100}
+function slug(t){return (""+(t||"")).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_+|_+$/g,"")}
+function embPlazas(p){if(p.embarcado)return plazasDe(p);var n=0;viajeros(p).forEach(function(x){if(x.tipo!=="bebe"&&x.emb)n++});return n}
+function cobPax(p){if(p.cobrado)return +p.pendiente||0;var s=0;viajeros(p).forEach(function(x){s+=(+x.cob||0)});return r2(s)}
+function precioPers(v,x){return x.tipo==="bebe"?0:(x.tipo==="nino"?precioN(v):(+v.precioA||0))}
+function cuotaPend(v,p,x){var tot=+p.importe||importe(v,viajeros(p));if(!tot)return 0;return r2(precioPers(v,x)*(+p.pendiente||0)/tot)}
+function aseguraIds(vId,pId){
+ var p=DB.viajes[vId].pasajeros[pId];
+ if(!p.viajeros||!p.viajeros.length)p.viajeros=viajeros(p);
+ var ch=false;p.viajeros.forEach(function(x){if(!x.uid){x.uid=uid("q");ch=true}});
+ if(ch)wPax(vId,p);
+ return p}
+function buscaPers(p,uidp){var vj=p.viajeros||[];for(var i=0;i<vj.length;i++)if(vj[i].uid===uidp)return {x:vj[i],i:i};return null}
+function nomPers(p,x,i){return (x.nombre||"").trim()||("Acompañante "+i+" de "+((viajeros(p)[0]||{}).nombre||p.nombre||"").trim())}
+function tipoTxt(x){return x.tipo==="nino"?"Niño"+(x.edad?" ("+x.edad+" años)":""):x.tipo==="bebe"?"Bebé":"Adulto"}
+function recalcRes(vId,pId){
+ var p=DB.viajes[vId].pasajeros[pId],vj=p.viajeros||[];
+ var todos=vj.filter(function(x){return x.tipo!=="bebe"});
+ p.embarcado=todos.length>0&&todos.every(function(x){return x.emb});
+ if(!p.cobrado){var s=0;vj.forEach(function(x){s+=(+x.cob||0)});if((+p.pendiente||0)>0&&s>=(+p.pendiente)-0.01)p.cobrado=true}
+ var b="viajes/"+vId+"/pasajeros/"+pId+"/";
+ wField(b+"viajeros",vj);wField(b+"embarcado",!!p.embarcado);wField(b+"cobrado",!!p.cobrado)}
+function qrImg(txt){try{if(typeof qrcode==="undefined")return "";var q=qrcode(0,"M");q.addData(txt);q.make();return q.createDataURL(6,8)}catch(e){return ""}}
+function htmlBillete(v,p,x,i){
+ var cuota=cuotaPend(v,p,x),precio=precioPers(v,x),loc=(p.localizador||"YMV")+"-"+(i+1);
+ var u=qrImg("YMV:"+v.id+":"+p.id+":"+x.uid);
+ var tit=((viajeros(p)[0]||{}).nombre||p.nombre||"").trim();
+ return '<div class="jst"><div class="hd"><div class="lc">'+esc(loc)+'</div><h1>BILLETE INDIVIDUAL</h1><div class="sub">'+MARCA+(v.num?"  ·  Viaje Nº "+v.num:"")+'</div></div>'+
+  '<div class="rw"><span>Pasajero</span><b>'+esc(nomPers(p,x,i))+'</b></div>'+
+  '<div class="rw"><span>Tipo</span><b>'+esc(tipoTxt(x))+'</b></div>'+
+  (i>0?'<div class="rw"><span>Reserva a nombre de</span><b>'+esc(tit)+'</b></div>':"")+
+  '<div class="rw"><span>Trayecto</span><b>MADRID → '+esc((v.destino||"").toUpperCase())+'</b></div>'+
+  '<div class="rw"><span>Fecha</span><b>'+esc(fmtLargoMin(v.fecha))+'</b></div>'+
+  '<div class="rw"><span>Punto de recogida</span><b>'+esc(recDe(p,x,v))+'</b></div>'+
+  '<div class="rw"><span>Hora de salida</span><b>'+esc(v.hora||"—")+'</b></div>'+
+  '<div class="rw"><span>Presentación</span><b>15 minutos antes</b></div>'+
+  (v.regreso?'<div class="rw"><span>Regreso desde '+esc(v.destino)+'</span><b>'+esc(v.regreso)+'</b></div>':"")+
+  '<h3>PAGO DE ESTE PASAJERO</h3>'+
+  '<div class="tot"><div class="rw"><span>Precio del billete</span><b>'+money(precio)+'</b></div>'+
+  '<div class="rw"><span>Señal ya pagada (su parte)</span><b>- '+money(r2(precio-cuota))+'</b></div></div>'+
+  '<div class="pend"><span>PENDIENTE · en metálico al subir</span><span>'+money(cuota)+'</span></div>'+
+  (u?'<div class="qr"><img style="width:170px;height:170px" src="'+u+'"><div><b>CÓDIGO PERSONAL DE EMBARQUE</b> · enséñalo al subir</div></div>':"")+
+  '<div class="avi"><b>⚠️ '+AVISO1+'</b><br>'+AVISO2+'</div>'+
+  '<div class="ft">YO ME VOY EXCURSIONES · Reservas e información: '+TELS+'</div></div>'}
+function billetes(vId,pId){
+ var v=DB.viajes[vId],p=aseguraIds(vId,pId),items=[];
+ p.viajeros.forEach(function(x,i){if(x.tipo==="bebe")return;
+  items.push({html:htmlBillete(v,p,x,i),nombre:"Billete-"+(p.localizador||"YMV")+"-"+(i+1)+"-"+slug(nomPers(p,x,i)).slice(0,24)+".pdf",label:(i+1)+". "+nomPers(p,x,i)})});
+ genPdfs(items,{titulo:"Billetes individuales",sub:esc(p.nombre)+" · "+items.length+" billete(s)",volver:"justificante('"+vId+"','"+pId+"')",ancho:700})}
+
 /* ---------- Justificante ---------- */
 var AVISO1="IMPORTANTE — EL PUNTO DE RECOGIDA NO SE PUEDE MODIFICAR.";
 var ASIENTO1="ASIENTOS: POR ORDEN DE LLEGADA Y FIJOS TODO EL VIAJE.";
@@ -1124,6 +1237,7 @@ function justificante(vId,pId,auto){
    '<div class="r big"><span>Pendiente</span><b style="color:var(--amber)">'+money(+p.pendiente||0)+'</b></div></div>'+
    '<a class="btn bwa" style="margin-top:12px" href="'+wa+'" target="_blank" rel="noopener">💬 Enviar por WhatsApp'+(tel?"":" (elegir contacto)")+'</a>'+
    '<button class="btn bp" style="margin-top:9px" onclick="pdfJust(\''+vId+'\',\''+pId+'\')">📄 Generar PDF</button>'+
+   '<button class="btn bg2" style="margin-top:9px" onclick="billetes(\''+vId+'\',\''+pId+'\')">🎟️ Billetes individuales (1 QR por persona)</button>'+
    '<button class="btn bg2" style="margin-top:9px" onclick="imprimirJust(\''+vId+'\',\''+pId+'\')">🖨️ Imprimir</button>'+
    '<button class="btn bg2" style="margin-top:9px" onclick="copiarJust(\''+vId+'\',\''+pId+'\')">📋 Copiar texto</button>'+
    (tel?"":'<div class="note">Esta reserva no tiene teléfono: WhatsApp te pedirá elegir el contacto.</div>'),
@@ -1157,35 +1271,43 @@ function htmlJust(v,p){
   qrBloque(v,p)+'<div class="cond">· Presenta este justificante (impreso o en el móvil) al subir al autobús.<br>· El autobús no espera: preséntate 15 minutos antes en el punto indicado.<br>· La señal no es reembolsable, pero es transferible a otra persona o a otra excursión avisando con 48 h de antelación.<br>· La organización no se responsabiliza de objetos personales olvidados.</div>'+
   '<div class="ft">YO ME VOY EXCURSIONES · Reservas e información: '+TELS+'</div></div>'}
 function imprimirJust(vId,pId){var v=DB.viajes[vId],p=v.pasajeros[pId];document.getElementById("print-area").innerHTML=htmlJust(v,p);window.print()}
-var _pdf=null;
+var _pdfs=[];
 function pdfJust(vId,pId){
  var v=DB.viajes[vId],p=v.pasajeros[pId];if(!p)return;
  genPdf({html:htmlJust(v,p),nombre:"Justificante-"+(p.localizador||"reserva")+".pdf",ancho:700,titulo:"PDF listo",
   sub:esc(p.nombre),volver:"justificante('"+vId+"','"+pId+"')"})}
-function genPdf(o){
- if(typeof html2pdf==="undefined"){toast("No cargó el generador de PDF (revisa la conexión)");return}
- if(!o.html){toast("Nada que generar");return}
- toast("Generando PDF…");
+function renderPdf(o){return new Promise(function(res,rej){
  var host=document.getElementById("pdf-area");host.style.width=o.ancho+"px";host.innerHTML=o.html;
  var sy=window.pageYOffset||0,sx=window.pageXOffset||0;window.scrollTo(0,0);
  var vuelve=function(){host.innerHTML="";window.scrollTo(sx,sy)};
  setTimeout(function(){
- html2pdf().set({margin:[8,8,8,8],filename:o.nombre,image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:o.ancho,scrollX:0,scrollY:0,x:0,y:0},
-  jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".gr-h",".fir",".avi",".tot",".pend",".qr"]}})
-  .from(host).outputPdf("blob").then(function(blob){
-   vuelve();_pdf={blob:blob,nombre:o.nombre};
-   sheet('<h2>📄 '+o.titulo+'</h2><div style="font-size:12.5px;color:var(--muted)">'+(o.sub||"")+'</div>',
-    '<div class="sumbox"><div class="r"><span>Archivo</span><b>'+esc(o.nombre)+'</b></div></div>'+
-    '<button class="btn bwa" style="margin-top:12px" onclick="compartirPdf()">📤 Compartir (WhatsApp, etc.)</button>'+
-    '<button class="btn bp" style="margin-top:9px" onclick="descargarPdf()">⬇️ Descargar PDF</button>',
-    '<button class="btn bg2" onclick="'+o.volver+'">‹ Volver</button><button class="btn bg2" onclick="cerrar()">Cerrar</button>')})
-  .catch(function(e){vuelve();toast("No se pudo generar el PDF: "+(e&&e.message||e))})},250)}
-function descargarPdf(){if(!_pdf)return;var a=document.createElement("a");a.href=URL.createObjectURL(_pdf.blob);a.download=_pdf.nombre;
- document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000);toast("PDF descargado")}
-function compartirPdf(){if(!_pdf)return;
- var f=new File([_pdf.blob],_pdf.nombre,{type:"application/pdf"});
- if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:_pdf.nombre}).catch(function(e){if(e&&e.name!=="AbortError")descargarPdf()});
- else descargarPdf()}
+  html2pdf().set({margin:[8,8,8,8],filename:"x.pdf",image:{type:"jpeg",quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:o.ancho,scrollX:0,scrollY:0,x:0,y:0},
+   jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".gr-h",".fir",".avi",".tot",".pend",".qr"]}})
+   .from(host).outputPdf("blob").then(function(b){vuelve();res(b)}).catch(function(e){vuelve();rej(e)})},250)})}
+function genPdfs(items,o){
+ if(typeof html2pdf==="undefined"){toast("No cargó el generador de PDF (revisa la conexión)");return}
+ if(!items.length||!items[0].html){toast("Nada que generar");return}
+ toast("Generando "+items.length+" PDF…");_pdfs=[];
+ items.reduce(function(pr,it){return pr.then(function(){return renderPdf({html:it.html,ancho:o.ancho||700}).then(function(b){_pdfs.push({blob:b,nombre:it.nombre,label:it.label||it.nombre})})})},Promise.resolve())
+  .then(function(){showPdfs(o)}).catch(function(e){toast("No se pudo generar el PDF: "+(e&&e.message||e))})}
+function genPdf(o){genPdfs([{html:o.html,nombre:o.nombre}],o)}
+function showPdfs(o){
+ var multi=_pdfs.length>1;
+ sheet('<h2>📄 '+o.titulo+'</h2><div style="font-size:12.5px;color:var(--muted)">'+(o.sub||"")+'</div>',
+  (multi?_pdfs.map(function(f,i){return '<div class="imp" style="padding:10px"><b>'+esc(f.label)+'</b><div style="display:flex;gap:6px;margin-top:7px"><button class="btn bwa" style="padding:9px;font-size:13px" onclick="compartirPdf('+i+')">📤 Compartir</button><button class="btn bg2" style="padding:9px;font-size:13px;width:60px" onclick="descargarPdf('+i+')">⬇️</button></div></div>'}).join("")+
+   '<button class="btn bp" style="margin-top:6px" onclick="compartirPdf()">📤 Compartir todos a la vez</button><button class="btn bg2" style="margin-top:8px" onclick="descargarPdf()">⬇️ Descargar todos</button>'
+  :'<div class="sumbox"><div class="r"><span>Archivo</span><b>'+esc(_pdfs[0].nombre)+'</b></div></div>'+
+   '<button class="btn bwa" style="margin-top:12px" onclick="compartirPdf(0)">📤 Compartir (WhatsApp, etc.)</button><button class="btn bp" style="margin-top:9px" onclick="descargarPdf(0)">⬇️ Descargar PDF</button>'),
+  '<button class="btn bg2" onclick="'+o.volver+'">‹ Volver</button><button class="btn bg2" onclick="cerrar()">Cerrar</button>')}
+function lstPdf(i){return (i==null)?_pdfs.slice():(_pdfs[i]?[_pdfs[i]]:[])}
+function descargarPdf(i){var l=lstPdf(i);if(!l.length)return;
+ l.forEach(function(f,k){setTimeout(function(){var a=document.createElement("a");a.href=URL.createObjectURL(f.blob);a.download=f.nombre;
+  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000)},k*500)});toast("PDF descargado")}
+function compartirPdf(i){var l=lstPdf(i);if(!l.length)return;
+ var fs=l.map(function(f){return new File([f.blob],f.nombre,{type:"application/pdf"})});
+ if(navigator.canShare&&navigator.canShare({files:fs}))navigator.share({files:fs,title:fs[0].name}).catch(function(e){if(e&&e.name!=="AbortError")descargarPdf(i)});
+ else descargarPdf(i)}
+
 
 /* ---------- Listado impreso ---------- */
 function htmlListado(vId){
