@@ -186,6 +186,18 @@ textarea{min-height:76px;resize:vertical}
 #pdf-area .jst .qr img{width:130px;height:130px;image-rendering:pixelated}
 #pdf-area .jst .qr div{font-size:10px;color:#333;margin-top:3px}
 #qr-reader video{width:100%!important;border-radius:12px}
+.vch{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.vch span{background:#EAF0F7;border-radius:20px;padding:3px 9px;font-size:11.5px;color:var(--navy)}.vch b{font-weight:800}
+.vs-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:13.5px}.vs-h span{font-size:12px;color:var(--muted);font-weight:700}
+.vs-r{padding:8px 0;border-bottom:1px dashed var(--line)}.vs-r:last-child{border-bottom:0}
+.vs-n{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:700;margin-bottom:5px}.vs-n b{font-size:21px;line-height:1}
+.vs-n em{font-style:normal;font-size:11px;color:var(--muted);font-weight:600}
+.vs-m{font-size:11.5px;color:var(--muted);margin-top:4px}
+.vs-r.yo .bar i{background:var(--navy)}
+.rcp{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:11px;padding:8px;margin-bottom:8px;background:#fff}
+.rcp .th{width:62px;height:62px;border-radius:9px;background:var(--bg);overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--red);cursor:pointer;flex-shrink:0}
+.rcp .th img{width:100%;height:100%;object-fit:cover}
+.rcp .i{flex:1;min-width:0}.rcp .m{font-size:11.5px;color:var(--muted)}
+.tag.sr{background:#FFF1D6;color:var(--amber)}.tag.ok{background:var(--greenbg);color:var(--green)}
 #login{position:fixed;inset:0;background:var(--navy);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
 #login .box{background:#fff;border-radius:18px;padding:22px;width:100%;max-width:380px}
 #login h1{font-size:19px;margin-bottom:2px}#login .s{font-size:12.5px;color:var(--muted)}
@@ -198,13 +210,13 @@ textarea{min-height:76px;resize:vertical}
 .usr{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;margin-bottom:8px;background:#fff}
 .usr .pd{width:11px;height:11px;border-radius:50%;background:#c3cdd8;flex-shrink:0}.usr .pd.on{background:var(--green);box-shadow:0 0 0 3px #c9efdc}
 .usr .i{flex:1;min-width:0}.usr .n{font-weight:800;font-size:14.5px}.usr .m{font-size:11.5px;color:var(--muted);margin-top:2px}
-.usr .ab{display:flex;gap:6px}.usr .ab button,.mini{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 10px;font-size:15px;cursor:pointer}
+.usr .ab{display:flex;gap:6px}.usr .ab button,.mbtn{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 10px;font-size:15px;cursor:pointer}
 .tag.off{color:var(--red)}
 .adm{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 9px;font-size:15px}.adm .m{font-size:12px;color:var(--muted);font-weight:700}
 .log{border:1px solid var(--line);border-radius:11px;padding:9px 11px;margin-bottom:7px;background:#fff;font-size:13px}
 .log .lh{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-bottom:2px}.log .lh b{color:var(--navy)}
 .log .m{color:var(--muted);font-size:11.5px;margin-top:2px;word-break:break-word}
-.mini.rs{margin-top:7px;font-size:12.5px;font-weight:800;color:var(--navy)}
+.mbtn.rs{margin-top:7px;font-size:12.5px;font-weight:800;color:var(--navy)}
 #print-area{display:none}
 @media print{
  @page{margin:8mm}
@@ -332,7 +344,7 @@ AUTH.onAuthStateChanged(function(u){
  if((u.email||"").toLowerCase()===ADMIN_USER+DOM){iniciaSesion({uid:u.uid,usuario:ADMIN_USER,nombre:"Sergio",rol:"admin"});return}
  RT.ref("usuarios/"+u.uid).once("value").then(function(s){var r=s.val();
   if(!r||r.activo!==true){_lgMsg=(r&&r.activo===false)?"Tu usuario está desactivado. Habla con el administrador.":"Este usuario no está autorizado.";AUTH.signOut();return}
-  iniciaSesion({uid:u.uid,usuario:r.usuario,nombre:r.nombre||r.usuario,rol:"vendedor"})})
+  iniciaSesion({uid:u.uid,usuario:r.usuario,nombre:canonVend(r.nombre||r.usuario),rol:(r.rol==="admin"?"admin":"vendedor")})})
   .catch(function(){_lgMsg="No se pudo comprobar tu usuario. Revisa la conexión.";AUTH.signOut()})});
 function iniciaSesion(me){
  ME=me;ocultaLogin();pintaWho();
@@ -342,10 +354,6 @@ function iniciaSesion(me){
  iniciaDatos()}
 function pintaWho(){var w=document.getElementById("who");w.style.display="flex";
  w.innerHTML='<i></i><span>'+esc(ME.nombre)+'</span>'+(esAdmin()?'<span class="rol">ADMIN</span>':"")}
-function refrescaVend(){
- if(!ME)return;
- if(esAdmin()){var n=VEND_LEG.slice();Object.keys(USUARIOS).forEach(function(k){var u=USUARIOS[k];if(u&&u.activo&&!u.reemplazado&&u.nombre&&n.indexOf(u.nombre)<0)n.push(u.nombre)});VEND=n}
- else VEND=[ME.nombre]}
 
 /* --- presencia (en línea) --- */
 function iniciaPresencia(){
@@ -360,11 +368,6 @@ function iniciaPresencia(){
    base.child("ultimo").onDisconnect().set(SV.TIMESTAMP);
    base.update({nombre:ME.nombre,usuario:ME.usuario,rol:ME.rol});
    c.set(SV.TIMESTAMP)}).catch(function(){})})}
-function vigilaUsuario(){
- if(_uw){_uw.off();_uw=null}
- if(esAdmin())return;
- _uw=RT.ref("usuarios/"+ME.uid);
- _uw.on("value",function(s){var r=s.val();if(!r||r.activo!==true){_lgMsg="Tu acceso ha sido desactivado o cambiado por el administrador.";AUTH.signOut()}})}
 function escuchaAdmin(){
  RT.ref("usuarios").on("value",function(s){USUARIOS=s.val()||{};refrescaVend();if(TAB==="admin")render()});
  RT.ref("presencia").on("value",function(s){PRES=s.val()||{};if(TAB==="admin")render()});
@@ -432,13 +435,6 @@ function crearCuenta(usuario,pass){
    .catch(function(e){if(e&&e.code==="auth/email-already-in-use"&&ver<9)return intento(ver+1);throw e})}
  return intento(1)}
 function activosUsr(){return Object.keys(USUARIOS).map(function(k){return Object.assign({uid:k},USUARIOS[k])}).filter(function(u){return !u.reemplazado})}
-function modalVendedor(){
- sheet('<h2>➕ Añadir vendedor</h2>',
-  '<label>Nombre (el que saldrá en las reservas)</label><input id="nv-nom" placeholder="Ej: Fersho" oninput="nvAuto()">'+
-  '<label>Usuario para entrar (sin espacios)</label><input id="nv-user" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="fersho">'+
-  '<label>Contraseña inicial</label><div style="display:flex;gap:7px"><input id="nv-pass" value="'+genPass()+'" autocapitalize="none" autocorrect="off" spellcheck="false"><button class="btn bg2" style="width:56px;padding:0" onclick="document.getElementById(\'nv-pass\').value=genPass()">🎲</button></div>'+
-  '<div class="note">El vendedor podrá cambiar su contraseña desde su perfil. No podrá eliminar nada y todo lo que modifique quedará en el registro.</div>',
-  '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" id="nv-btn" onclick="crearVendedor()">Crear</button>')}
 function nvAuto(){var u=document.getElementById("nv-user");if(u&&!u.dataset.man)u.value=normUser(document.getElementById("nv-nom").value);}
 function credenciales(titulo,nombre,usuario,pass){
  var url=location.href.split("#")[0].split("?")[0],
@@ -451,35 +447,6 @@ function credenciales(titulo,nombre,usuario,pass){
   '<button class="btn bg2" style="margin-top:8px" onclick="copiaCred()">📋 Copiar datos de acceso</button>',
   '<button class="btn bp" onclick="cerrar()">Listo</button>')}
 function copiaCred(){try{navigator.clipboard.writeText(window._credTxt).then(function(){toast("Copiado")},function(){prompt("Copia el texto:",window._credTxt)})}catch(e){prompt("Copia el texto:",window._credTxt)}}
-function crearVendedor(){
- var nom=document.getElementById("nv-nom").value.trim(),us=normUser(document.getElementById("nv-user").value),pw=document.getElementById("nv-pass").value;
- if(!nom||nom.length>30){toast("Pon el nombre del vendedor");return}
- if(us.length<3){toast("El usuario necesita 3 letras o números como mínimo");return}
- if(us===ADMIN_USER||us==="admin"){toast("Ese usuario está reservado");return}
- if(pw.length<6){toast("La contraseña necesita 6 caracteres como mínimo");return}
- var dup=activosUsr().some(function(u){return (u.nombre||"").toLowerCase()===nom.toLowerCase()})||VEND_LEG.some(function(n){return n.toLowerCase()===nom.toLowerCase()&&activosUsr().some(function(u){return u.nombre===n})});
- if(dup){toast("Ya hay un vendedor con ese nombre");return}
- var b=document.getElementById("nv-btn");b.disabled=true;b.textContent="Creando…";
- RT.ref("usernames/"+us).once("value").then(function(s){
-  if(s.exists())throw {code:"usuario-existe"};
-  return crearCuenta(us,pw)}).then(function(r){
-  var up={};up["usuarios/"+r.uid]={nombre:nom,usuario:us,email:r.email,rol:"vendedor",activo:true,creado:SV.TIMESTAMP,creadoPor:ME.uid};
-  up["usernames/"+us]={email:r.email,uid:r.uid};
-  return RT.ref().update(up)}).then(function(){
-  logUsuario("Alta de vendedor "+nom,"usuario: "+us);credenciales("✅ Vendedor creado",nom,us,pw)})
-  .catch(function(e){b.disabled=false;b.textContent="Crear";var c=(e&&e.code)||"";
-   toast(c==="usuario-existe"?"Ese usuario ya existe":/network/.test(c)?"Sin conexión":/permission/i.test(c+(e.message||""))?"Sin permiso: revisa las reglas de Firebase":/operation-not-allowed|configuration/.test(c)?"Activa Email/Contraseña en Firebase → Authentication":"No se pudo crear: "+(c||e))})}
-function resetPass(uid){
- var u=USUARIOS[uid];if(!u)return;
- if(!confirm("¿Generar una contraseña nueva para "+u.nombre+"? La anterior dejará de funcionar."))return;
- var pw=genPass();toast("Generando…");
- crearCuenta(u.usuario,pw).then(function(r){
-  var up={};up["usuarios/"+uid+"/activo"]=false;up["usuarios/"+uid+"/reemplazado"]=true;
-  up["usuarios/"+r.uid]={nombre:u.nombre,usuario:u.usuario,email:r.email,rol:"vendedor",activo:u.activo!==false,creado:SV.TIMESTAMP,creadoPor:ME.uid};
-  up["usernames/"+u.usuario]={email:r.email,uid:r.uid};
-  return RT.ref().update(up)}).then(function(){
-  logUsuario("Contraseña restablecida: "+u.nombre,"usuario: "+u.usuario);credenciales("🔑 Contraseña nueva",u.nombre,u.usuario,pw)})
-  .catch(function(e){toast("No se pudo restablecer: "+((e&&e.code)||e))})}
 function togActivo(uid){
  var u=USUARIOS[uid];if(!u)return;var nuevo=u.activo===false;
  if(!nuevo&&!confirm("¿Desactivar a "+u.nombre+"? No podrá entrar hasta que lo actives."))return;
@@ -504,19 +471,223 @@ function cambiarPass(){
 
 /* --- panel de administración --- */
 function estPres(uid){var p=PRES[uid]||{};return {on:!!(p.conex&&Object.keys(p.conex).length),ult:p.ultimo||0}}
+function restaura(id){
+ var r=null;REGLOG.forEach(function(x){if(x.id===id)r=x});if(!r||!r.antes||!r.ruta)return;
+ if(!confirm("¿Restaurar "+r.objeto+"? Se volverá a crear tal como estaba cuando se borró."))return;
+ var data;try{data=JSON.parse(r.antes)}catch(e){toast("Copia dañada");return}
+ if(data==null){toast("No hay datos que restaurar");return}
+ REF.child(r.ruta).set(data).then(function(){RT.ref("registro/"+id+"/restaurado").set(true);
+  regLog({accion:"restaura",viaje:r.viaje||"",objeto:r.objeto||"",detalle:"Restaurado por el administrador",ruta:r.ruta});toast("Restaurado")}).catch(fail)}
+
+/* ---------- Nombres de vendedor, perfiles y duplicados ---------- */
+function esDueno(){return !!ME&&ME.usuario===ADMIN_USER}
+function normV(s){return (""+(s||"")).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,"")}
+var VMAP={};
+function reconstruyeVMAP(){
+ VMAP={};VEND_LEG.forEach(function(n){VMAP[normV(n)]=n});VMAP["viajaconsergio"]="Sergio";
+ if(ME&&ME.nombre&&!VMAP[normV(ME.nombre)])VMAP[normV(ME.nombre)]=ME.nombre;
+ Object.keys(USUARIOS||{}).forEach(function(k){var u=USUARIOS[k];if(u&&u.nombre&&!u.reemplazado&&!VMAP[normV(u.nombre)])VMAP[normV(u.nombre)]=(""+u.nombre).trim()})}
+reconstruyeVMAP();
+function canonVend(n){var k=normV(n);if(!k)return"SIN VENDEDOR";return VMAP[k]||(""+n).trim()}
+function hoyISO(){var d=new Date(),p=function(n){return (n<10?"0":"")+n};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())}
+function viajePasado(v){return !!(v&&v.fecha&&v.fecha<hoyISO())}
+function misPlazas(v){var me=ME?normV(ME.nombre):"",n=0;paxArr(v).forEach(function(p){if(normV(canonVend(p.vendedor))===me)n+=plazasDe(p)});return n}
+function statsViaje(v,t,cls){
+ if(esAdmin())return '<div class="'+cls+'"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Embarcados</small></div><div><b>'+money(t.cobrado)+'</b><small>Cobrado</small></div><div><b>'+money(t.porcobrar)+'</b><small>Por cobrar</small></div></div>';
+ return '<div class="'+cls+'"><div><b>'+t.plazas+'</b><small>Plazas vendidas</small></div><div><b>'+misPlazas(v)+'</b><small>Mis plazas</small></div></div>'}
+
+/* --- contador de ventas --- */
+function ventasVend(v){var g={};paxArr(v).forEach(function(p){var nm=canonVend(p.vendedor),k=normV(nm)||"sinvend";
+ if(!g[k])g[k]={nombre:nm,pl:0,n:0,imp:0};g[k].pl+=plazasDe(p);g[k].n++;g[k].imp+=(+p.importe||importe(v,viajeros(p)))});return g}
+function ventasHTML(v){
+ var g=ventasVend(v),ks=Object.keys(g).sort(function(a,b){return g[b].pl-g[a].pl});if(!ks.length)return"";
+ var tot=0,nres=0;ks.forEach(function(k){tot+=g[k].pl;nres+=g[k].n});
+ var max=g[ks[0]].pl||1,me=ME?normV(ME.nombre):"";
+ return '<div class="card vs"><div class="vs-h"><b>📊 Ventas de este viaje</b><span>'+tot+' plazas · '+nres+' reservas</span></div>'+
+  ks.map(function(k,i){var r=g[k],yo=(k===me);
+   return '<div class="vs-r'+(yo?" yo":"")+'"><div class="vs-n"><span>'+(i===0&&ks.length>1&&r.pl>0?"🥇 ":"")+esc(r.nombre)+(yo?' <em>(tú)</em>':"")+'</span><b>'+r.pl+'</b></div>'+
+    '<div class="bar"><i style="width:'+Math.round(r.pl/max*100)+'%"></i></div>'+
+    '<div class="vs-m">'+r.n+' reserva'+(r.n===1?"":"s")+' · '+(tot?Math.round(r.pl/tot*100):0)+'% del total'+(esAdmin()?' · vendido '+money(r.imp):"")+'</div></div>'}).join("")+'</div>'}
+function vchipsHTML(v){
+ var g=ventasVend(v),ks=Object.keys(g).sort(function(a,b){return g[b].pl-g[a].pl});if(!ks.length)return"";
+ return '<div class="vch">'+ks.slice(0,6).map(function(k){return '<span><b>'+g[k].pl+'</b> '+esc(g[k].nombre)+'</span>'}).join("")+(ks.length>6?'<span>+'+(ks.length-6)+'</span>':"")+'</div>'}
+
+/* --- recibos de transferencia --- */
+function nRec(p){return p&&p.recibos?Object.keys(p.recibos).length:0}
+var _rcList={};
+function modalRecibos(vId,pId){
+ var v=DB.viajes[vId],p=v&&v.pasajeros&&v.pasajeros[pId];if(!p)return;
+ sheet('<h2>🧾 Recibos de transferencia</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(p.nombre)+(p.localizador?" · "+esc(p.localizador):"")+' · señal '+money(+p.senal||0)+'</div>',
+  '<div id="rc-list"><div class="empty" style="padding:14px">Cargando…</div></div>'+
+  '<label>Importe de la transferencia (€)</label><input id="rc-imp" type="number" inputmode="decimal" value="'+(+p.senal||"")+'">'+
+  '<input type="file" id="rc-file" accept="image/*,application/pdf" style="display:none" onchange="subeRecibo(\''+vId+'\',\''+pId+'\')">'+
+  '<button class="btn bp" style="margin-top:10px" onclick="document.getElementById(\'rc-file\').click()">📎 Adjuntar foto o PDF del recibo</button>'+
+  '<div class="note">Haz una captura o foto de la transferencia. Una vez adjuntado, solo el administrador puede borrarlo.</div>',
+  '<button class="btn bg2" onclick="cerrar()">Cerrar</button>');
+ cargaRecibos(vId,pId)}
+function cargaRecibos(vId,pId){
+ RT.ref("recibos/"+vId+"/"+pId).once("value").then(function(s){
+  var o=s.val()||{},a=Object.keys(o).map(function(k){return Object.assign({id:k},o[k])}).sort(function(x,y){return (y.ts||0)-(x.ts||0)});
+  _rcList[vId+"/"+pId]=a;var e=document.getElementById("rc-list");if(!e)return;
+  e.innerHTML=a.length?a.map(function(r){
+   return '<div class="rcp"><div class="th" onclick="verRecibo(\''+vId+'\',\''+pId+'\',\''+r.id+'\')">'+(r.tipo==="application/pdf"?'<span>PDF</span>':'<img src="'+r.data+'" alt="">')+'</div>'+
+    '<div class="i"><b>'+(r.importe?money(+r.importe):"Recibo")+'</b><div class="m">'+fmtTs(r.ts)+' · '+esc(r.quien||"")+'</div></div>'+
+    (esAdmin()?'<button class="mbtn" onclick="borraRecibo(\''+vId+'\',\''+pId+'\',\''+r.id+'\')">🗑️</button>':"")+'</div>'}).join("")
+   :'<div class="empty" style="padding:14px">Todavía no hay ningún recibo adjunto.</div>'})
+  .catch(function(){var e=document.getElementById("rc-list");if(e)e.innerHTML='<div class="empty" style="padding:14px">No se pudieron cargar (revisa la conexión o los permisos).</div>'})}
+function comprimeImg(file,maxPx,q){return new Promise(function(res,rej){
+ var u=URL.createObjectURL(file),im=new Image();
+ im.onload=function(){var k=Math.min(1,maxPx/Math.max(im.width,im.height)),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));
+  var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+  URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",q))};
+ im.onerror=function(){URL.revokeObjectURL(u);rej({code:"imagen"})};im.src=u})}
+function leeRecibo(file){
+ if(file.type==="application/pdf"){
+  if(file.size>520000)return Promise.reject({code:"grande"});
+  return new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res({tipo:"application/pdf",data:fr.result})};fr.onerror=function(){rej({code:"lectura"})};fr.readAsDataURL(file)})}
+ return comprimeImg(file,1400,.72).then(function(d){return d.length>650000?comprimeImg(file,1000,.6):d})
+  .then(function(d){if(d.length>900000)throw {code:"grande"};return {tipo:"image/jpeg",data:d}})}
+function subeRecibo(vId,pId){
+ var inp=document.getElementById("rc-file"),f=inp&&inp.files[0];if(!f)return;
+ var v=DB.viajes[vId],p=v.pasajeros[pId],imp=parseFloat(document.getElementById("rc-imp").value)||0;
+ toast("Subiendo recibo…");
+ leeRecibo(f).then(function(r){
+  var ref=RT.ref("recibos/"+vId+"/"+pId).push(),id=ref.key;
+  return ref.set({tipo:r.tipo,data:r.data,importe:imp,ts:SV.TIMESTAMP,uid:ME.uid,quien:ME.nombre,archivo:(f.name||"").slice(0,60)})
+   .then(function(){p.recibos=p.recibos||{};p.recibos[id]=Date.now();return REF.child("viajes/"+vId+"/pasajeros/"+pId+"/recibos/"+id).set(p.recibos[id])})
+   .then(function(){regLog({accion:"modifica",viaje:descViajeLog(vId),objeto:nomPaxLog(p),detalle:"Adjuntó recibo de transferencia"+(imp?" de "+money(imp):""),ruta:"viajes/"+vId+"/pasajeros/"+pId});
+    toast("✓ Recibo adjuntado");render();modalRecibos(vId,pId)})})
+ .catch(function(e){var c=(e&&e.code||"")+(e&&e.message||"");
+  toast(/grande/.test(c)?"Archivo demasiado grande (máx. ~600 KB). Haz una captura en vez de PDF.":/permission/i.test(c)?"⛔ Sin permiso para adjuntar":"No se pudo adjuntar el recibo")})}
+function verRecibo(vId,pId,rid){
+ var a=_rcList[vId+"/"+pId]||[],r=a.filter(function(x){return x.id===rid})[0];if(!r)return;
+ sheet('<h2>🧾 Recibo</h2><div style="font-size:12.5px;color:var(--muted)">'+(r.importe?money(+r.importe)+" · ":"")+fmtTs(r.ts)+' · '+esc(r.quien||"")+'</div>',
+  r.tipo==="application/pdf"?'<a class="btn bp" href="'+r.data+'" download="recibo.pdf">📄 Descargar PDF</a>':'<img src="'+r.data+'" alt="" style="width:100%;border-radius:10px;border:1px solid var(--line)">',
+  '<button class="btn bg2" onclick="modalRecibos(\''+vId+'\',\''+pId+'\')">‹ Volver</button><button class="btn bg2" onclick="cerrar()">Cerrar</button>')}
+function borraRecibo(vId,pId,rid){
+ if(!esAdmin())return;if(!confirm("¿Borrar este recibo?"))return;
+ var p=DB.viajes[vId].pasajeros[pId];
+ Promise.all([RT.ref("recibos/"+vId+"/"+pId+"/"+rid).remove(),REF.child("viajes/"+vId+"/pasajeros/"+pId+"/recibos/"+rid).remove()]).then(function(){
+  if(p.recibos)delete p.recibos[rid];
+  regLog({accion:"borra",viaje:descViajeLog(vId),objeto:nomPaxLog(p),detalle:"Recibo de transferencia eliminado",ruta:""});
+  render();modalRecibos(vId,pId)}).catch(fail)}
+
+/* --- equipo, administradores y duplicados --- */
+function refrescaVend(){
+ if(!ME)return;reconstruyeVMAP();
+ if(esAdmin()){var n=[],seen={},add=function(x){var k=normV(x);if(k&&!seen[k]){seen[k]=1;n.push(VMAP[k]||(""+x).trim())}};
+  VEND_LEG.forEach(add);Object.keys(USUARIOS).forEach(function(k){var u=USUARIOS[k];if(u&&u.activo&&!u.reemplazado&&u.nombre)add(u.nombre)});VEND=n}
+ else VEND=[ME.nombre]}
+function vigilaUsuario(){
+ if(_uw){_uw.off();_uw=null}
+ if(esDueno())return;
+ _uw=RT.ref("usuarios/"+ME.uid);
+ _uw.on("value",function(s){var r=s.val(),rol=(r&&r.rol==="admin")?"admin":"vendedor";
+  if(!r||r.activo!==true||rol!==ME.rol){_lgMsg="Tu acceso ha cambiado o está desactivado. Vuelve a entrar o habla con el administrador.";AUTH.signOut()}})}
+function puedeGest(u){return esDueno()||u.rol!=="admin"}
+function presDe(usuario){var k=Object.keys(PRES).filter(function(x){return PRES[x]&&PRES[x].usuario===usuario})[0];return k?estPres(k):{on:false,ult:0}}
+function sinAcceso(){
+ var cnt={},nom={};VEND_LEG.forEach(function(n){cnt[normV(n)]=0;nom[normV(n)]=n});
+ var vs=SRVO.viajes||{};
+ Object.keys(vs).forEach(function(vk){var ps=vs[vk].pasajeros||{};Object.keys(ps).forEach(function(pk){var raw=(ps[pk].vendedor||"").trim(),k=normV(raw);if(!k)return;if(!(k in cnt)){cnt[k]=0;nom[k]=VMAP[k]||raw}cnt[k]++})});
+ var tiene={sergio:1,viajaconsergio:1};activosUsr().forEach(function(u){tiene[normV(u.nombre)]=1});
+ return Object.keys(cnt).filter(function(k){return !tiene[k]}).map(function(k){return {nombre:VMAP[k]||nom[k],n:cnt[k]}}).sort(function(a,b){return b.n-a.n}).slice(0,8)}
+function planUnif(){
+ var grp={};
+ var vs=SRVO.viajes||{};
+ Object.keys(vs).forEach(function(vk){var ps=vs[vk].pasajeros||{};Object.keys(ps).forEach(function(pk){
+  var raw=(ps[pk].vendedor||"").trim(),k=normV(raw);if(!k)return;
+  var g=grp[k]||(grp[k]={spell:{},items:[]});g.spell[raw]=(g.spell[raw]||0)+1;g.items.push({vid:vk,pid:pk,val:(ps[pk].vendedor||"")})})});
+ var plan=[];
+ Object.keys(grp).forEach(function(k){var g=grp[k],canon=VMAP[k];
+  if(!canon){var best=0;Object.keys(g.spell).forEach(function(s){if(g.spell[s]>best){best=g.spell[s];canon=s}})}
+  var cambios=g.items.filter(function(i){return i.val!==canon});
+  if(cambios.length)plan.push({canon:canon,variantes:Object.keys(g.spell).filter(function(s){return s!==canon}),cambios:cambios})});
+ var ug={};activosUsr().forEach(function(u){var k=normV(u.nombre);if(!k)return;(ug[k]=ug[k]||[]).push(u)});
+ var dups=Object.keys(ug).filter(function(k){return ug[k].length>1}).map(function(k){return ug[k]});
+ return {plan:plan,dups:dups}}
+function unificaTodo(){
+ if(!esDueno())return;
+ var r=planUnif(),n=r.plan.reduce(function(s,g){return s+g.cambios.length},0);
+ if(!n&&!r.dups.length){toast("No hay nada que unificar");return}
+ if(!confirm("Se corregirá el nombre del vendedor en "+n+" reservas y se unificarán "+r.dups.length+" perfil(es) duplicado(s). No se borra ninguna reserva. ¿Continuar?"))return;
+ var up={},uu={};
+ r.plan.forEach(function(g){g.cambios.forEach(function(c){up["viajes/"+c.vid+"/pasajeros/"+c.pid+"/vendedor"]=g.canon})});
+ r.dups.forEach(function(arr){
+  var keep=arr.slice().sort(function(a,b){return ((b.rol==="admin")?1:0)-((a.rol==="admin")?1:0)||(a.creado||0)-(b.creado||0)})[0];
+  var canon=VMAP[normV(keep.nombre)]||keep.nombre,anyAdmin=arr.some(function(u){return u.rol==="admin"});
+  uu["usuarios/"+keep.uid+"/nombre"]=canon;
+  if(anyAdmin&&keep.rol!=="admin")uu["usuarios/"+keep.uid+"/rol"]="admin";
+  arr.forEach(function(u){if(u.uid===keep.uid)return;
+   uu["usuarios/"+u.uid+"/activo"]=false;uu["usuarios/"+u.uid+"/reemplazado"]=true;uu["usuarios/"+u.uid+"/unificadoCon"]=keep.uid;
+   if(u.usuario&&u.usuario!==keep.usuario)uu["usernames/"+u.usuario]=null})});
+ Promise.all([Object.keys(up).length?REF.update(up):0,Object.keys(uu).length?RT.ref().update(uu):0]).then(function(){
+  logUsuario("Unificación de duplicados","Reservas corregidas: "+n+" · perfiles unificados: "+r.dups.length);toast("✓ Duplicados unificados");render()}).catch(fail)}
+function modalVendedor(nombre,admin){
+ nombre=nombre||"";
+ sheet('<h2>➕ '+(nombre?"Crear acceso para "+esc(nombre):"Añadir vendedor")+'</h2>',
+  '<label>Nombre (el que saldrá en las reservas)</label><input id="nv-nom" value="'+esc(nombre)+'" placeholder="Ej: Fersho" oninput="nvAuto()"'+(nombre?' readonly style="background:var(--bg)"':"")+'>'+
+  '<label>Usuario para entrar (sin espacios)</label><input id="nv-user" value="'+esc(normUser(nombre))+'" oninput="this.dataset.man=1" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="fersho">'+
+  '<label>Contraseña inicial</label><div style="display:flex;gap:7px"><input id="nv-pass" value="'+genPass()+'" autocapitalize="none" autocorrect="off" spellcheck="false"><button class="btn bg2" style="width:56px;padding:0" onclick="document.getElementById(\'nv-pass\').value=genPass()">🎲</button></div>'+
+  (esDueno()?'<label style="display:flex;align-items:center;gap:9px;text-transform:none;font-size:13.5px;color:var(--navy)"><input type="checkbox" id="nv-admin" style="width:auto"'+(admin?" checked":"")+'> Administrador (acceso completo, como tú)</label>':"")+
+  '<div class="note">'+(nombre?"Todas las reservas que ya hizo "+esc(nombre)+" se mantienen a su nombre. ":"")+'El vendedor podrá cambiar su contraseña desde su perfil. Todo lo que modifique quedará en el registro.</div>',
+  '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" id="nv-btn" onclick="crearVendedor()">Crear</button>')}
+function crearVendedor(){
+ var nom=document.getElementById("nv-nom").value.trim(),us=normUser(document.getElementById("nv-user").value),pw=document.getElementById("nv-pass").value;
+ var ca=document.getElementById("nv-admin"),rol=(esDueno()&&ca&&ca.checked)?"admin":"vendedor";
+ if(!nom||nom.length>30){toast("Pon el nombre del vendedor");return}
+ nom=VMAP[normV(nom)]||nom;
+ if(us.length<3){toast("El usuario necesita 3 letras o números como mínimo");return}
+ if(us===ADMIN_USER||us==="admin"){toast("Ese usuario está reservado");return}
+ if(pw.length<6){toast("La contraseña necesita 6 caracteres como mínimo");return}
+ if(normV(nom)==="sergio"){toast("Ese perfil es el del dueño");return}
+ if(activosUsr().some(function(u){return normV(u.nombre)===normV(nom)})){toast("Ya existe un perfil «"+nom+"». Si está duplicado, usa Unificar.");return}
+ var b=document.getElementById("nv-btn");b.disabled=true;b.textContent="Creando…";
+ RT.ref("usernames/"+us).once("value").then(function(s){
+  if(s.exists())throw {code:"usuario-existe"};
+  return crearCuenta(us,pw)}).then(function(r){
+  var up={};up["usuarios/"+r.uid]={nombre:nom,usuario:us,email:r.email,rol:rol,activo:true,creado:SV.TIMESTAMP,creadoPor:ME.uid};
+  up["usernames/"+us]={email:r.email,uid:r.uid};
+  return RT.ref().update(up)}).then(function(){
+  logUsuario("Alta de "+(rol==="admin"?"administrador ":"vendedor ")+nom,"usuario: "+us);credenciales("✅ Acceso creado",nom,us,pw)})
+  .catch(function(e){b.disabled=false;b.textContent="Crear";var c=(e&&e.code)||"";
+   toast(c==="usuario-existe"?"Ese usuario ya existe":/network/.test(c)?"Sin conexión":/permission/i.test(c+(e.message||""))?"Sin permiso: revisa las reglas de Firebase":/operation-not-allowed|configuration/.test(c)?"Activa Email/Contraseña en Firebase → Authentication":"No se pudo crear: "+(c||e))})}
+function togAdmin(uid){
+ if(!esDueno())return;var u=USUARIOS[uid];if(!u)return;var nuevo=u.rol==="admin"?"vendedor":"admin";
+ if(!confirm(nuevo==="admin"?"¿Dar acceso de administrador a "+u.nombre+"? Verá los cobros y podrá hacer lo mismo que tú.":"¿Quitar el acceso de administrador a "+u.nombre+"?"))return;
+ RT.ref("usuarios/"+uid+"/rol").set(nuevo).then(function(){logUsuario((nuevo==="admin"?"Nuevo administrador: ":"Ya no es administrador: ")+u.nombre,"usuario: "+u.usuario);toast("Hecho")}).catch(fail)}
+function resetPass(uid){
+ var u=USUARIOS[uid];if(!u)return;if(!puedeGest(u))return;
+ if(!confirm("¿Generar una contraseña nueva para "+u.nombre+"? La anterior dejará de funcionar."))return;
+ var pw=genPass();toast("Generando…");
+ crearCuenta(u.usuario,pw).then(function(r){
+  var up={};up["usuarios/"+uid+"/activo"]=false;up["usuarios/"+uid+"/reemplazado"]=true;
+  up["usuarios/"+r.uid]={nombre:u.nombre,usuario:u.usuario,email:r.email,rol:u.rol||"vendedor",activo:u.activo!==false,creado:SV.TIMESTAMP,creadoPor:ME.uid};
+  up["usernames/"+u.usuario]={email:r.email,uid:r.uid};
+  return RT.ref().update(up)}).then(function(){
+  logUsuario("Contraseña restablecida: "+u.nombre,"usuario: "+u.usuario);credenciales("🔑 Contraseña nueva",u.nombre,u.usuario,pw)})
+  .catch(function(e){toast("No se pudo restablecer: "+((e&&e.code)||e))})}
 function renderAdmin(){
  if(!esAdmin()){TAB="viajes";return render()}
  var us=activosUsr().sort(function(a,b){return (a.nombre||"").localeCompare(b.nombre||"")});
- var eA=estPres(ME.uid);
+ var eS=esDueno()?estPres(ME.uid):presDe(ADMIN_USER);
  var fila=function(nom,sub,e,btns){return '<div class="usr"><i class="pd '+(e.on?"on":"")+'"></i><div class="i"><div class="n">'+nom+'</div><div class="m">'+sub+'</div></div>'+(btns||"")+'</div>'};
  var h='<h2>⚙️ Administración</h2>';
- var nOn=us.filter(function(u){return estPres(u.uid).on}).length+(eA.on?1:0);
+ var nOn=us.filter(function(u){return estPres(u.uid).on}).length+(eS.on?1:0);
  h+='<div class="adm"><b>👥 Equipo</b><span class="m">'+nOn+' en línea</span></div>';
- h+=fila('👑 Sergio <span class="tag">ADMIN</span>',eA.on?"🟢 En línea":"Visto "+hace(eA.ult),eA,"");
- h+=us.map(function(u){var e=estPres(u.uid),des=u.activo===false;
-  return fila(esc(u.nombre)+(des?' <span class="tag off">DESACTIVADO</span>':""),esc(u.usuario)+" · "+(e.on?"🟢 En línea":"visto "+hace(e.ult)),e,
-   '<div class="ab"><button onclick="resetPass(\''+u.uid+'\')">🔑</button><button onclick="togActivo(\''+u.uid+'\')">'+(des?"✅":"⛔")+'</button></div>')}).join("");
- h+='<button class="btn bp" style="margin:10px 0 4px" onclick="modalVendedor()">➕ Añadir vendedor</button><div class="m" style="font-size:11px;margin-bottom:14px">🔑 nueva contraseña · ⛔ desactivar / ✅ activar</div>';
+ h+=fila('👑 Sergio <span class="tag">ADMIN</span>',eS.on?"🟢 En línea":"Visto "+hace(eS.ult),eS,"");
+ h+=us.map(function(u){var e=estPres(u.uid),des=u.activo===false,adm=u.rol==="admin";
+  var btns=puedeGest(u)?'<div class="ab">'+(esDueno()?'<button title="Administrador" onclick="togAdmin(\''+u.uid+'\')">'+(adm?"⬇️":"👑")+'</button>':"")+'<button onclick="resetPass(\''+u.uid+'\')">🔑</button><button onclick="togActivo(\''+u.uid+'\')">'+(des?"✅":"⛔")+'</button></div>':"";
+  return fila(esc(u.nombre)+(adm?' <span class="tag">ADMIN</span>':"")+(des?' <span class="tag off">DESACTIVADO</span>':""),esc(u.usuario)+" · "+(e.on?"🟢 En línea":"visto "+hace(e.ult)),e,btns)}).join("");
+ var sa=sinAcceso();
+ h+=sa.map(function(x){return fila(esc(x.nombre)+' <span class="tag n">SIN ACCESO</span>',x.n+" reserva"+(x.n===1?"":"s")+" a su nombre · aún no tiene usuario",{on:false},'<div class="ab"><button onclick="modalVendedor(\''+jsq(x.nombre)+'\','+(normV(x.nombre)==="ariel")+')">Crear acceso</button></div>')}).join("");
+ if(esDueno()){var pu=planUnif(),nr=pu.plan.reduce(function(s,g){return s+g.cambios.length},0);
+  if(nr||pu.dups.length)h+='<div class="note" style="margin:8px 0 6px">🧹 <b>Duplicados detectados</b>'+
+   (nr?'<br>'+nr+' reserva(s) con el vendedor escrito de otra forma: '+pu.plan.map(function(g){return esc(g.variantes.join(", "))+' → <b>'+esc(g.canon)+'</b>'}).join("; "):"")+
+   (pu.dups.length?'<br>Perfiles repetidos: '+pu.dups.map(function(a){return esc(a[0].nombre)+' ×'+a.length}).join(", "):"")+
+   '<button class="btn bp" style="margin-top:9px;padding:11px;font-size:14px" onclick="unificaTodo()">🧹 Unificar todo (no borra reservas)</button></div>'}
+ h+='<button class="btn bp" style="margin:10px 0 4px" onclick="modalVendedor()">➕ Añadir vendedor</button><div class="m" style="font-size:11px;margin-bottom:14px">'+(esDueno()?"👑 hacer/quitar administrador · ":"")+'🔑 nueva contraseña · ⛔ desactivar / ✅ activar</div>';
  var nombres=[];REGLOG.forEach(function(r){if(r.nombre&&nombres.indexOf(r.nombre)<0)nombres.push(r.nombre)});
  h+='<div class="adm"><b>📋 Registro de cambios</b><span class="m">últimos '+REGLOG.length+'</span></div>';
  h+='<div class="chips"><div class="chip '+(FLOG==="todos"?"on":"")+'" onclick="FLOG=\'todos\';render()">Todos</div><div class="chip '+(FLOG==="__borra"?"on":"")+'" onclick="FLOG=\'__borra\';render()">🗑️ Borrados</div>'+
@@ -526,17 +697,12 @@ function renderAdmin(){
  h+=lst.length?lst.map(function(r){
   return '<div class="log"><div class="lh"><b>'+esc(r.nombre||"?")+'</b><span>'+fmtTs(r.ts)+'</span></div><div>'+(ic[r.accion]||"•")+' '+esc(r.objeto||"")+'</div>'+
    ((r.viaje||r.detalle)?'<div class="m">'+(r.viaje?esc(r.viaje)+(r.detalle?" — ":""):"")+esc(r.detalle||"")+'</div>':"")+
-   (r.accion==="borra"&&r.antes&&!r.restaurado?'<button class="mini rs" onclick="restaura(\''+r.id+'\')">↩️ Restaurar</button>':"")+
+   (r.accion==="borra"&&r.antes&&!r.restaurado?'<button class="mbtn rs" onclick="restaura(\''+r.id+'\')">↩️ Restaurar</button>':"")+
    (r.restaurado?'<div class="m" style="color:var(--green);font-weight:700">↩️ Restaurado</div>':"")+'</div>'}).join("")
   :'<div class="empty">Aún no hay cambios registrados.</div>';
  document.getElementById("app").innerHTML=h}
-function restaura(id){
- var r=null;REGLOG.forEach(function(x){if(x.id===id)r=x});if(!r||!r.antes||!r.ruta)return;
- if(!confirm("¿Restaurar "+r.objeto+"? Se volverá a crear tal como estaba cuando se borró."))return;
- var data;try{data=JSON.parse(r.antes)}catch(e){toast("Copia dañada");return}
- if(data==null){toast("No hay datos que restaurar");return}
- REF.child(r.ruta).set(data).then(function(){RT.ref("registro/"+id+"/restaurado").set(true);
-  regLog({accion:"restaura",viaje:r.viaje||"",objeto:r.objeto||"",detalle:"Restaurado por el administrador",ruta:r.ruta});toast("Restaurado")}).catch(fail)}
+function recTag(v,p){var n=nRec(p);if(n)return ' <span class="tag ok">🧾 recibo'+(n>1?" ×"+n:"")+'</span>';
+ if((+p.senal||0)>0&&!viajePasado(v))return ' <span class="tag sr">⚠️ señal sin recibo</span>';return""}
 
 /* ---------- Firebase ---------- */
 function iniciaDatos(){REF.off("value");REF.on("value",function(s){var d=s.val()||{};SRVO=JSON.parse(JSON.stringify({viajes:d.viajes||{},clientes:d.clientes||{}}));DB={viajes:d.viajes||{},clientes:d.clientes||{},counters:d.counters||{}};
@@ -610,7 +776,7 @@ function renderLista(){
    :'<div class="cap"><div class="bl">⚠️ Sin autobús asignado — ábrelo y elige el bus</div></div>';
   return '<div class="card viaje" onclick="abrir(\''+v.id+'\')">'+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+
    '<span class="d">🚌 '+esc(v.destino)+'</span><div class="m">'+(v.fecha?fmtF(v.fecha):"sin fecha")+(v.hora?" · "+esc(v.hora):"")+'</div>'+
-   '<div class="mini"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Embarcados</small></div><div><b>'+money(t.cobrado)+'</b><small>Cobrado</small></div><div><b>'+money(t.porcobrar)+'</b><small>Por cobrar</small></div></div>'+cap+'</div>'}).join("")
+   vchipsHTML(v)+statsViaje(v,t,"mini")+cap+'</div>'}).join("")
   :'<div class="empty">Aún no hay viajes.<br>Pulsa <b>+ Nuevo viaje</b>.</div>';
  document.getElementById("app").innerHTML=h}
 
@@ -630,19 +796,19 @@ function renderDetalle(){
  h+='<h2>'+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+'🚌 '+esc(v.destino)+'</h2>';
  h+='<div style="color:var(--muted);font-size:12.5px;margin:-6px 0 11px">'+(v.fecha?fmtF(v.fecha):"")+(v.hora?" · "+esc(v.hora):"")+
   ' · <a onclick="modalViaje(\''+v.id+'\')" style="color:var(--navy);font-weight:800;cursor:pointer">✏️ editar viaje</a></div>';
- h+='<div class="big-tot"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Embarcados</small></div><div><b>'+money(t.cobrado)+'</b><small>Cobrado</small></div><div><b>'+money(t.porcobrar)+'</b><small>Por cobrar</small></div></div>';
+ h+=statsViaje(v,t,"big-tot");
+ h+=ventasHTML(v);
  h+='<div class="card" style="padding:12px">'+(t.cap?
    '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;margin-bottom:7px;flex-wrap:wrap"><span>Ocupación '+t.plazas+' / '+t.cap+'</span><span style="color:'+(t.libres<0?"var(--red)":t.libres<=5?"var(--amber)":"var(--green)")+'">'+(t.libres<0?"SOBREVENTA de "+Math.abs(t.libres):t.libres+" libres")+'</span></div>'+
    '<div class="bar '+(t.libres<0?"full":t.libres<=5?"warn":"")+'"><i style="width:'+Math.min(100,t.plazas/t.cap*100)+'%"></i></div>'+
    '<div class="bl">'+esc(busNames(v))+(t.bebes?" · "+t.bebes+" bebé(s) sin plaza":"")+'</div>'
   :'<b style="font-size:13px">⚠️ Sin autobús asignado</b><div class="bl">No se pueden controlar las plazas libres.</div>')+
   '<button class="btn bg2" style="margin-top:9px;padding:10px;font-size:13.5px" onclick="modalBuses(\''+v.id+'\')">🚌 '+(t.cap?"Cambiar / añadir autobuses":"Elegir autobuses")+'</button></div>';
- h+=ventasHTML(v);
- h+='<button class="btn bp" style="margin-bottom:10px;background:var(--green)" onclick="modalScan()">📷 Escanear QR de embarque</button>';
+ if(esAdmin())h+='<button class="btn bp" style="margin-bottom:10px;background:var(--green)" onclick="modalScan()">📷 Escanear QR de embarque</button>';
  h+='<div class="search"><input id="q" placeholder="🔍 Nombre, acompañante, teléfono o localizador" value="'+esc(Q)+'" oninput="Q=this.value;renderDetalle();var e=document.getElementById(\'q\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
  h+='<div class="chips"><div class="chip '+(FPT==="__all"?"on":"")+'" onclick="FPT=\'__all\';renderDetalle()">Todos ('+t.plazas+')</div>';
  pts.forEach(function(r){h+='<div class="chip '+(FPT===r?"on":"")+'" onclick="FPT=\''+jsq(r)+'\';renderDetalle()">'+esc(r)+' ('+plazasPunto(v,r)+')</div>'});
- h+='</div><button class="btn bg2" style="margin-bottom:8px" onclick="modalImport(\''+v.id+'\')">\ud83d\udce5 Importar reservas a este viaje (Excel · PDF)</button><button class="btn bp" style="margin-bottom:8px" onclick="pdfListado(\''+v.id+'\')">📄 PDF del listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button><button class="btn bg2" style="margin-bottom:11px" onclick="imprimir(\''+v.id+'\')">🖨️ Imprimir listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button>';
+ h+='</div>';if(esAdmin())h+='<button class="btn bg2" style="margin-bottom:8px" onclick="modalImport(\''+v.id+'\')">\ud83d\udce5 Importar reservas a este viaje (Excel · PDF)</button><button class="btn bp" style="margin-bottom:8px" onclick="pdfListado(\''+v.id+'\')">📄 PDF del listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button><button class="btn bg2" style="margin-bottom:11px" onclick="imprimir(\''+v.id+'\')">🖨️ Imprimir listado '+(FPT==="__all"?"completo":"de "+esc(FPT))+'</button>';
  h+=lista.length?lista.map(function(p){return paxRow(v,p)}).join(""):'<div class="empty">Ninguna reserva coincide.</div>';
  document.getElementById("app").innerHTML=h}
 
@@ -656,27 +822,22 @@ function paxRow(v,p){
   return tg+((x.emb&&!p.embarcado)?"✅ ":"")+esc(x.nombre||"(sin nombre)")+(mx?' <span class="tag pt">'+esc(recDe(p,x,v))+'</span>':"")}).join(" · ");
  if(snt)acom+=(acom?" · ":"")+'<span class="tag">'+snt+' sin nombre</span>';
  return '<div class="pax '+(p.embarcado?"emb":"")+' '+(p.cobrado?"cob":"")+'">'+
-  '<div class="chk" onclick="toggleEmb(\''+vId+'\',\''+p.id+'\')">'+(p.embarcado?"✓":"")+'</div><div class="i">'+
+  '<div class="chk"'+(esAdmin()?' onclick="toggleEmb(\''+vId+'\',\''+p.id+'\')"':"")+'>'+(p.embarcado?"✓":"")+'</div><div class="i">'+
   '<div class="n"><span class="titu">TITULAR</span>'+((vjs[0]&&vjs[0].emb&&!p.embarcado)?"✅ ":"")+esc(vjs[0]?vjs[0].nombre:p.nombre)+(mx?' <span class="tag pt">'+esc(recDe(p,vjs[0],v))+'</span>':"")+'</div>'+
   (acom?'<div class="acom">'+acom+'</div>':"")+
   '<div class="mm">'+pl+' plaza(s)'+(c.be?" + "+c.be+" bebé":"")+(function(){var ne=embPlazas(p);return (ne>0&&ne<pl)?' · <b style="color:var(--green)">'+ne+'/'+pl+' subidos</b>':""})()+(mx?' <span class="tag mix">RECOGIDAS DISTINTAS</span>':" · "+esc(recBase(p,v)))+(pl===1?' <span class="tag solo">no sentar solo</span>':"")+(p.nota?" · "+esc(p.nota):"")+'</div>'+
-  '<div class="mm">🧑‍💼 <b>'+esc(p.vendedor||"SIN VENDEDOR")+'</b></div>'+
+  '<div class="mm">🧑‍💼 <b>'+esc(canonVend(p.vendedor))+'</b>'+recTag(v,p)+'</div>'+
   (p.localizador?'<div class="loc">'+esc(p.localizador)+'</div>':"")+
   '<div class="acts">'+
    (tel?'<button class="tel" onclick="menuTel(\''+tel+'\',\''+jsq(vjs[0]?vjs[0].nombre:p.nombre)+'\')">📞 '+esc(p.tel)+'</button>':"")+
    '<button class="just" onclick="justificante(\''+vId+'\',\''+p.id+'\')">🧾 Justificante</button>'+
    '<button class="just" onclick="billetes(\''+vId+'\',\''+p.id+'\')">🎟️ Billetes QR</button>'+
-   '<button class="bc" onclick="toggleCob(\''+vId+'\',\''+p.id+'\')">'+(p.cobrado?"✓ Cobrado":(cobPax(p)>0?"Cobrar "+r2((+p.pendiente||0)-cobPax(p))+"€ (cobrado "+cobPax(p)+"€)":"Cobrar "+(+p.pendiente||0)+"€"))+'</button>'+
+   '<button class="just" onclick="modalRecibos(\''+vId+'\',\''+p.id+'\')">📎 Recibo'+(nRec(p)?" ("+nRec(p)+")":"")+'</button>'+
+   (esAdmin()?'<button class="bc" onclick="toggleCob(\''+vId+'\',\''+p.id+'\')">'+(p.cobrado?"✓ Cobrado":(cobPax(p)>0?"Cobrar "+r2((+p.pendiente||0)-cobPax(p))+"€ (cobrado "+cobPax(p)+"€)":"Cobrar "+(+p.pendiente||0)+"€"))+'</button>':"")+
    '<button onclick="modalPax(\''+vId+'\',\''+p.id+'\')">✏️</button>'+
    (esAdmin()?'<button onclick="delPax(\''+vId+'\',\''+p.id+'\')">🗑️</button>':"")+'</div></div>'+
-  '<div class="r"><div class="eur">'+money(+p.pendiente||0)+'</div><div class="cob-lbl">COBRADO</div></div></div>'}
+  (esAdmin()?'<div class="r"><div class="eur">'+money(+p.pendiente||0)+'</div><div class="cob-lbl">COBRADO</div></div>':"")+'</div>'}
 
-function ventasVend(v){var g={};paxArr(v).forEach(function(p){var k=(p.vendedor||"").trim()||"SIN VENDEDOR";
- if(!g[k])g[k]={pl:0,se:0,pe:0,n:0};g[k].pl+=plazasDe(p);g[k].se+=(+p.senal||0);g[k].pe+=(+p.pendiente||0);g[k].n++});return g}
-function ventasHTML(v){var g=ventasVend(v),ks=Object.keys(g).sort(function(a,b){return g[b].pl-g[a].pl});
- if(!ks.length)return "";
- return '<div class="card" style="padding:12px"><div style="font-size:13px;font-weight:800;margin-bottom:7px">🧑‍💼 Plazas por vendedor</div>'+
-  ks.map(function(k){return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--line)"><span>'+esc(k)+' <small style="color:var(--muted)">('+g[k].n+' reservas)</small></span><b>'+g[k].pl+' plazas · '+money(g[k].se)+'</b></div>'}).join("")+'</div>'}
 
 /* ---------- Clientes ---------- */
 function nViajes(c){return Object.keys(c.viajes||{}).length}
