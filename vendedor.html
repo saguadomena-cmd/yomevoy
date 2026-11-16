@@ -32,6 +32,9 @@ firebase.initializeApp({apiKey:"AIzaSyDI2vdwTHZxAbfw1HRim4S3QsH1yEygHtw",authDom
 function esc(s){return (""+(s||"")).replace(/[<>&"]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]})}
 function fmtF(i){var a=(i||"").split("-");return a[2]?a[2]+"/"+a[1]+"/"+a[0]:i}
 var DIAS=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+function faltan(i){if(!i)return"";var a=i.split("-"),h=new Date(),n=Math.round((Date.UTC(+a[0],+a[1]-1,+a[2])-Date.UTC(h.getFullYear(),h.getMonth(),h.getDate()))/864e5);
+ var c=n<=1?"#b42318;background:#fde2e2":n<=7?"#8a5a00;background:#fff1d4":"#1d4f9f;background:#e4edfb",t=n===0?"¡HOY!":n===1?"¡Mañana!":"Faltan "+n+" días";
+ return '<span style="float:right;margin-left:8px;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;color:'+c+'">'+(n===0?"":"⏳ ")+t+'</span>'}
 function dia(i){var d=new Date(i+"T12:00:00");return isNaN(d)?"":DIAS[d.getDay()]}
 firebase.database().ref("resumen_publico").on("value",function(s){
  document.getElementById("dot").classList.remove("off");
@@ -40,7 +43,7 @@ firebase.database().ref("resumen_publico").on("value",function(s){
  var vs=Object.keys(d).filter(function(k){return k.charAt(0)!=="_"&&d[k]&&d[k].destino&&(!d[k].fecha||d[k].fecha>=hs)})
   .map(function(k){return d[k]}).sort(function(a,b){return (a.fecha||"9").localeCompare(b.fecha||"9")});
  var h=vs.map(function(v){var lib=v.cap?v.cap-v.plazas:null,pc=v.cap?Math.min(100,v.plazas/v.cap*100):0;
-  return '<div class="card">'+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+'<span class="d">🚌 '+esc(v.destino)+'</span>'+
+  return '<div class="card">'+faltan(v.fecha)+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+'<span class="d">🚌 '+esc(v.destino)+'</span>'+
    '<div class="m">'+(v.fecha?dia(v.fecha)+" "+fmtF(v.fecha):"sin fecha")+(v.hora?" · salida "+esc(v.hora):"")+'</div>'+
    '<div class="row"><div class="n"><b>'+v.plazas+'</b><span>viajeros'+(v.bebes?" (+"+v.bebes+" bebé)":"")+'</span></div>'+
    (lib!==null?'<div class="lib" style="color:'+(lib<0?"var(--red)":lib<=5?"var(--amber)":"var(--green)")+'">'+(lib<0?"Completo":lib+" libres")+'</div>':"")+'</div>'+
