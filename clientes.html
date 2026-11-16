@@ -143,6 +143,12 @@ textarea{min-height:70px;resize:vertical}
 .okv .ic{width:76px;height:76px;margin:6px auto 10px;border-radius:50%;background:linear-gradient(135deg,#1E9E63,#34c38f);color:#fff;font-size:40px;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px -12px rgba(30,158,99,.8);animation:pop .5s cubic-bezier(.2,.9,.3,1.4)}
 .okv h3{font-size:21px;font-weight:900}.okv p{color:#2b3b4d;margin-top:6px}
 .okv .cod{display:inline-block;margin-top:10px;background:var(--navy);color:var(--gold);font-weight:900;letter-spacing:1.5px;border-radius:12px;padding:7px 14px;font-size:18px}
+.regi{text-align:center;padding:4px 0 2px}.regi img{width:96px;height:96px;border-radius:50%;box-shadow:0 0 0 3px #fff,0 10px 24px -10px rgba(13,31,60,.6)}
+.regi p{font-size:16.5px;color:#2b3b4d;font-weight:700;margin-top:10px}
+.big label{font-size:13.5px}.big input{font-size:19px;padding:15px 14px;border-radius:14px}
+.big .ck{font-size:15px}.big .ck i{width:30px;height:30px;border-radius:9px;font-size:18px}
+.lnk{display:block;width:100%;background:none;border:0;color:var(--muted);font-weight:800;font-size:15px;padding:12px;margin-top:4px;cursor:pointer;text-decoration:underline}
+.hola-c{font-size:13px;margin-top:8px;position:relative}.hola-c a{color:#FFD76A;font-weight:800;cursor:pointer;text-decoration:underline}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%) translateY(10px);background:linear-gradient(135deg,#0D1F3C,#1d4f86);color:#fff;padding:11px 16px;border-radius:14px;font-weight:800;font-size:14px;opacity:0;transition:.2s;z-index:60;pointer-events:none;max-width:90vw;text-align:center}
 .toast.s{opacity:1;transform:translateX(-50%)}
 .sk{background:linear-gradient(90deg,#e6edf5 0,#f4f7fb 40%,#e6edf5 80%);background-size:300% 100%;animation:sk 1.3s linear infinite;border-radius:20px;height:250px}
@@ -186,7 +192,8 @@ function waNum(){return ((CFG.whatsapp||WA_DEF)+"").replace(/\D/g,"")}
 function waLink(t){return "https://wa.me/34"+waNum()+"?text="+encodeURIComponent(t)}
 
 /* ---- datos ---- */
-DBR.ref("web_publica/viajes").on("value",function(s){VJ=s.val()||{};pinta()},function(){VJ=VJ||{};document.getElementById("app").innerHTML='<div class="empty"><b>Sin conexión</b>No hemos podido cargar los viajes. Revisa tu conexión e inténtalo de nuevo.</div>'});
+var _primera=true;
+DBR.ref("web_publica/viajes").on("value",function(s){VJ=s.val()||{};pinta();if(_primera){_primera=false;setTimeout(alEntrar,700)}},function(){VJ=VJ||{};document.getElementById("app").innerHTML='<div class="empty"><b>Sin conexión</b>No hemos podido cargar los viajes. Revisa tu conexión e inténtalo de nuevo.</div>'});
 DBR.ref("web_publica/config").on("value",function(s){CFG=s.val()||{}});
 function cargaPortada(v){if(!v.portada||PORT[v.id+"/"+v.portada]!==undefined)return;PORT[v.id+"/"+v.portada]=null;
  DBR.ref("web_fotos/"+v.id+"/"+v.portada).once("value").then(function(s){var d=s.val();PORT[v.id+"/"+v.portada]=d&&d.d||"";
@@ -200,11 +207,13 @@ function ir(h){if(location.hash!=="#"+h&&(h||location.hash))location.hash=h;else
 window.addEventListener("hashchange",function(){window.scrollTo(0,0);pinta()});
 function pinta(){if(VJ===null)return;var h=location.hash.replace("#",""),app=document.getElementById("app");
  var key=h.indexOf("viaje-")===0?h:"lista";if(key!==VIEW){VIEW=key;app.classList.remove("enter");void app.offsetWidth;app.classList.add("enter");setTimeout(function(){app.classList.remove("enter")},800)}
- if(h.indexOf("viaje-")===0&&VJ[h.slice(6)])return detalle(h.slice(6));portada()}
+ if(h.indexOf("viaje-")===0&&VJ[h.slice(6)]){vista("Mirando "+VJ[h.slice(6)].destino);return detalle(h.slice(6))}vista("Viendo la lista de viajes");portada()}
 function portada(){var l=lista(),app=document.getElementById("app");
  var pts={};l.forEach(function(v){salidas(v).forEach(function(x){pts[x.p]=1})});var pk=Object.keys(pts).slice(0,4);
- var h='<section class="hero"><h1>Próximas excursiones en autobús</h1><p>Elige tu viaje, mira los horarios y reserva tu plaza en un minuto.</p>'+
-  (pk.length?'<div class="pts">'+pk.map(function(p){return '<span>📍 '+esc(p)+'</span>'}).join("")+'</div>':"")+'</section>';
+ var nm=yaReg()?(REG.nombre||"").split(" ")[0]:"";
+ var h='<section class="hero"><h1>'+(nm?"Hola, "+esc(nm)+" 👋":"Próximas excursiones en autobús")+'</h1><p>'+(nm?"Estas son nuestras próximas excursiones. Elige la tuya y reserva en un minuto.":"Elige tu viaje, mira los horarios y reserva tu plaza en un minuto.")+'</p>'+
+  (pk.length?'<div class="pts">'+pk.map(function(p){return '<span>📍 '+esc(p)+'</span>'}).join("")+'</div>':"")+
+  (nm?'<div class="hola-c">¿No eres '+esc(nm)+'? <a onclick="cambiaUsuario()">Cambiar</a></div>':'<div class="hola-c"><a onclick="pideRegistro(\'bienvenida\')">Regístrate para recibir nuestros viajes</a></div>')+'</section>';
  if(!l.length)h+='<div class="empty"><b>Pronto publicaremos nuevas excursiones</b>Mientras tanto, escríbenos por WhatsApp y te avisamos.<a class="btn bw" style="margin-top:14px" href="'+waLink("Hola, quiero información de las próximas excursiones")+'" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a></div>';
  else h+='<div class="sec">'+l.length+' viaje'+(l.length===1?"":"s")+' disponible'+(l.length===1?"":"s")+'</div><div class="grid">'+l.map(tarjeta).join("")+'</div>';
  h+=pie();app.innerHTML=h;l.forEach(cargaPortada)}
@@ -242,7 +251,8 @@ function compartir(id){var v=VJ[id],u=location.href.split("#")[0]+"#viaje-"+id,t
 
 /* ---- formulario de reserva ---- */
 var F={};
-function reservar(id){var v=Object.assign({id:id},VJ[id]),sal=salidas(v),yo=ls("yo")||{};
+function reservar(id){if(!yaReg())return pideRegistro("reservar",function(){reservar(id)});
+ var v=Object.assign({id:id},VJ[id]),sal=salidas(v),yo=Object.assign({},ls("yo")||{},REG||{});vista("Rellenando reserva · "+v.destino);
  F={id:id,ad:1,ni:0,be:0,rec:sal.length===1?sal[0].p:"",doc:null,ok:false};
  sheet('<h2>Reservar · '+esc(v.destino)+'</h2><div class="s">'+esc(fLarga(v.fecha))+'</div>',
   '<label for="f-nom">Nombre y apellidos del titular</label><input id="f-nom" autocomplete="name" value="'+esc(yo.nombre||"")+'" placeholder="Como aparece en tu DNI o pasaporte">'+
@@ -305,14 +315,58 @@ function enviar(){var v=VJ[F.id];if(!v){err("Este viaje ya no está disponible."
  ref.set(sol).then(function(){return DBR.ref("solicitudes_doc/"+sid).set({tipo:F.doc.tipo,data:F.doc.data,ts:SV.TIMESTAMP})}).then(function(){
   var cod=sid.slice(-6).toUpperCase(),pl=F.ad+F.ni,mis=ls("mis")||[];mis.unshift({cod:cod,destino:v.destino,fecha:v.fecha,pl:pl,ts:Date.now()});ls("mis",mis.slice(0,20));
   var txt="Hola, acabo de pedir reserva en la app 🙌\n🚌 "+v.destino+" · "+fLarga(v.fecha)+"\n👤 "+nom+" · "+pl+" plaza(s)"+(F.be?" + "+F.be+" bebé(s)":"")+"\n📍 "+(F.rec||"-")+"\n💶 Transferido: "+money(imp)+"\nCódigo: "+cod;
-  sheet('<h2>¡Solicitud enviada!</h2>','<div class="okv"><div class="ic">✓</div><h3>Ya casi está, '+esc(nom.split(" ")[0])+'</h3><p>Hemos recibido tu solicitud para <b>'+esc(v.destino)+'</b>. Revisaremos la transferencia y te confirmaremos la plaza por WhatsApp.</p><div class="cod">'+cod+'</div><p class="hint">Guarda este código por si nos escribes.</p></div>',
+  vista("Ha enviado una solicitud · "+v.destino);sheet('<h2>¡Solicitud enviada!</h2>','<div class="okv"><div class="ic">✓</div><h3>Ya casi está, '+esc(nom.split(" ")[0])+'</h3><p>Hemos recibido tu solicitud para <b>'+esc(v.destino)+'</b>. Revisaremos la transferencia y te confirmaremos la plaza por WhatsApp.</p><div class="cod">'+cod+'</div><p class="hint">Guarda este código por si nos escribes.</p></div>',
    '<a class="btn bw" href="'+waLink(txt)+'" target="_blank" rel="noopener">💬 Avisar por WhatsApp</a><button class="btn bg2" style="margin-top:8px" onclick="cerrar();ir(\'\')">Ver más viajes</button>')})
  .catch(function(e){b.disabled=false;b.textContent="Enviar solicitud de reserva";err(/permission/i.test((e&&e.code||"")+(e&&e.message||""))?"Este viaje no admite reservas ahora mismo. Escríbenos por WhatsApp.":"No se pudo enviar. Revisa tu conexión e inténtalo otra vez.")})}
 
+
+/* ---- registro sencillo (nombre + teléfono) ---- */
+var REG=ls("reg");
+function yaReg(){return !!(REG&&REG.tel)}
+function saltado(){try{return sessionStorage.getItem("ymv_salta")==="1"}catch(e){return false}}
+function alEntrar(){if(yaReg())return visita();if(!saltado()&&!location.hash)pideRegistro("bienvenida")}
+function visita(){var hoy=hoyISO();if(ls("vis")===hoy)return;ls("vis",hoy);
+ var inc=SV.increment?SV.increment(1):1;DBR.ref("clientes_app/"+REG.tel).update({ult:SV.TIMESTAMP,visitas:inc}).catch(function(){})}
+function pideRegistro(motivo,despues){window._trasReg=despues||null;var res=motivo==="reservar";vista("En la pantalla de registro");
+ sheet('<h2>'+(res?"Un paso antes de reservar":"¡Bienvenido a Yo Me Voy!")+'</h2><div class="s">Solo tu nombre y tu teléfono</div>',
+  '<div class="big"><div class="regi"><img src="'+document.querySelector(".logo").src+'" alt=""><p>'+(res?"Así sabremos quién eres y te confirmaremos la plaza por WhatsApp.":"Déjanos tus datos y te avisaremos por WhatsApp de los nuevos viajes.")+'</p></div>'+
+  '<label for="r-nom">Tu nombre</label><input id="r-nom" autocomplete="name" autocapitalize="words" placeholder="Ej. María López">'+
+  '<label for="r-tel">Tu teléfono</label><input id="r-tel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="600 000 000">'+
+  '<label for="r-mail">Email (si quieres)</label><input id="r-mail" type="email" inputmode="email" autocomplete="email" placeholder="No es obligatorio">'+
+  '<div class="ck" id="r-ck" onclick="this.classList.toggle(\'on\');this.querySelector(\'i\').textContent=this.classList.contains(\'on\')?\'✓\':\'\'"><i></i><span>Acepto que <b>Yo Me Voy Excursiones</b> guarde mis datos para avisarme de sus viajes y gestionar mis reservas. Puedo pedir que los borren cuando quiera por WhatsApp.</span></div>'+
+  '<div class="err" id="r-err"></div></div>',
+  '<button class="btn bgold" id="r-ok" onclick="registrar()">'+(res?"Continuar con la reserva":"Entrar")+'</button>'+
+  '<button class="lnk" onclick="'+(res?"cerrar()":"saltaReg()")+'">'+(res?"Cancelar":"Ahora no, solo quiero mirar")+'</button>');
+ var yo=ls("yo")||{};if(yo.nombre)document.getElementById("r-nom").value=yo.nombre;if(yo.tel)document.getElementById("r-tel").value=yo.tel;if(yo.email)document.getElementById("r-mail").value=yo.email}
+function saltaReg(){try{sessionStorage.setItem("ymv_salta","1")}catch(e){}cerrar()}
+function registrar(){var g=function(i){return document.getElementById(i).value.trim()},e=document.getElementById("r-err");
+ var nom=g("r-nom").replace(/\s+/g," "),tel=g("r-tel").replace(/\D/g,"").replace(/^0034|^34(?=\d{9}$)/,""),mail=g("r-mail");
+ var mal=function(m){e.textContent=m;toast(m)};
+ if(nom.length<2)return mal("Escribe tu nombre.");
+ if(tel.length!==9)return mal("El teléfono debe tener 9 números.");
+ if(mail&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail))return mal("El email no parece correcto. Puedes dejarlo vacío.");
+ if(!document.getElementById("r-ck").classList.contains("on"))return mal("Marca la casilla para aceptar.");
+ var b=document.getElementById("r-ok");b.disabled=true;b.textContent="Guardando…";
+ var ref=DBR.ref("clientes_app/"+tel),inc=SV.increment?SV.increment(1):1;
+ var fin=function(){REG={nombre:nom,tel:tel,email:mail};ls("reg",REG);ls("yo",REG);ls("vis",hoyISO());cerrar();pinta();toast("¡Gracias, "+nom.split(" ")[0]+"!");
+  var f=window._trasReg;window._trasReg=null;if(f)setTimeout(f,250)};
+ ref.set({nombre:nom.slice(0,80),tel:tel,email:mail.slice(0,100),ts:SV.TIMESTAMP,ult:SV.TIMESTAMP,visitas:1,consent:true,origen:"app"}).then(fin)
+  .catch(function(er){if(/permission/i.test((er&&er.code||"")+(er&&er.message||"")))return ref.update({ult:SV.TIMESTAMP,visitas:inc}).then(fin,fin);
+   b.disabled=false;b.textContent="Entrar";mal("No se pudo guardar. Revisa tu conexión e inténtalo otra vez.")})}
+function cambiaUsuario(){REG=null;ls("reg",null);pinta();pideRegistro("bienvenida")}
+
+/* ---- en línea: el Gestor de Sergio ve quién está usando la app ---- */
+var PRES_REF=null,PRES_ID="s"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),PRES_DESDE=Date.now(),VISTA="Viendo la lista de viajes";
+function disp(){var u=navigator.userAgent;return /iphone|ipad/i.test(u)?"iPhone":/android/i.test(u)?"Android":"Ordenador"}
+function vista(t){if(t)VISTA=t;actPres()}
+function actPres(){if(!PRES_REF||document.hidden)return;PRES_REF.set({nombre:(REG&&REG.nombre||"").slice(0,80),tel:(REG&&REG.tel||""),vista:VISTA.slice(0,80),disp:disp(),desde:PRES_DESDE,ts:SV.TIMESTAMP}).catch(function(){})}
+DBR.ref(".info/connected").on("value",function(s){if(s.val()!==true)return;PRES_REF=DBR.ref("presencia_app/"+PRES_ID);PRES_REF.onDisconnect().remove();actPres()});
+document.addEventListener("visibilitychange",function(){if(!PRES_REF)return;if(document.hidden)PRES_REF.remove().catch(function(){});else actPres()});
+setInterval(actPres,120000);
 /* ---- hojas ---- */
 function sheet(h,b,f){document.getElementById("sheet").innerHTML='<div class="sh-h">'+h+'<button class="sh-x" onclick="cerrar()" aria-label="Cerrar">✕</button></div><div class="sh-b">'+b+'</div>'+(f?'<div class="sh-f">'+f+'</div>':"");
  document.getElementById("ov").classList.add("on");document.body.style.overflow="hidden"}
-function cerrar(){document.getElementById("ov").classList.remove("on");document.body.style.overflow=""}
+function cerrar(){document.getElementById("ov").classList.remove("on");document.body.style.overflow="";if(typeof VJ!=="undefined"&&VJ){var h=location.hash.replace("#","");vista(h.indexOf("viaje-")===0&&VJ[h.slice(6)]?"Mirando "+VJ[h.slice(6)].destino:"Viendo la lista de viajes")}}
 document.getElementById("ov").addEventListener("click",function(e){if(e.target.id==="ov")cerrar()});
 window.addEventListener("scroll",function(){document.body.classList.toggle("sc",window.scrollY>24)},{passive:true});
 
