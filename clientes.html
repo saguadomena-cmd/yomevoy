@@ -267,7 +267,7 @@ function reservar(id){if(!yaReg())return pideRegistro("reservar",function(){rese
   '<label for="f-imp">Importe que has transferido (€)</label><input id="f-imp" type="number" inputmode="decimal" min="1" placeholder="'+(CFG.senal?CFG.senal:"20")+'">'+
   '<label>Justificante de la transferencia</label><input type="file" id="f-file" accept="image/*,application/pdf" style="display:none" onchange="leeDoc()"><div class="up" id="f-up" onclick="document.getElementById(\'f-file\').click()">📎 Adjuntar captura o PDF del justificante</div>'+
   '<label for="f-nota">Comentarios (opcional)</label><textarea id="f-nota" placeholder="Alergias, ir sentados juntos, etc."></textarea>'+
-  '<div class="ck" id="f-ck" onclick="F.ok=!F.ok;this.classList.toggle(\'on\',F.ok);this.querySelector(\'i\').textContent=F.ok?\'✓\':\'\'"><i></i><span>'+esc(CFG.condiciones||"La plaza queda reservada cuando comprobemos la transferencia; te lo confirmaremos por WhatsApp. El resto se paga al subir al autobús.")+'</span></div>'+
+  '<div class="ck" id="f-ck" onclick="F.ok=!F.ok;this.classList.toggle(\'on\',F.ok);this.querySelector(\'i\').textContent=F.ok?\'✓\':\'\'"><i></i><span>'+esc(CFG.condiciones||"La plaza queda reservada cuando comprobemos la transferencia; te lo confirmaremos por WhatsApp. El resto se paga en efectivo en el autobús el día de la excursión. La reserva no es reembolsable, salvo causa de fuerza mayor justificada con documentación oficial. Las cancelaciones con menos de 5 días naturales de antelación no dan derecho a reembolso.")+'</span></div>'+
   '<div class="err" id="f-err"></div>',
   '<button class="btn bgold" id="f-send" onclick="enviar()">Enviar solicitud de reserva</button>');
  totF()}

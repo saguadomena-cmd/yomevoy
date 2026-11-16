@@ -417,6 +417,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sky);box
 .live .lr{display:flex;align-items:center;gap:10px;padding:9px 0 2px;border-top:1px dashed var(--line);margin-top:9px}
 .live .lr .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1d4f86,#3f86c6);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .live .lr .i{flex:1;min-width:0}.live .lr .m{font-size:12px;color:var(--muted)}
+.acts .pago{background:#fff7dd;border-color:#f0d98a;color:#8a6100}
 /* animaciones */
 .enter>*{animation:sube .42s cubic-bezier(.2,.8,.2,1) both}
 .enter>*:nth-child(2){animation-delay:.04s}.enter>*:nth-child(3){animation-delay:.08s}.enter>*:nth-child(4){animation-delay:.12s}.enter>*:nth-child(5){animation-delay:.16s}.enter>*:nth-child(n+6){animation-delay:.2s}
@@ -502,7 +503,7 @@ function salir(){
  if(_connRef){_connRef.off();_connRef=null}
  if(_pc&&ME){var c=_pc;_pc=null;Promise.all([c.remove(),RT.ref("presencia/"+ME.uid+"/ultimo").set(SV.TIMESTAMP)]).then(fin,fin)}else fin()}
 function paraTodo(){
- try{REF.off();RT.ref("solicitudes").off();RT.ref("clientes_app").off();RT.ref("presencia_app").off();CAPP={};PAPP={};clearInterval(_liveT);RT.ref("usuarios").off();RT.ref("presencia").off();RT.ref("registro").off();if(_uw){_uw.off();_uw=null}if(_connRef){_connRef.off();_connRef=null}}catch(e){}
+ try{REF.off();RT.ref("solicitudes").off();RT.ref("clientes_app").off();RT.ref("presencia_app").off();RT.ref("web_publica/config").off();CAPP={};PAPP={};clearInterval(_liveT);RT.ref("usuarios").off();RT.ref("presencia").off();RT.ref("registro").off();if(_uw){_uw.off();_uw=null}if(_connRef){_connRef.off();_connRef=null}}catch(e){}
  ME=null;USUARIOS={};PRES={};REGLOG=[];DB={viajes:{},clientes:{},counters:{}};_cliAuto=false;_resLast="";SRVO={};
  document.getElementById("app").innerHTML="";document.getElementById("who").style.display="none";document.getElementById("tb-a").style.display="none";document.getElementById("tb-s").style.display="none";SOL={};
  TAB="viajes";VIEW="lista";cerrar()}
@@ -537,6 +538,7 @@ function iniciaPresencia(){
    c.set(SV.TIMESTAMP)}).catch(function(){})})}
 function escuchaAdmin(){
  if(esDueno()){RT.ref("presencia_app").on("value",function(s){PAPP=s.val()||{};pintaLive()});clearInterval(_liveT);_liveT=setInterval(pintaLive,30000)}
+ if(esDueno())RT.ref("web_publica/config").on("value",function(s){CFGW=s.val()||{}},function(){});
  if(esDueno())RT.ref("clientes_app").on("value",function(s){CAPP=s.val()||{};if(TAB==="solicitudes")render()});
  if(esDueno())RT.ref("solicitudes").limitToLast(300).on("value",function(s){SOL=s.val()||{};var n=Object.keys(SOL).filter(function(k){return SOL[k]&&SOL[k].estado==="pendiente"}).length;
   var b=document.getElementById("nb-s");if(b){b.textContent=n||"";b.style.display=n?"inline-block":"none"}if(TAB==="solicitudes")render()});
@@ -725,7 +727,7 @@ function solCard(x){var v=DB.viajes[x.vId],pend=x.estado==="pendiente";
   '<div class="m">📍 '+esc(x.recogida||"—")+(x.acomp?' · 👥 '+esc(x.acomp):"")+(x.nota?' · 📝 '+esc(x.nota):"")+'</div>'+
   '<div class="m">Enviada '+fmtTs(x.ts)+(x.por?' · revisada por '+esc(x.por):"")+(x.motivo?' · motivo: '+esc(x.motivo):"")+'</div>'+
   '<div class="acts"><button class="just" onclick="verDocSol(\''+x.id+'\')">🧾 Justificante</button>'+
-  '<button onclick="waSol(\''+x.id+'\')">💬 WhatsApp</button>'+
+  '<button onclick="waSol(\''+x.id+'\')">💬 WhatsApp</button><button class="pago" onclick="enviaPago(\''+x.tel+'\')">💳 Datos de pago</button>'+
   (pend&&v?'<button class="bc ok" onclick="aprobarSol(\''+x.id+'\')">✅ Aprobar</button>':"")+
   (pend?'<button onclick="rechazarSol(\''+x.id+'\')">❌ Rechazar</button>':"")+
   (!pend&&x.pId&&v&&v.pasajeros&&v.pasajeros[x.pId]?'<button onclick="CUR=\''+x.vId+'\';TAB=\'viajes\';VIEW=\'detalle\';Q=\''+jsq(x.localizador||x.nombre)+'\';render()">Ver reserva</button>':"")+
@@ -773,7 +775,7 @@ function liveHTML(){var a=liveArr(),ab=window._liveAb;
  if(a.length&&ab)h+=a.map(function(x){var reg=x.tel&&(CAPP||{})[x.tel];
   return '<div class="lr"><div class="av">'+(x.nombre?esc(x.nombre.trim().charAt(0).toUpperCase()):"?")+'</div><div class="i"><b>'+(x.nombre?esc(x.nombre):"Visitante sin registrar")+'</b>'+
    '<div class="m">'+esc(x.vista||"")+'</div><div class="m">'+esc(x.disp||"")+' · conectado '+hace(x.desde).replace("hace ","hace ")+(x.tel?' · '+esc(x.tel):"")+'</div></div>'+
-   (x.tel?'<button class="mbtn" onclick="event.stopPropagation();window.open(\'https://wa.me/34'+x.tel+'\',\'_blank\')">💬</button>':"")+'</div>'}).join("");
+   (x.tel?'<button class="mbtn" onclick="event.stopPropagation();window.open(\'https://wa.me/34'+x.tel+'\',\'_blank\')">💬</button><button class="mbtn" title="Enviar datos de pago" onclick="event.stopPropagation();enviaPago(\''+x.tel+'\')">💳</button>':"")+'</div>'}).join("");
  return h+'</div>'}
 function pintaLive(){var e=document.getElementById("live");if(e)e.innerHTML=liveHTML();
  var n=liveArr().length,b=document.getElementById("nb-l");if(b){b.textContent=n||"";b.style.display=n?"inline-block":"none"}}
@@ -792,7 +794,7 @@ function registradosHTML(){
    '<div class="m">📞 '+esc(c.tel)+(c.email?' · ✉️ '+esc(c.email):"")+'</div>'+
    '<div class="m">Registrado '+fmtTs(c.ts)+' · última visita '+hace(c.ult||c.ts)+' · '+(c.visitas||1)+' visita'+((c.visitas||1)===1?"":"s")+'</div>'+
    '<div style="margin-top:5px">'+(nv?'<span class="tag ok">✓ Ha viajado ('+nv+')</span>':'<span class="tag sr">Aún no ha viajado</span>')+(ns?' <span class="tag pt">📥 '+ns+' solicitud'+(ns>1?"es":"")+'</span>':"")+'</div>'+
-   '<div class="acts"><button class="tel" onclick="window.open(\'https://wa.me/34'+c.tel+'\',\'_blank\')">💬 WhatsApp</button><a href="tel:'+c.tel+'"><button>📞 Llamar</button></a><button onclick="borraReg(\''+c.tel+'\')">🗑️</button></div></div></div>'}).join("")
+   '<div class="acts"><button class="tel" onclick="window.open(\'https://wa.me/34'+c.tel+'\',\'_blank\')">💬 WhatsApp</button><button class="pago" onclick="enviaPago(\''+c.tel+'\')">💳 Datos de pago</button><a href="tel:'+c.tel+'"><button>📞 Llamar</button></a><button onclick="borraReg(\''+c.tel+'\')">🗑️</button></div></div></div>'}).join("")
   :'<div class="empty">'+(a.length?"Nadie coincide con la búsqueda.":"Todavía no se ha registrado nadie.<br>Comparte el enlace de la app con tus clientes.")+'</div>';
  return h}
 function exportaReg(){var a=capArr().sort(function(x,y){return (x.nombre||"").localeCompare(y.nombre||"")});
@@ -803,16 +805,26 @@ function exportaReg(){var a=capArr().sort(function(x,y){return (x.nombre||"").lo
  el.href=u;el.download="clientes_app_"+hoyISO()+".csv";document.body.appendChild(el);el.click();setTimeout(function(){URL.revokeObjectURL(u);el.remove()},800);toast("Lista descargada")}
 function borraReg(tel){var c=CAPP[tel];if(!c||!esDueno())return;if(!confirm("¿Borrar los datos de "+c.nombre+" ("+tel+")? Hazlo solo si te lo pide el cliente."))return;
  RT.ref("clientes_app/"+tel).remove().then(function(){toast("Datos borrados")}).catch(fail)}
+
+/* --- mensaje de datos de pago por WhatsApp --- */
+var CFGW={},PAGO_DEF={iban:"ES92 2085 8028 7603 3045 5810",titular:"TOURING LUCAS S.L.",senal:30};
+function msgPago(){var c=CFGW||{},sen=c.senal||PAGO_DEF.senal,tit=c.titular||PAGO_DEF.titular,iban=c.iban||PAGO_DEF.iban;
+ return "💳 RESERVA DE PLAZA\n\nLa reserva es de "+sen+" € por persona.\nEl resto del importe del viaje se abonará el mismo día de la excursión, en efectivo, directamente en el autobús.\n\nTitular de la cuenta:\n"+tit+"\n\n🏦 IBAN\n\n"+iban+
+  "\n\n📲 Una vez realizada la transferencia, envía el justificante de pago por WhatsApp junto con el nombre completo de todos los viajeros para confirmar la reserva.\n\nCondiciones de cancelación\n\n"+
+  "- La reserva no es reembolsable.\n- En caso de accidente, enfermedad grave u otra causa de fuerza mayor, debidamente justificada mediante documentación oficial, la empresa podrá valorar la devolución del importe de la reserva o el cambio a otra fecha.\n"+
+  "- Las cancelaciones realizadas con menos de 5 días naturales de antelación no darán derecho al reembolso, salvo en los casos de fuerza mayor debidamente justificados.\n\nAl realizar la reserva, el cliente declara haber leído y aceptado estas condiciones."}
+function enviaPago(tel){tel=normTel(tel||"");window.open("https://wa.me/"+(tel.length===9?"34"+tel:"")+"?text="+encodeURIComponent(msgPago()),"_blank")}
+function copiaPago(){var t=msgPago();if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast("Mensaje de pago copiado")},function(){prompt("Copia el mensaje:",t)});else prompt("Copia el mensaje:",t)}
 /* --- datos de pago y enlace de la app --- */
 var URL_CLI="https://saguadomena-cmd.github.io/yomevoy/clientes.html";
 function modalConfigWeb(){if(!esDueno())return;RT.ref("web_publica/config").once("value").then(function(s){var c=s.val()||{};
  sheet('<h2>📱 App de clientes · datos de pago</h2><div style="font-size:12.5px;color:var(--muted)">Lo que ven los clientes al reservar</div>',
-  '<label>IBAN</label><input id="cw-iban" value="'+esc(c.iban||"")+'" placeholder="ES00 0000 0000 0000 0000 0000">'+
-  '<label>Titular de la cuenta</label><input id="cw-tit" value="'+esc(c.titular||"")+'">'+
+  '<label>IBAN</label><input id="cw-iban" value="'+esc(c.iban||PAGO_DEF.iban)+'" placeholder="ES00 0000 0000 0000 0000 0000">'+
+  '<label>Titular de la cuenta</label><input id="cw-tit" value="'+esc(c.titular||PAGO_DEF.titular)+'">'+
   '<label>Bizum (opcional)</label><input id="cw-biz" value="'+esc(c.bizum||"")+'" placeholder="614 599 790">'+
-  '<label>Señal por plaza (€)</label><input id="cw-sen" type="number" inputmode="decimal" value="'+(c.senal||"")+'" placeholder="20">'+
+  '<label>Señal por plaza (€)</label><input id="cw-sen" type="number" inputmode="decimal" value="'+(c.senal||PAGO_DEF.senal)+'" placeholder="30">'+
   '<label>WhatsApp de contacto</label><input id="cw-wa" value="'+esc(c.whatsapp||TEL_EMP)+'">'+
-  '<label>Condiciones que acepta el cliente</label><textarea id="cw-cond" style="min-height:110px">'+esc(c.condiciones||"La plaza queda reservada cuando comprobemos la transferencia; te lo confirmaremos por WhatsApp. El resto se paga al subir al autobús. Si necesitas cambiar tu punto de recogida, avísanos con 2 días de antelación.")+'</textarea>',
+  '<label>Condiciones que acepta el cliente</label><textarea id="cw-cond" style="min-height:110px">'+esc(c.condiciones||"La plaza queda reservada cuando comprobemos la transferencia; te lo confirmaremos por WhatsApp. El resto se paga en efectivo en el autobús el día de la excursión. La reserva no es reembolsable, salvo causa de fuerza mayor justificada con documentación oficial. Las cancelaciones con menos de 5 días naturales de antelación no dan derecho a reembolso.")+'</textarea>',
   '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" onclick="guardaConfigWeb()">Guardar</button>')}).catch(fail)}
 function guardaConfigWeb(){var g=function(i){return document.getElementById(i).value.trim()};
  RT.ref("web_publica/config").set({iban:g("cw-iban"),titular:g("cw-tit"),bizum:g("cw-biz"),senal:parseFloat(g("cw-sen"))||0,whatsapp:g("cw-wa").replace(/\D/g,""),condiciones:g("cw-cond").slice(0,1500)})
@@ -1016,7 +1028,7 @@ function renderAdmin(){
  var h='<h2>⚙️ Administración</h2>';
  var npen=solArr().filter(function(x){return x.estado==="pendiente"}).length;
  if(esDueno())h+='<div class="card appcli"><b>📱 App de clientes</b><div class="m">Tus clientes ven los viajes publicados y piden reserva con su justificante.'+(npen?' Tienes <b>'+npen+'</b> solicitud(es) pendiente(s).':"")+'</div>'+
-  '<div class="acc" style="margin-top:9px;flex-wrap:wrap"><button class="btn bp" onclick="copiaUrlCli()">🔗 Copiar enlace</button><button class="btn bg2" onclick="window.open(URL_CLI,\'_blank\')">👀 Abrir</button><button class="btn bg2" onclick="modalConfigWeb()">💳 Datos de pago</button></div></div>';
+  '<div class="acc" style="margin-top:9px;flex-wrap:wrap"><button class="btn bp" onclick="copiaUrlCli()">🔗 Copiar enlace</button><button class="btn bg2" onclick="window.open(URL_CLI,\'_blank\')">👀 Abrir</button><button class="btn bg2" onclick="modalConfigWeb()">⚙️ Datos de pago</button><button class="btn bg2" onclick="copiaPago()">💳 Copiar mensaje de pago</button></div></div>';
  var nOn=us.filter(function(u){return estPres(u.uid).on}).length+(eS.on?1:0);
  h+='<div class="adm"><b>👥 Equipo</b><span class="m">'+nOn+' en línea</span></div>';
  h+=fila('👑 Sergio <span class="tag prem">PREMIUM</span>',eS.on?"🟢 En línea":"Visto "+hace(eS.ult),eS,"");
