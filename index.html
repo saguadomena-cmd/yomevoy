@@ -421,6 +421,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sky);box
 .cambios{border:1.5px solid #f3d37a;background:linear-gradient(180deg,#fffaf0,#fff)}
 .cambios .cb{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}.cambios .m{font-size:12px;color:var(--muted)}
 .cambios .txt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:6px;font-size:14px}
+.fe-wrap{position:relative;border-radius:16px;overflow:hidden;box-shadow:var(--sh);touch-action:none}
+.fe-wrap canvas{display:block;width:100%;height:auto;cursor:grab}
+.fe-guia{position:absolute;inset:0;pointer-events:none}
+.fe-guia span{position:absolute;top:8px;background:rgba(255,255,255,.85);color:var(--navy);font-size:10.5px;font-weight:900;border-radius:9px;padding:3px 8px}
+.fe-guia span:first-child{left:8px}.fe-guia span:nth-child(2){right:8px}
+.fe-guia b{position:absolute;left:10px;bottom:8px;color:#fff;font-size:17px;font-weight:900;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.ft .fb{flex-wrap:wrap}
 /* animaciones */
 .enter>*{animation:sube .42s cubic-bezier(.2,.8,.2,1) both}
 .enter>*:nth-child(2){animation-delay:.04s}.enter>*:nth-child(3){animation-delay:.08s}.enter>*:nth-child(4){animation-delay:.12s}.enter>*:nth-child(5){animation-delay:.16s}.enter>*:nth-child(n+6){animation-delay:.2s}
@@ -757,7 +764,7 @@ function publicaWeb(){
  var o={};Object.keys(DB.viajes).forEach(function(k){var v=DB.viajes[k];
   if(v.publico===false||!v.destino||!v.fecha||viajePasado(v))return;var t=totViaje(v);
   o[k]={destino:v.destino,fecha:v.fecha,hora:v.hora||"",num:v.num||0,precioA:+v.precioA||0,precioN:precioN(v),regreso:v.regreso||"",
-   punto:v.punto||"",salidas:v.salidas||{},descripcion:v.descripcion||"",portada:v.portada||"",nfotos:v.nfotos||0,completo:!!(t.cap&&t.libres<=0)}});
+   punto:v.punto||"",salidas:v.salidas||{},descripcion:v.descripcion||"",portada:v.portada||"",nfotos:v.nfotos||0,completo:!!(v.agotado||(t.cap&&t.libres<=0))}});
  var j=JSON.stringify(o);if(j===_webLast)return;_webLast=j;WEB.set(o).catch(function(){_webLast=""})}
 /* --- fotos del viaje --- */
 function modalFotos(vId){var v=DB.viajes[vId];if(!v||!esDueno())return;
@@ -773,7 +780,7 @@ function cargaFotos(vId){RT.ref("web_fotos/"+vId).once("value").then(function(s)
  var o=s.val()||{},a=Object.keys(o).sort().map(function(k){return {id:k,d:o[k].d}});_ftList[vId]=a;
  var v=DB.viajes[vId],por=v.portada||(a[0]&&a[0].id)||"",e=document.getElementById("ft-list");if(!e)return;
  e.innerHTML=a.length?a.map(function(f){return '<div class="ft'+(f.id===por?" por":"")+'"><img src="'+f.d+'" alt=""><div class="fb">'+
-   '<button onclick="portadaFoto(\''+vId+'\',\''+f.id+'\')">'+(f.id===por?"⭐ Portada":"☆ Portada")+'</button><button onclick="borraFoto(\''+vId+'\',\''+f.id+'\')">🗑️</button></div></div>'}).join("")
+   '<button onclick="portadaFoto(\''+vId+'\',\''+f.id+'\')">'+(f.id===por?"⭐ Portada":"☆ Portada")+'</button><button onclick="editaFoto(\''+vId+'\',\''+f.id+'\')">✂️ Ajustar</button><button onclick="borraFoto(\''+vId+'\',\''+f.id+'\')">🗑️</button></div></div>'}).join("")
   :'<div class="empty" style="padding:14px;grid-column:1/-1">Este viaje aún no tiene fotos.</div>'}).catch(function(){var e=document.getElementById("ft-list");if(e)e.innerHTML='<div class="empty" style="grid-column:1/-1">No se pudieron cargar las fotos.</div>'})}
 function fijaFotos(vId,a){var v=DB.viajes[vId];if(!v)return;var por=v.portada;
  if(!a.length)por="";else if(!por||!a.some(function(f){return f.id===por}))por=a[0].id;
@@ -789,6 +796,37 @@ function subeFotos(vId){var inp=document.getElementById("ft-file"),fs=[].slice.c
 function borraFoto(vId,fid){if(!confirm("¿Quitar esta foto de la app?"))return;
  RT.ref("web_fotos/"+vId+"/"+fid).remove().then(function(){_ftList[vId]=(_ftList[vId]||[]).filter(function(f){return f.id!==fid});fijaFotos(vId,_ftList[vId]);cargaFotos(vId)}).catch(fail)}
 function portadaFoto(vId,fid){var v=DB.viajes[vId];v.portada=fid;wUpd("viajes/"+vId,{portada:fid});cargaFotos(vId);toast("⭐ Portada cambiada")}
+
+/* --- editor de fotos: encuadre 16:10 para la app de clientes --- */
+var FE={};
+function editaFoto(vId,fid){var f=(_ftList[vId]||[]).filter(function(x){return x.id===fid})[0];if(!f)return;
+ var im=new Image();im.onload=function(){FE={vId:vId,fid:fid,img:im,modo:"rellenar",zoom:1,x:0,y:0,rot:0};
+  sheet('<h2>✂️ Ajustar foto</h2><div style="font-size:12.5px;color:var(--muted)">Así se verá en la tarjeta del viaje en la app de clientes</div>',
+   '<div class="fe-wrap"><canvas id="fe-c" width="800" height="500"></canvas><div class="fe-guia"><span>Fecha</span><span>Días</span><b>'+esc((DB.viajes[vId]||{}).destino||"")+'</b></div></div>'+
+   '<div class="ptabs" style="margin-top:10px"><div class="ptab on" id="fe-m1" onclick="feModo(\'rellenar\')">🔍 Rellenar (recorta)</div><div class="ptab" id="fe-m2" onclick="feModo(\'encajar\')">🖼️ Encajar entera</div></div>'+
+   '<label>Zoom</label><input id="fe-z" type="range" min="1" max="3" step="0.01" value="1" oninput="FE.zoom=+this.value;feDibuja()">'+
+   '<div class="acc" style="margin-top:8px"><button class="btn bg2" onclick="feGira()">↻ Girar</button><button class="btn bg2" onclick="FE.x=0;FE.y=0;FE.zoom=1;document.getElementById(\'fe-z\').value=1;feDibuja()">↺ Centrar</button></div>'+
+   '<div class="hint" style="color:var(--muted);font-weight:600">Arrastra la foto con el dedo para moverla. Las marcas de arriba y el nombre de abajo son lo que pone la app encima.</div>',
+   '<button class="btn bg2" onclick="modalFotos(\''+vId+'\')">Cancelar</button><button class="btn bp" onclick="feGuarda()">Guardar foto</button>');
+  var c=document.getElementById("fe-c"),dr=null;
+  var pos=function(e){var r=c.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return {x:(t.clientX-r.left)*c.width/r.width,y:(t.clientY-r.top)*c.height/r.height}};
+  var ini=function(e){dr=pos(e);dr.ox=FE.x;dr.oy=FE.y;e.preventDefault()},mov=function(e){if(!dr)return;var q=pos(e);FE.x=dr.ox+(q.x-dr.x)/c.width;FE.y=dr.oy+(q.y-dr.y)/c.height;feDibuja();e.preventDefault()},fin=function(){dr=null};
+  c.addEventListener("mousedown",ini);c.addEventListener("touchstart",ini,{passive:false});window.addEventListener("mousemove",mov);c.addEventListener("touchmove",mov,{passive:false});window.addEventListener("mouseup",fin);c.addEventListener("touchend",fin);
+  feDibuja()};im.src=f.d}
+function feModo(m){FE.modo=m;FE.x=0;FE.y=0;FE.zoom=1;var z=document.getElementById("fe-z");if(z)z.value=1;
+ document.getElementById("fe-m1").classList.toggle("on",m==="rellenar");document.getElementById("fe-m2").classList.toggle("on",m==="encajar");feDibuja()}
+function feGira(){FE.rot=(FE.rot+90)%360;feDibuja()}
+function fePinta(ctx,W,H){var im=FE.img,rot=FE.rot%180!==0,iw=rot?im.height:im.width,ih=rot?im.width:im.height;
+ ctx.fillStyle="#0D1F3C";ctx.fillRect(0,0,W,H);
+ var dib=function(k,cx,cy){ctx.save();ctx.translate(cx,cy);ctx.rotate(FE.rot*Math.PI/180);ctx.drawImage(im,-im.width*k/2,-im.height*k/2,im.width*k,im.height*k);ctx.restore()};
+ if(FE.modo==="encajar"){var kb=Math.max(W/iw,H/ih);ctx.save();ctx.filter="blur("+Math.round(W/40)+"px) brightness(.6)";dib(kb*1.1,W/2,H/2);ctx.restore();ctx.filter="none"}
+ var k=(FE.modo==="encajar"?Math.min(W/iw,H/ih):Math.max(W/iw,H/ih))*FE.zoom;
+ dib(k,W/2+FE.x*W,H/2+FE.y*H)}
+function feDibuja(){var c=document.getElementById("fe-c");if(!c||!FE.img)return;fePinta(c.getContext("2d"),c.width,c.height)}
+function feGuarda(){var c=document.createElement("canvas");c.width=1600;c.height=1000;fePinta(c.getContext("2d"),1600,1000);
+ var q=.84,d=c.toDataURL("image/jpeg",q);while(d.length>420000&&q>.45){q-=.08;d=c.toDataURL("image/jpeg",q)}
+ toast("Guardando foto…");RT.ref("web_fotos/"+FE.vId+"/"+FE.fid).set({d:d,ts:SV.TIMESTAMP}).then(function(){
+  (_ftList[FE.vId]||[]).forEach(function(f){if(f.id===FE.fid)f.d=d});toast("✓ Foto ajustada");modalFotos(FE.vId)}).catch(fail)}
 /* --- solicitudes de reserva --- */
 function solArr(){return Object.keys(SOL||{}).map(function(k){return Object.assign({id:k},SOL[k])}).filter(function(x){return x&&x.nombre})}
 var FSOL="pendiente";
@@ -1843,7 +1881,7 @@ function volcar(v){
 /* ---------- Modal viaje ---------- */
 function modalViaje(id){
  var v=id?DB.viajes[id]:{buses:{}};window._bus=Object.assign({},v.buses||{});window._conOcup=!!id;
- window._vpunto=v.punto||PTS[0];window._vpub=v.publico!==false;var sal=v.salidas||{};
+ window._vpunto=v.punto||PTS[0];window._vpub=v.publico!==false;window._vago=!!v.agotado;var sal=v.salidas||{};
  sheet('<h2>'+(id?("Editar viaje"+(v.num?" Nº "+v.num:"")):"Nuevo viaje")+'</h2>',
   '<label>Destino</label><input id="v-dest" value="'+esc(v.destino||"")+'" placeholder="Ej. Benidorm">'+
   '<div class="row2"><div><label>Fecha</label><input id="v-fecha" type="date" value="'+(v.fecha||"")+'"></div>'+
@@ -1857,6 +1895,7 @@ function modalViaje(id){
   (esDueno()?'<div class="prembox"><div class="pbh">👑 App de clientes · solo Sergio</div>'+
   '<label>Descripción para los clientes</label><textarea id="v-desc" placeholder="Qué se visita, qué incluye, consejos…">'+esc(v.descripcion||"")+'</textarea>'+
   '<div class="sw '+(window._vpub?"on":"")+'" id="v-pub" onclick="window._vpub=!window._vpub;this.classList.toggle(\'on\',window._vpub);this.querySelector(\'.bx\').textContent=window._vpub?\'✓\':\'\'"><div class="bx">'+(window._vpub?"✓":"")+'</div><div><b>Mostrar en la app de clientes</b><small>Los clientes lo ven y pueden pedir reserva</small></div></div>'+
+  '<div class="sw '+(window._vago?"on":"")+'" id="v-ago" style="margin-top:8px" onclick="window._vago=!window._vago;this.classList.toggle(\'on\',window._vago);this.querySelector(\'.bx\').textContent=window._vago?\'✓\':\'\'"><div class="bx">'+(window._vago?"✓":"")+'</div><div><b>🔴 Agotado · SOLD OUT</b><small>Se muestra como vendido y no se puede reservar</small></div></div>'+
   (id?'<button class="btn bg2" style="margin-top:10px" onclick="modalFotos(\''+id+'\')">📷 Fotos del viaje para la app'+(v.nfotos?" ("+v.nfotos+")":"")+'</button>':'<div class="note">📷 Las fotos se añaden después de crear el viaje, desde “Editar viaje”.</div>')+'</div>':"")+
   '<label>Autobús / autobuses</label><div class="buses">'+busOps(window._bus)+'</div>'+
   '<div id="capinfo" style="font-size:13.5px;font-weight:800;margin-top:10px;color:var(--navy)"></div>'+
@@ -1873,7 +1912,7 @@ function guardarViaje(id){
   punto:window._vpunto||"",regreso:document.getElementById("v-regreso").value.trim(),
   precioA:pa,precioN:pn,buses:Object.assign({},window._bus),
   salidas:(function(){var o={};PTS.forEach(function(p,i){var h=document.getElementById("v-sal"+i).value.trim();if(h)o[p]=h});return o})()};
- if(esDueno()){base.descripcion=document.getElementById("v-desc").value.trim();base.publico=window._vpub!==false}
+ if(esDueno()){base.descripcion=document.getElementById("v-desc").value.trim();base.publico=window._vpub!==false;base.agotado=!!window._vago}
  if(id){var v=Object.assign({id:id},base);Object.assign(DB.viajes[id],v);wViaje(v);
   var vv=DB.viajes[id],n=0;
   paxArr(vv).forEach(function(p){var pend=Math.max(0,Math.round((importe(vv,viajeros(p))-(+p.senal||0))*100)/100);
