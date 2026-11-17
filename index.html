@@ -902,7 +902,7 @@ function msgPago(){var c=CFGW||{},sen=c.senal||PAGO_DEF.senal,tit=c.titular||PAG
 function enviaPago(tel){tel=normTel(tel||"");window.open("https://wa.me/"+(tel.length===9?"34"+tel:"")+"?text="+encodeURIComponent(msgPago()),"_blank")}
 function copiaPago(){var t=msgPago();if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast("Mensaje de pago copiado")},function(){prompt("Copia el mensaje:",t)});else prompt("Copia el mensaje:",t)}
 /* --- datos de pago y enlace de la app --- */
-var URL_CLI="https://saguadomena-cmd.github.io/yomevoy/clientes.html";
+var URL_CLI="https://yomevoyexcursiones.github.io/";
 function modalConfigWeb(){if(!esDueno())return;RT.ref("web_publica/config").once("value").then(function(s){var c=s.val()||{};
  sheet('<h2>📱 App de clientes · datos de pago</h2><div style="font-size:12.5px;color:var(--muted)">Lo que ven los clientes al reservar</div>',
   '<label>IBAN</label><input id="cw-iban" value="'+esc(c.iban||PAGO_DEF.iban)+'" placeholder="ES00 0000 0000 0000 0000 0000">'+
