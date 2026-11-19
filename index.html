@@ -513,7 +513,7 @@ function salir(){
  if(_connRef){_connRef.off();_connRef=null}
  if(_pc&&ME){var c=_pc;_pc=null;Promise.all([c.remove(),RT.ref("presencia/"+ME.uid+"/ultimo").set(SV.TIMESTAMP)]).then(fin,fin)}else fin()}
 function paraTodo(){
- try{paraVend();RT.ref("cambios").off();CAMBALL={};REF.off();RT.ref("solicitudes").off();RT.ref("clientes_app").off();RT.ref("presencia_app").off();RT.ref("web_publica/config").off();CAPP={};PAPP={};clearInterval(_liveT);RT.ref("usuarios").off();RT.ref("presencia").off();RT.ref("registro").off();if(_uw){_uw.off();_uw=null}if(_connRef){_connRef.off();_connRef=null}}catch(e){}
+ try{paraVend();paraEnc();RT.ref("caja").off();RT.ref("embarque_mis").off();CAJA={};EMIS={};RT.ref("cambios").off();CAMBALL={};REF.off();RT.ref("solicitudes").off();RT.ref("clientes_app").off();RT.ref("presencia_app").off();RT.ref("web_publica/config").off();CAPP={};PAPP={};clearInterval(_liveT);RT.ref("usuarios").off();RT.ref("presencia").off();RT.ref("registro").off();if(_uw){_uw.off();_uw=null}if(_connRef){_connRef.off();_connRef=null}}catch(e){}
  ME=null;USUARIOS={};PRES={};REGLOG=[];DB={viajes:{},clientes:{},counters:{}};_cliAuto=false;_resLast="";SRVO={};
  document.getElementById("app").innerHTML="";document.getElementById("who").style.display="none";document.getElementById("tb-a").style.display="none";document.getElementById("tb-s").style.display="none";SOL={};
  TAB="viajes";VIEW="lista";cerrar()}
@@ -522,11 +522,15 @@ AUTH.onAuthStateChanged(function(u){
  if((u.email||"").toLowerCase()===ADMIN_USER+DOM){iniciaSesion({uid:u.uid,usuario:ADMIN_USER,nombre:"Sergio",rol:"admin"});return}
  RT.ref("usuarios/"+u.uid).once("value").then(function(s){var r=s.val();
   if(!r||r.activo!==true){_lgMsg=(r&&r.activo===false)?"Tu usuario está desactivado. Habla con el administrador.":"Este usuario no está autorizado.";AUTH.signOut();return}
-  iniciaSesion({uid:u.uid,usuario:r.usuario,nombre:canonVend(r.nombre||r.usuario),rol:(r.rol==="admin"?"admin":"vendedor")})})
+  iniciaSesion({uid:u.uid,usuario:r.usuario,nombre:canonVend(r.nombre||r.usuario),rol:(r.rol==="admin"?"admin":(r.rol==="encargado"?"encargado":"vendedor"))})})
   .catch(function(){_lgMsg="No se pudo comprobar tu usuario. Revisa la conexión.";AUTH.signOut()})});
 function iniciaSesion(me){
- ME=me;ocultaLogin();pintaWho();
+ ME=me;
+ if(me.rol==="encargado"&&!MODO_EMB){location.replace("embarque.html");return}
+ if(MODO_EMB&&me.rol==="vendedor"){location.replace("index.html");return}
+ ocultaLogin();pintaWho();
  document.getElementById("tb-a").style.display=esAdmin()?"":"none";document.getElementById("tb-s").style.display=esDueno()?"":"none";document.getElementById("tb-c").style.display=esAdmin()?"":"none";
+ if(MODO_EMB){["tb-c","tb-a","tb-s"].forEach(function(i){document.getElementById(i).style.display="none"});document.getElementById("tb-v").innerHTML="🚌 Viajes de embarque";document.title="Embarque · Yo Me Voy";var bb=document.querySelector(".brand b");if(bb)bb.textContent="Embarque"}
  refrescaVend();iniciaPresencia();vigilaUsuario();
  if(esAdmin())escuchaAdmin();
  iniciaDatos()}
@@ -547,6 +551,8 @@ function iniciaPresencia(){
    base.update({nombre:ME.nombre,usuario:ME.usuario,rol:ME.rol});
    c.set(SV.TIMESTAMP)}).catch(function(){})})}
 function escuchaAdmin(){
+ RT.ref("caja").on("value",function(s){CAJA=s.val()||{};if(TAB==="viajes"&&VIEW==="detalle")render()},function(){});
+ RT.ref("embarque_mis").on("value",function(s){EMIS=s.val()||{}},function(){});
  RT.ref("cambios").on("value",function(s){CAMBALL=s.val()||{};pintaNbA();if(TAB==="admin")render()},function(){});
  if(esDueno()){RT.ref("presencia_app").on("value",function(s){PAPP=s.val()||{};pintaLive()});clearInterval(_liveT);_liveT=setInterval(pintaLive,30000)}
  if(esDueno())RT.ref("web_publica/config").on("value",function(s){CFGW=s.val()||{}},function(){});
@@ -677,8 +683,108 @@ function hoyISO(){var d=new Date(),p=function(n){return (n<10?"0":"")+n};return 
 function viajePasado(v){return !!(v&&v.fecha&&v.fecha<hoyISO())}
 
 
+
+/* ================= Embarque: encargados y caja ================= */
+var CAJA={},EMIS={},_encL={},_encR=null;
+function paraEnc(){Object.keys(_encL).forEach(function(k){_encL[k].forEach(function(r){try{r.off()}catch(e){}})});_encL={};if(_encR){try{_encR.off()}catch(e){}_encR=null}}
+function iniciaDatosEnc(){paraEnc();SRVO={};DB={viajes:{},clientes:{},counters:{}};CAJA={};
+ _encR=RT.ref("embarque_mis/"+ME.uid);
+ _encR.on("value",function(s){var m=s.val()||{};
+  Object.keys(_encL).forEach(function(k){if(!m[k]){_encL[k].forEach(function(r){r.off()});delete _encL[k];delete DB.viajes[k];delete CAJA[k]}});
+  Object.keys(m).forEach(function(vid){if(_encL[vid]||m[vid]!==true)return;var a=REF.child("viajes/"+vid),b=RT.ref("caja/"+vid);_encL[vid]=[a,b];
+   a.on("value",function(x){var v=x.val();if(v){v.id=vid;DB.viajes[vid]=v}else delete DB.viajes[vid];render()},function(){delete DB.viajes[vid];render()});
+   b.on("value",function(x){CAJA[vid]=x.val()||{};render()},function(){})});
+  document.getElementById("dot").classList.remove("off");render()},errVend)}
+function metTabs(){return ["Efectivo","Bizum"].map(function(m){return '<div class="ptab '+(window._met===m?"on":"")+'" onclick="setMet(\''+m+'\')">'+(m==="Efectivo"?"💶 Efectivo":"📱 Bizum")+'</div>'}).join("")}
+function metHTML(){window._met="Efectivo";return '<label>Forma de pago</label><div class="ptabs" id="met">'+metTabs()+'</div>'}
+function setMet(m){window._met=m;var e=document.getElementById("met");if(e)e.innerHTML=metTabs()}
+function trasAnotar(){if(window._origen==="lista"){window._origen="";cerrar()}else modalScan()}
+function registraCobro(vId,pId,imp,uidp){if(!(imp>0)||!ME)return;
+ var e={pid:pId,uidp:uidp||"",uid:ME.uid,nombre:ME.nombre,importe:r2(imp),metodo:window._met||"Efectivo",ts:SV.TIMESTAMP};
+ var r=RT.ref("caja/"+vId).push();if(!CAJA[vId])CAJA[vId]={};CAJA[vId][r.key]=Object.assign({},e,{ts:Date.now()});
+ r.set(e).catch(function(){toast("⚠️ El cobro no quedó registrado en caja. Avisa a un administrador.")});
+ var p=(DB.viajes[vId]||{}).pasajeros&&DB.viajes[vId].pasajeros[pId];
+ regLog({accion:"modifica",viaje:descViajeLog(vId),objeto:p?p.nombre:"",detalle:"Cobra "+money(imp)+" ("+e.metodo+") en el autobús",ruta:"caja/"+vId})}
+function cajaArr(vId){var o=CAJA[vId]||{};return Object.keys(o).map(function(k){return Object.assign({id:k},o[k])}).sort(function(a,b){return (b.ts||0)-(a.ts||0)})}
+function cobrosPax(vId,pId){return cajaArr(vId).filter(function(e){return e.pid===pId&&!e.anulado})}
+function anulaCobrosPax(vId,pId){cobrosPax(vId,pId).forEach(function(e){RT.ref("caja/"+vId+"/"+e.id).update({anulado:true,anuladoPor:ME.nombre,tsAnul:Date.now()}).catch(function(){})})}
+function puedeDeshacer(e){return !e.anulado&&(esAdmin()||(e.uid===ME.uid&&Date.now()-(e.ts||0)<600000))}
+function deshaceCobro(vId,cid){var e=(CAJA[vId]||{})[cid];if(!e||!puedeDeshacer(e)){toast("Ya no se puede deshacer: avisa a Ariel o a Sergio");return}
+ var v=DB.viajes[vId],p=v&&v.pasajeros&&v.pasajeros[e.pid];if(!p)return;
+ if(!confirm("¿Deshacer el cobro de "+money(e.importe)+" a "+p.nombre+"?"))return;
+ var b="viajes/"+vId+"/pasajeros/"+e.pid+"/";
+ if(e.uidp){var f=buscaPers(p,e.uidp);if(f)f.x.cob=Math.max(0,r2((+f.x.cob||0)-e.importe));var sm=0;(p.viajeros||[]).forEach(function(x){sm+=(+x.cob||0)});if(sm<(+p.pendiente||0)-0.01)p.cobrado=false;wField(b+"viajeros",p.viajeros)}
+ else p.cobrado=false;
+ wField(b+"cobrado",!!p.cobrado);
+ RT.ref("caja/"+vId+"/"+cid).update({anulado:true,anuladoPor:ME.nombre,tsAnul:Date.now()}).then(function(){toast("Cobro deshecho");modalCaja(vId)}).catch(fail);
+ regLog({accion:"modifica",viaje:descViajeLog(vId),objeto:p.nombre,detalle:"Deshace cobro de "+money(e.importe),ruta:"caja/"+vId})}
+function resumenCaja(vId,soloYo){var t={},tot=0;cajaArr(vId).forEach(function(e){if(e.anulado||(soloYo&&e.uid!==ME.uid))return;var k=e.nombre||"?";if(!t[k])t[k]={Efectivo:0,Bizum:0,n:0};t[k][e.metodo==="Bizum"?"Bizum":"Efectivo"]+=+e.importe||0;t[k].n++;tot+=+e.importe||0});return {pers:t,tot:r2(tot)}}
+function modalCaja(vId){var v=DB.viajes[vId];if(!v)return;var yo=!esAdmin(),rc=resumenCaja(vId,yo),l=cajaArr(vId).filter(function(e){return !yo||e.uid===ME.uid});
+ sheet('<h2>💶 '+(yo?"Mi caja":"Caja del autobús")+'</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):"")+'</div>',
+  Object.keys(rc.pers).map(function(k){var x=rc.pers[k];return '<div class="sumbox" style="margin-top:8px"><div class="r"><span><b>'+esc(k)+'</b> · '+x.n+' cobro'+(x.n===1?"":"s")+'</span><b>'+money(r2(x.Efectivo+x.Bizum))+'</b></div><div class="r"><span>💶 Efectivo</span><b>'+money(r2(x.Efectivo))+'</b></div><div class="r"><span>📱 Bizum</span><b>'+money(r2(x.Bizum))+'</b></div></div>'}).join("")+
+  (l.length?'<label>Movimientos</label>'+l.map(function(e){var p=(v.pasajeros||{})[e.pid]||{},f=e.uidp&&p.viajeros?buscaPers(p,e.uidp):null;
+   return '<div class="imp'+(e.anulado?" bad":"")+'"><b>'+money(e.importe)+'</b> · '+esc(e.metodo)+(e.anulado?' · <span style="color:var(--red)">ANULADO</span>':"")+'<div class="m">'+esc(f?nomPers(p,f.x,f.i):(p.nombre||"Reserva"))+(p.localizador?" · "+esc(p.localizador):"")+'</div><div class="m">'+fmtTs(e.ts)+' · cobró <b>'+esc(e.nombre)+'</b>'+(e.anulado&&e.anuladoPor?' · anuló '+esc(e.anuladoPor):"")+'</div>'+
+    (puedeDeshacer(e)?'<button class="mbtn rs" onclick="deshaceCobro(\''+vId+'\',\''+e.id+'\')">↩️ Deshacer'+(esAdmin()?"":" (máx. 10 min)")+'</button>':"")+'</div>'}).join(""):'<div class="empty" style="padding:14px">Todavía no hay cobros.</div>')+
+  '<div class="note">Cada cobro queda a nombre de quien lo marca. '+(yo?"Si te equivocas, puedes deshacerlo durante 10 minutos; después, avisa a Ariel o a Sergio.":"")+'</div>',
+  '<button class="btn bp" onclick="cerrar()">Cerrar</button>')}
+/* --- pantallas de la app de embarque --- */
+function viajesEmb(){var hoy=hoyISO();return Object.keys(DB.viajes||{}).map(function(k){return DB.viajes[k]}).filter(function(v){if(!v||!v.fecha)return false;var n=diasHasta(v.fecha);return n>=-1&&(esEnc()||n<=14)}).sort(cmpProx)}
+function restoPax(p){return p.cobrado?0:Math.max(0,r2((+p.pendiente||0)-cobPax(p)))}
+function renderEmb(){var f=document.getElementById("fab");if(f)f.style.display="none";
+ if(VIEW==="detalle"&&DB.viajes[CUR])return embDetalle();VIEW="lista";embLista()}
+function embLista(){var l=viajesEmb();
+ var h='<div class="resumen"><div class="hola">Hola, '+esc(ME.nombre)+' 👋</div><div class="prox">'+(esEnc()?"Estos son los viajes en los que te toca embarcar.":"Viajes de los próximos días.")+'</div></div>';
+ h+=l.length?'<div class="vgrid">'+l.map(function(v){var t=totViaje(v),rest=0;paxArr(v).forEach(function(p){rest+=restoPax(p)});var mc=resumenCaja(v.id,true).tot;
+  return '<div class="card viaje" onclick="CUR=\''+v.id+'\';VIEW=\'detalle\';Q=\'\';FPT=\'__all\';render()">'+contadorHTML(v,true)+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+'<span class="d">🚌 '+esc(v.destino)+'</span><div class="m">'+(v.fecha?fmtF(v.fecha):"")+(v.hora?" · "+esc(v.hora):"")+'</div>'+
+   '<div class="mini"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Han subido</small></div><div><b>'+money(r2(rest))+'</b><small>Falta cobrar</small></div><div><b>'+money(mc)+'</b><small>Mi caja</small></div></div></div>'}).join("")+'</div>'
+  :'<div class="empty">'+(esEnc()?"No tienes viajes asignados.<br>Pide a Ariel o a Sergio que te asignen al viaje.":"No hay viajes en los próximos días.")+'</div>';
+ document.getElementById("app").innerHTML=h}
+function embDetalle(){var v=DB.viajes[CUR],t=totViaje(v),rest=0;paxArr(v).forEach(function(p){rest+=restoPax(p)});var mc=resumenCaja(v.id,true).tot,pts=puntosDe(v);
+ var lista=paxArr(v).filter(function(p){return filtra(p,v)}).sort(function(a,b){var ea=a.embarcado?1:0,eb=b.embarcado?1:0;return ea-eb||(a.nombre||"").localeCompare(b.nombre||"")});
+ var h='<button class="back" onclick="VIEW=\'lista\';Q=\'\';FPT=\'__all\';render()">‹ Viajes</button>';
+ h+='<div class="vhero">'+(v.num?'<span class="vnum">Nº '+v.num+'</span>':"")+'<h2>🚌 '+esc(v.destino)+'</h2><div class="vm">'+(v.fecha?'📅 '+esc(fmtLargoMin(v.fecha)):"")+(v.hora?' · 🕐 '+esc(v.hora):"")+'</div><div class="vb">'+contadorHTML(v,false)+'</div></div>';
+ h+='<div class="big-tot"><div><b>'+t.emb+'/'+t.plazas+'</b><small>Han subido</small></div><div><b>'+money(r2(rest))+'</b><small>Falta cobrar</small></div><div><b>'+money(mc)+'</b><small>Mi caja</small></div></div>';
+ h+='<div class="acc"><button class="btn bp" style="background:linear-gradient(135deg,#1E9E63,#34c38f)" onclick="window._origen=\'\';modalScan()">📷 Escanear QR</button><button class="btn bg2" onclick="modalCaja(\''+v.id+'\')">💶 '+(esAdmin()?"Caja":"Mi caja")+'</button></div>';
+ h+='<div class="search" style="margin-top:8px"><input id="q" placeholder="🔍 Buscar nombre o localizador" value="'+esc(Q)+'" oninput="Q=this.value;render();var e=document.getElementById(\'q\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
+ h+='<div class="chips"><div class="chip '+(FPT==="__all"?"on":"")+'" onclick="FPT=\'__all\';render()">Todos ('+t.plazas+')</div>';
+ pts.forEach(function(r){h+='<div class="chip '+(FPT===r?"on":"")+'" onclick="FPT=\''+jsq(r)+'\';render()">'+esc(r)+' ('+plazasPunto(v,r)+')</div>'});h+='</div>';
+ h+=lista.length?lista.map(function(p){return embRow(v,p)}).join(""):'<div class="empty">Nadie coincide.</div>';
+ document.getElementById("app").innerHTML=h}
+function embRow(v,p){var pl=plazasDe(p),sub=embPlazas(p),r=restoPax(p),tel=normTel(p.tel),cb=cobrosPax(v.id,p.id),A='\''+v.id+'\',\''+p.id+'\'';
+ return '<div class="pax '+(p.embarcado?"emb":"")+'"><div class="chk" style="font-size:13px">'+(p.embarcado?"✓":sub+"/"+pl)+'</div><div class="i">'+
+  '<div class="n">'+esc(p.nombre)+(p.localizador?' <span class="loc">'+esc(p.localizador)+'</span>':"")+'</div>'+
+  '<div class="mm">'+pl+' plaza(s)'+(p.bebes?" + "+p.bebes+" bebé":"")+' · 📍 '+(mixto(p,v)?"varios puntos":esc(recBase(p,v)))+(p.nota?" · 📝 "+esc(p.nota):"")+'</div>'+
+  '<div class="mm">'+(r>0?'<b style="color:var(--amber)">💶 Falta cobrar '+money(r)+'</b>':'<b style="color:var(--green)">✓ Pagado</b>')+(cb.length?' · cobró '+esc(cb.map(function(e){return e.nombre+" ("+e.metodo+")"}).filter(function(x,i,a){return a.indexOf(x)===i}).join(", ")):"")+'</div>'+
+  '<div class="acts"><button class="bc ok" onclick="window._origen=\'lista\';CUR=\''+v.id+'\';resultadoScan('+A+')">'+(p.embarcado?(r>0?"💶 Cobrar":"Ver"):"✅ Suben"+(r>0?" / cobrar":""))+'</button>'+
+  (pl>1?'<button onclick="embPersonas('+A+')">👥 Uno a uno</button>':"")+
+  (tel?'<a href="tel:+34'+tel+'"><button>📞 Llamar</button></a><button onclick="window.open(\'https://wa.me/34'+tel+'\',\'_blank\')">💬</button>':"")+'</div></div></div>'}
+function embPersonas(vId,pId){var p=aseguraIds(vId,pId),v=DB.viajes[vId];if(!p)return;CUR=vId;
+ sheet('<h2>👥 Uno a uno</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(p.nombre)+' · cada persona sube y paga por separado</div>',
+  (p.viajeros||[]).map(function(x,i){if(x.tipo==="bebe")return '<div class="imp">👶 '+esc(nomPers(p,x,i))+' <span class="m">bebé, no ocupa plaza</span></div>';
+   var debe=Math.max(0,r2((p.cobrado?0:cuotaPend(v,p,x))-(p.cobrado?0:(+x.cob||0))));
+   return '<div class="imp" style="cursor:pointer" onclick="window._origen=\'lista\';resultadoPersona(\''+vId+'\',\''+pId+'\',\''+x.uid+'\')"><b>'+((p.embarcado||x.emb)?"✅ ":"⬜ ")+esc(nomPers(p,x,i))+'</b><div class="m">'+esc(tipoTxt(x))+' · '+esc(recDe(p,x,v))+' · '+(debe>0?'<b style="color:var(--amber)">debe '+money(debe)+'</b>':'<b style="color:var(--green)">pagado</b>')+'</div></div>'}).join(""),
+  '<button class="btn bg2" onclick="cerrar()">Cerrar</button>')}
+/* --- asignar encargados (administradores) --- */
+function encargados(){return activosUsr().filter(function(u){return u.rol==="encargado"&&u.activo!==false})}
+function asignadosA(vId){return encargados().filter(function(u){return EMIS[u.uid]&&EMIS[u.uid][vId]===true})}
+function modalAsigna(vId){var v=DB.viajes[vId],l=encargados();
+ sheet('<h2>👷 Encargados de embarque</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+(v.fecha?" · "+fmtF(v.fecha):"")+'</div>',
+  (l.length?l.map(function(u){var on=EMIS[u.uid]&&EMIS[u.uid][vId]===true;return '<div class="sw '+(on?"on":"")+'" onclick="togAsigna(\''+u.uid+'\',\''+vId+'\')"><div class="bx">'+(on?"✓":"")+'</div><div><b>'+esc(u.nombre)+'</b><small>'+esc(u.usuario||"")+'</small></div></div>'}).join("")
+   :'<div class="empty">Aún no hay encargados.<br>Créalos en <b>Admin → Añadir vendedor</b> eligiendo «Encargado de embarque».</div>')+
+  '<div class="note">Solo verán este viaje en la app de embarque (<b>…/yomevoy/embarque.html</b>) y solo podrán marcar subidas y cobros.</div>',
+  '<button class="btn bp" onclick="cerrar();render()">Listo</button>')}
+function togAsigna(uid,vId){var on=EMIS[uid]&&EMIS[uid][vId]===true;if(!EMIS[uid])EMIS[uid]={};
+ RT.ref("embarque_mis/"+uid+"/"+vId).set(on?null:true).then(function(){if(on)delete EMIS[uid][vId];else EMIS[uid][vId]=true;modalAsigna(vId);
+  regLog({accion:"modifica",viaje:descViajeLog(vId),objeto:(USUARIOS[uid]||{}).nombre||"",detalle:on?"Quita encargado de embarque":"Asigna encargado de embarque",ruta:""})}).catch(fail)}
+function cajaCardHTML(v){var rc=resumenCaja(v.id,false),as=asignadosA(v.id);
+ return '<div class="card" style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>💶 Cobros en el autobús</b><b>'+money(rc.tot)+'</b></div>'+
+  (Object.keys(rc.pers).length?Object.keys(rc.pers).map(function(k){var x=rc.pers[k];return '<div class="m" style="font-size:12.5px;color:var(--muted);margin-top:4px">'+esc(k)+': <b style="color:var(--ink)">'+money(r2(x.Efectivo+x.Bizum))+'</b> (💶 '+money(r2(x.Efectivo))+' · 📱 '+money(r2(x.Bizum))+')</div>'}).join(""):'<div class="m" style="font-size:12.5px;color:var(--muted);margin-top:4px">Sin cobros todavía.</div>')+
+  '<div class="m" style="font-size:12.5px;color:var(--muted);margin-top:6px">👷 Encargados: '+(as.length?as.map(function(u){return esc(u.nombre)}).join(", "):"ninguno")+'</div>'+
+  '<div class="acc" style="margin-top:8px;margin-bottom:0"><button class="btn bg2" onclick="modalCaja(\''+v.id+'\')">Ver caja</button><button class="btn bg2" onclick="modalAsigna(\''+v.id+'\')">👷 Asignar encargados</button></div></div>'}
 /* ================= Vendedores externos: acceso mínimo ================= */
-function esVend(){return !!ME&&!esAdmin()}
+function esVend(){return !!ME&&!esAdmin()&&ME.rol!=="encargado"}
+function esEnc(){return !!ME&&ME.rol==="encargado"}
+var MODO_EMB=/embarque/i.test(location.pathname);
 function uidDeVend(nombre){var k=normV(canonVend(nombre||""));if(!k)return"";var r="";
  Object.keys(USUARIOS||{}).forEach(function(u){var x=USUARIOS[u];if(!r&&x&&x.activo!==false&&!x.reemplazado&&x.rol!=="admin"&&normV(canonVend(x.nombre||x.usuario))===k)r=u});return r}
 var RESV={},VPAX={},VIDX={},CAMB={},CAMBALL={},_vl=[],_paxL={};
@@ -1060,7 +1166,7 @@ function vigilaUsuario(){
  if(_uw){_uw.off();_uw=null}
  if(esDueno())return;
  _uw=RT.ref("usuarios/"+ME.uid);
- _uw.on("value",function(s){var r=s.val(),rol=(r&&r.rol==="admin")?"admin":"vendedor";
+ _uw.on("value",function(s){var r=s.val(),rol=(r&&r.rol==="admin")?"admin":((r&&r.rol==="encargado")?"encargado":"vendedor");
   if(!r||r.activo!==true||rol!==ME.rol){_lgMsg="Tu acceso ha cambiado o está desactivado. Vuelve a entrar o habla con el administrador.";AUTH.signOut()}})}
 function puedeGest(u){return esDueno()||u.rol!=="admin"}
 function presDe(usuario){var k=Object.keys(PRES).filter(function(x){return PRES[x]&&PRES[x].usuario===usuario})[0];return k?estPres(k):{on:false,ult:0}}
@@ -1107,12 +1213,13 @@ function modalVendedor(nombre,admin){
   '<label>Nombre (el que saldrá en las reservas)</label><input id="nv-nom" value="'+esc(nombre)+'" placeholder="Ej: Fersho" oninput="nvAuto()"'+(nombre?' readonly style="background:var(--bg)"':"")+'>'+
   '<label>Usuario para entrar (sin espacios)</label><input id="nv-user" value="'+esc(normUser(nombre))+'" oninput="this.dataset.man=1" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="fersho">'+
   '<label>Contraseña inicial</label><div style="display:flex;gap:7px"><input id="nv-pass" value="'+genPass()+'" autocapitalize="none" autocorrect="off" spellcheck="false"><button class="btn bg2" style="width:56px;padding:0" onclick="document.getElementById(\'nv-pass\').value=genPass()">🎲</button></div>'+
+  '<label>Tipo de acceso</label><div class="ptabs" id="nv-rol">'+[["vendedor","🧑‍💼 Vendedor"],["encargado","👷 Encargado de embarque"]].map(function(o){return '<div class="ptab '+(o[0]==="vendedor"?"on":"")+'" data-r="'+o[0]+'" onclick="[].forEach.call(this.parentNode.children,function(c){c.classList.remove(\'on\')});this.classList.add(\'on\')">'+o[1]+'</div>'}).join("")+'</div>'+
   (esDueno()?'<label style="display:flex;align-items:center;gap:9px;text-transform:none;font-size:13.5px;color:var(--navy)"><input type="checkbox" id="nv-admin" style="width:auto"'+(admin?" checked":"")+'> Administrador (acceso completo, como tú)</label>':"")+
   '<div class="note">'+(nombre?"Todas las reservas que ya hizo "+esc(nombre)+" se mantienen a su nombre. ":"")+'El vendedor podrá cambiar su contraseña desde su perfil. Todo lo que modifique quedará en el registro.</div>',
   '<button class="btn bg2" onclick="cerrar()">Cancelar</button><button class="btn bp" id="nv-btn" onclick="crearVendedor()">Crear</button>')}
 function crearVendedor(){
  var nom=document.getElementById("nv-nom").value.trim(),us=normUser(document.getElementById("nv-user").value),pw=document.getElementById("nv-pass").value;
- var ca=document.getElementById("nv-admin"),rol=(esDueno()&&ca&&ca.checked)?"admin":"vendedor";
+ var ca=document.getElementById("nv-admin"),rs=document.querySelector("#nv-rol .ptab.on"),rol=(esDueno()&&ca&&ca.checked)?"admin":((rs&&rs.getAttribute("data-r"))||"vendedor");
  if(!nom||nom.length>30){toast("Pon el nombre del vendedor");return}
  nom=VMAP[normV(nom)]||nom;
  if(us.length<3){toast("El usuario necesita 3 letras o números como mínimo");return}
@@ -1159,7 +1266,7 @@ function renderAdmin(){
  h+=fila('👑 Sergio <span class="tag prem">PREMIUM</span>',eS.on?"🟢 En línea":"Visto "+hace(eS.ult),eS,"");
  h+=us.map(function(u){var e=estPres(u.uid),des=u.activo===false,adm=u.rol==="admin";
   var btns=puedeGest(u)?'<div class="ab">'+(esDueno()?'<button title="Administrador" onclick="togAdmin(\''+u.uid+'\')">'+(adm?"⬇️":"👑")+'</button>':"")+'<button onclick="resetPass(\''+u.uid+'\')">🔑</button><button onclick="togActivo(\''+u.uid+'\')">'+(des?"✅":"⛔")+'</button></div>':"";
-  return fila(esc(u.nombre)+(adm?' <span class="tag">ADMIN</span>':"")+(des?' <span class="tag off">DESACTIVADO</span>':""),esc(u.usuario)+" · "+(e.on?"🟢 En línea":"visto "+hace(e.ult)),e,btns)}).join("");
+  return fila(esc(u.nombre)+(adm?' <span class="tag">ADMIN</span>':"")+(u.rol==="encargado"?' <span class="tag pt">👷 EMBARQUE</span>':"")+(des?' <span class="tag off">DESACTIVADO</span>':""),esc(u.usuario)+" · "+(e.on?"🟢 En línea":"visto "+hace(e.ult)),e,btns)}).join("");
  var sa=sinAcceso();
  h+=sa.map(function(x){return fila(esc(x.nombre)+' <span class="tag n">SIN ACCESO</span>',x.n+" reserva"+(x.n===1?"":"s")+" a su nombre · aún no tiene usuario",{on:false},'<div class="ab"><button onclick="modalVendedor(\''+jsq(x.nombre)+'\','+(normV(x.nombre)==="ariel")+')">Crear acceso</button></div>')}).join("");
  if(esDueno()){var pu=planUnif(),nr=pu.plan.reduce(function(s,g){return s+g.cambios.length},0);
@@ -1185,7 +1292,7 @@ function recTag(v,p){var n=nRec(p);if(n)return ' <span class="tag ok">🧾 recib
  if((+p.senal||0)>0&&!viajePasado(v))return ' <span class="tag sr">⚠️ señal sin recibo</span>';return""}
 
 /* ---------- Firebase ---------- */
-function iniciaDatos(){if(esVend())return iniciaDatosVend();REF.off("value");REF.on("value",function(s){var d=s.val()||{};SRVO=JSON.parse(JSON.stringify({viajes:d.viajes||{},clientes:d.clientes||{}}));DB={viajes:d.viajes||{},clientes:d.clientes||{},counters:d.counters||{}};
+function iniciaDatos(){if(esEnc())return iniciaDatosEnc();if(esVend())return iniciaDatosVend();REF.off("value");REF.on("value",function(s){var d=s.val()||{};SRVO=JSON.parse(JSON.stringify({viajes:d.viajes||{},clientes:d.clientes||{}}));DB={viajes:d.viajes||{},clientes:d.clientes||{},counters:d.counters||{}};
  Object.keys(DB.viajes).forEach(function(k){var ps=DB.viajes[k].pasajeros||{};Object.keys(ps).forEach(function(i){if(ps[i].vendedor)ps[i].vendedor=nomVend(ps[i].vendedor)})});
  document.getElementById("dot").classList.remove("off");render();publicaResumen();publicaWeb();if(esAdmin())setTimeout(migraVuid,2500);if(!_cliAuto&&esAdmin()){_cliAuto=true;setTimeout(function(){sincClientes(true)},1500)}},
  function(e){document.getElementById("dot").classList.add("off");if(e&&/permission/i.test((e.code||"")+(e.message||""))){_lgMsg="Sin permiso de acceso. Habla con el administrador.";salir()}})}
@@ -1244,6 +1351,7 @@ function enPunto(p,pt,v){return viajeros(p).filter(function(x){return recDe(p,x,
 function goTab(t){if(esVend()&&t!=="viajes")t="viajes";TAB=t;VIEW="lista";Q="";QC="";render()}
 function render(){
  if(!ME)return;
+ if(MODO_EMB)return renderEmb();
  document.getElementById("tb-v").classList.toggle("on",TAB==="viajes");
  document.getElementById("tb-c").classList.toggle("on",TAB==="clientes");
  document.getElementById("tb-a").classList.toggle("on",TAB==="admin");
@@ -1313,7 +1421,7 @@ function renderDetalle(){
    '<div class="bl">'+esc(busNames(v))+(t.bebes?" · "+t.bebes+" bebé(s) sin plaza":"")+'</div>'
   :'<b style="font-size:13px">⚠️ Sin autobús asignado</b><div class="bl">No se pueden controlar las plazas libres.</div>')+
   (esAdmin()?'<button class="btn bg2" style="margin-top:9px;padding:10px;font-size:13.5px" onclick="modalBuses(\''+v.id+'\')">🚌 '+(t.cap?"Cambiar / añadir autobuses":"Elegir autobuses")+'</button>':"")+'</div>'+(esVend()?'<div class="sec">Mis reservas en este viaje</div>':"");
- if(esAdmin())h+='<button class="btn bp" style="margin-bottom:10px;background:var(--green)" onclick="modalScan()">📷 Escanear QR de embarque</button>';
+ if(esAdmin())h+=cajaCardHTML(v)+'<button class="btn bp" style="margin-bottom:10px;background:var(--green)" onclick="modalScan()">📷 Escanear QR de embarque</button>';
  h+='<div class="search"><input id="q" placeholder="🔍 Nombre, acompañante, teléfono o localizador" value="'+esc(Q)+'" oninput="Q=this.value;renderDetalle();var e=document.getElementById(\'q\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
  h+='<div class="chips"><div class="chip '+(FPT==="__all"?"on":"")+'" onclick="FPT=\'__all\';renderDetalle()">Todos ('+(t.misPlazas!=null?t.misPlazas:t.plazas)+')</div>';
  pts.forEach(function(r){h+='<div class="chip '+(FPT===r?"on":"")+'" onclick="FPT=\''+jsq(r)+'\';renderDetalle()">'+esc(r)+' ('+plazasPunto(v,r)+')</div>'});
@@ -1401,7 +1509,9 @@ function abrir(id){CUR=id;VIEW="detalle";Q="";FPT="__all";render()}
 function fabAction(){VIEW==="lista"?modalViaje():modalPax(CUR)}
 function toggleEmb(vId,pId){var p=DB.viajes[vId].pasajeros[pId];p.embarcado=!p.embarcado;wField("viajes/"+vId+"/pasajeros/"+pId+"/embarcado",p.embarcado);
  if(p.viajeros&&p.viajeros.length){p.viajeros.forEach(function(x){if(x.tipo!=="bebe")x.emb=p.embarcado});wField("viajes/"+vId+"/pasajeros/"+pId+"/viajeros",p.viajeros)}render()}
-function toggleCob(vId,pId){var p=DB.viajes[vId].pasajeros[pId];p.cobrado=!p.cobrado;wField("viajes/"+vId+"/pasajeros/"+pId+"/cobrado",p.cobrado);
+function toggleCob(vId,pId){var p=DB.viajes[vId].pasajeros[pId];
+ if(!p.cobrado){var rest=Math.max(0,r2((+p.pendiente||0)-cobPax(p)));if(rest>0){window._met="Efectivo";registraCobro(vId,pId,rest,"")}}else anulaCobrosPax(vId,pId);
+ p.cobrado=!p.cobrado;wField("viajes/"+vId+"/pasajeros/"+pId+"/cobrado",p.cobrado);
  if(!p.cobrado&&p.viajeros&&p.viajeros.length){p.viajeros.forEach(function(x){x.cob=0});wField("viajes/"+vId+"/pasajeros/"+pId+"/viajeros",p.viajeros)}render()}
 function delPax(vId,pId){if(!esAdmin()){toast("⛔ Solo el administrador puede eliminar");return}if(confirm("¿Eliminar esta reserva?")){delete DB.viajes[vId].pasajeros[pId];wDel("viajes/"+vId+"/pasajeros/"+pId);render()}}
 
@@ -1485,15 +1595,15 @@ function resultadoPersona(vId,pId,uidp){
   '<div class="r big"><span>A cobrar ahora</span><b style="color:'+(debe>0?"var(--amber)":"var(--green)")+'">'+(debe>0?money(debe):"Nada pendiente ✓")+'</b></div></div>'+
   (dif&&!ya?'<div class="note">📍 Su recogida era <b>'+esc(plan)+'</b> y estás en <b>'+esc(_busPt)+'</b>: se registrará que sube aquí.</div>':"")+
   (debe>0?'<label>Importe que paga ahora (€)</label><input id="sc-monto" type="number" inputmode="decimal" value="'+debe+'">':"")+
-  '<div style="margin-top:12px">'+btns+'</div>',pieScan())}
+  (debe?metHTML():"")+'<div style="margin-top:12px">'+btns+'</div>',pieScan())}
 function anotaPersona(vId,pId,uidp,emb,cob){
  var v=DB.viajes[vId],p=v.pasajeros[pId],f=buscaPers(p,uidp);if(!f)return;var x=f.x;
  if(emb){x.emb=true;x.t=Date.now();if(_busPt){x.subeEn=_busPt;x.rec=(_busPt===recBase(p,v))?"":_busPt}}
  var m=0;
  if(cob){var e=document.getElementById("sc-monto");m=e?(parseFloat(e.value)||0):cuotaPend(v,p,x);x.cob=r2((+x.cob||0)+m)}
- recalcRes(vId,pId);
- toast("✓ "+nomPers(p,x,f.i)+(emb?" sube":"")+(m?" · "+money(m)+" cobrados":""));
- render();modalScan()}
+ recalcRes(vId,pId);if(cob&&m>0)registraCobro(vId,pId,m,uidp);
+ toast("✓ "+nomPers(p,x,f.i)+(emb?" sube":"")+(m?" · "+money(m)+" cobrados ("+(window._met||"Efectivo")+")":""));
+ render();trasAnotar()}
 /* --- QR de reserva (grupo, billetes antiguos) --- */
 function resultadoScan(vId,pId){
  var v=DB.viajes[vId],p=v&&v.pasajeros&&v.pasajeros[pId];
@@ -1514,15 +1624,16 @@ function resultadoScan(vId,pId){
   '<div class="r big"><span>A cobrar ahora</span><b style="color:'+(debe?"var(--amber)":"var(--green)")+'">'+(debe?money(resto):"Cobrado ✓")+'</b></div></div>'+
   (p.nota?'<div class="note">📝 '+esc(p.nota)+'</div>':"")+
   '<div class="note">Si no suben todos juntos o pagan cada uno lo suyo, usa los <b>billetes individuales</b> (🎟️) de esta reserva.</div>'+
-  '<div style="margin-top:12px">'+btns+'</div>',pieScan())}
+  (debe?metHTML():"")+'<div style="margin-top:12px">'+btns+'</div>',pieScan())}
 function anotaScan(vId,pId,emb,cob){
  var v=DB.viajes[vId],p=v.pasajeros[pId];
  if(emb){p.embarcado=true;if(p.viajeros)p.viajeros.forEach(function(x){if(x.tipo!=="bebe"&&!x.emb){x.emb=true;x.t=Date.now();if(_busPt){x.subeEn=_busPt;x.rec=(_busPt===recBase(p,v))?"":_busPt}}})}
- if(cob)p.cobrado=true;
+ var rest=0;if(cob&&!p.cobrado){rest=Math.max(0,r2((+p.pendiente||0)-cobPax(p)));p.cobrado=true}
  var b="viajes/"+vId+"/pasajeros/"+pId+"/";
  wField(b+"embarcado",!!p.embarcado);wField(b+"cobrado",!!p.cobrado);if(p.viajeros)wField(b+"viajeros",p.viajeros);
- toast("✓ Anotado: "+p.nombre+(cob?" · cobrado":""));
- render();modalScan()}
+ if(rest>0)registraCobro(vId,pId,rest,"");
+ toast("✓ Anotado: "+p.nombre+(cob?" · cobrado"+(rest?" "+money(rest)+" ("+(window._met||"Efectivo")+")":""):""));
+ render();trasAnotar()}
 
 
 /* ---------- Autobuses ---------- */
