@@ -428,6 +428,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sky);box
 .fe-guia span:first-child{left:8px}.fe-guia span:nth-child(2){right:8px}
 .fe-guia b{position:absolute;left:10px;bottom:8px;color:#fff;font-size:17px;font-weight:900;text-shadow:0 2px 6px rgba(0,0,0,.6)}
 .ft .fb{flex-wrap:wrap}
+.mbtn.wa{background:#25D366;color:#fff;border-color:#25D366;font-size:13px;font-weight:800;white-space:nowrap}
 /* animaciones */
 .enter>*{animation:sube .42s cubic-bezier(.2,.8,.2,1) both}
 .enter>*:nth-child(2){animation-delay:.04s}.enter>*:nth-child(3){animation-delay:.08s}.enter>*:nth-child(4){animation-delay:.12s}.enter>*:nth-child(5){animation-delay:.16s}.enter>*:nth-child(n+6){animation-delay:.2s}
@@ -513,7 +514,7 @@ function salir(){
  if(_connRef){_connRef.off();_connRef=null}
  if(_pc&&ME){var c=_pc;_pc=null;Promise.all([c.remove(),RT.ref("presencia/"+ME.uid+"/ultimo").set(SV.TIMESTAMP)]).then(fin,fin)}else fin()}
 function paraTodo(){
- try{paraVend();paraEnc();RT.ref("caja").off();RT.ref("embarque_mis").off();CAJA={};EMIS={};RT.ref("cambios").off();CAMBALL={};REF.off();RT.ref("solicitudes").off();RT.ref("clientes_app").off();RT.ref("presencia_app").off();RT.ref("web_publica/config").off();CAPP={};PAPP={};clearInterval(_liveT);RT.ref("usuarios").off();RT.ref("presencia").off();RT.ref("registro").off();if(_uw){_uw.off();_uw=null}if(_connRef){_connRef.off();_connRef=null}}catch(e){}
+ try{RT.ref("espera").off();RT.ref("liquidacion").off();RT.ref("valoraciones").off();ESP={};LIQ={};VALS={};paraVend();paraEnc();RT.ref("caja").off();RT.ref("embarque_mis").off();CAJA={};EMIS={};RT.ref("cambios").off();CAMBALL={};REF.off();RT.ref("solicitudes").off();RT.ref("clientes_app").off();RT.ref("presencia_app").off();RT.ref("web_publica/config").off();CAPP={};PAPP={};clearInterval(_liveT);RT.ref("usuarios").off();RT.ref("presencia").off();RT.ref("registro").off();if(_uw){_uw.off();_uw=null}if(_connRef){_connRef.off();_connRef=null}}catch(e){}
  ME=null;USUARIOS={};PRES={};REGLOG=[];DB={viajes:{},clientes:{},counters:{}};_cliAuto=false;_resLast="";SRVO={};
  document.getElementById("app").innerHTML="";document.getElementById("who").style.display="none";document.getElementById("tb-a").style.display="none";document.getElementById("tb-s").style.display="none";SOL={};
  TAB="viajes";VIEW="lista";cerrar()}
@@ -551,6 +552,9 @@ function iniciaPresencia(){
    base.update({nombre:ME.nombre,usuario:ME.usuario,rol:ME.rol});
    c.set(SV.TIMESTAMP)}).catch(function(){})})}
 function escuchaAdmin(){
+ RT.ref("espera").on("value",function(s){ESP=s.val()||{};if(TAB==="viajes")render()},function(){});
+ RT.ref("liquidacion").on("value",function(s){LIQ=s.val()||{}},function(){});
+ if(esDueno())RT.ref("valoraciones").on("value",function(s){VALS=s.val()||{};if(TAB==="solicitudes")render()},function(){});
  RT.ref("caja").on("value",function(s){CAJA=s.val()||{};if(TAB==="viajes"&&VIEW==="detalle")render()},function(){});
  RT.ref("embarque_mis").on("value",function(s){EMIS=s.val()||{}},function(){});
  RT.ref("cambios").on("value",function(s){CAMBALL=s.val()||{};pintaNbA();if(TAB==="admin")render()},function(){});
@@ -684,6 +688,103 @@ function viajePasado(v){return !!(v&&v.fecha&&v.fecha<hoyISO())}
 
 
 
+
+/* ================= Avisos WhatsApp, lista de espera, liquidación y valoraciones ================= */
+var ESP={},LIQ={},VALS={};
+var AV_T={rec:"⏰ Recordatorio de salida",pago:"💶 Recordatorio de pago",val:"⭐ Pedir valoración"};
+function avisoEnv(v,tipo,pid){return !!(v.avisos&&v.avisos[tipo]&&v.avisos[tipo][pid])}
+function listaAviso(v,tipo){var l=paxArr(v).filter(function(p){return estPax(p)!=="pendiente"&&normTel(p.tel).length===9});if(tipo==="pago")l=l.filter(function(p){return restoPax(p)>0});return l}
+function horaPunto(v,pt){return (v.salidas&&v.salidas[pt])||v.hora||""}
+function msgAviso(v,p,tipo){var n=((p.nombre||"").trim().split(/\s+/)[0])||"",pt=recBase(p,v),h=horaPunto(v,pt),f=fmtLargoMin(v.fecha);
+ if(tipo==="rec")return "Hola "+n+" 👋 Te recordamos tu viaje a *"+v.destino+"* el "+f+".\n\n📍 Recogida: *"+pt+"*"+(h?" a las *"+h+"*":"")+"\n⏰ Llega 10 minutos antes, el autobús sale puntual.\n"+(p.localizador?"🎟️ Tu localizador: "+p.localizador+"\n":"")+"\n¡Nos vemos! Yo Me Voy Excursiones 🚌";
+ if(tipo==="pago")return "Hola "+n+" 👋 ¡Ya casi nos vamos a *"+v.destino+"*! 🎉\n\nTe quedan por pagar *"+money(restoPax(p))+"*, que se abonan en el autobús en efectivo o por Bizum. Llévalo preparado, por favor 🙏\n\n📍 "+pt+(h?" · "+h:"")+"\n¡Gracias! Yo Me Voy Excursiones";
+ return "Hola "+n+" 😊 ¿Qué tal el viaje a *"+v.destino+"*? Tu opinión nos ayuda muchísimo y solo te llevará 1 minuto ⭐\n👉 "+URL_CLI.replace(/\/?$/,"/")+"#valorar-"+v.id+"\n\n¡Gracias por viajar con Yo Me Voy! 💛"}
+function espArr(vid){var o=ESP[vid]||{};return Object.keys(o).map(function(k){return Object.assign({tel:k},o[k])}).sort(function(a,b){return (a.ts||0)-(b.ts||0)})}
+function tareas(){var t=[];Object.keys(DB.viajes||{}).forEach(function(k){var v=DB.viajes[k],n=diasHasta(v.fecha);if(n===null)return;
+  var add=function(tipo){var l=listaAviso(v,tipo),f=l.filter(function(p){return !avisoEnv(v,tipo,p.id)}).length;if(f)t.push({v:v,tipo:tipo,n:f,o:n})};
+  if(n>=1&&n<=2)add("rec");if(n>=0&&n<=1)add("pago");if(n<=-1&&n>=-7)add("val");
+  var e=espArr(k).filter(function(x){return x.estado!=="avisado"}).length,lib=totViaje(v).libres;
+  if(e&&n>=0&&!v.agotado&&lib>0)t.push({v:v,tipo:"esp",n:e,lib:lib,o:-99})});
+ return t.sort(function(a,b){return a.o-b.o})}
+function tareasHTML(){var t=tareas();if(!t.length)return"";
+ return '<div class="card cambios"><b>📲 Avisos pendientes de hoy</b>'+t.map(function(x){var lbl=x.tipo==="esp"?"🔔 "+x.lib+" plaza(s) libre(s) y "+x.n+" persona(s) en lista de espera":AV_T[x.tipo]+" · "+x.n+" por enviar";
+  return '<div class="cb" style="display:flex;align-items:center;gap:10px"><div style="flex:1;min-width:0"><b>'+esc(x.v.destino)+'</b> · '+esc(fmtF(x.v.fecha))+'<div class="m">'+lbl+'</div></div><button class="mbtn" style="font-size:13px;font-weight:800" onclick="'+(x.tipo==="esp"?"modalEspera(\'"+x.v.id+"\')":"modalAvisos(\'"+x.v.id+"\',\'"+x.tipo+"\')")+'">Abrir</button></div>'}).join("")+'</div>'}
+function avisosCardHTML(v){var n=diasHasta(v.fecha),e=espArr(v.id),L=LIQ[v.id];
+ return '<div class="card" style="padding:12px"><b>📲 Clientes y cuentas</b><div class="acc" style="margin-top:8px;flex-wrap:wrap;margin-bottom:0">'+
+  '<button class="btn bg2" onclick="modalAvisos(\''+v.id+'\',\''+(n!==null&&n<0?"val":(n!==null&&n<=1?"pago":"rec"))+'\')">💬 Avisos por WhatsApp</button>'+
+  '<button class="btn bg2" onclick="modalEspera(\''+v.id+'\')">📝 Lista de espera ('+e.length+')</button>'+
+  '<button class="btn bg2" onclick="modalLiq(\''+v.id+'\')">📊 Liquidación'+(L?' · beneficio '+money(liqCalc(v,L).ben):"")+'</button></div></div>'}
+function modalAvisos(vId,tipo){var v=DB.viajes[vId];if(!v)return;var l=listaAviso(v,tipo),env=l.filter(function(p){return avisoEnv(v,tipo,p.id)}).length;
+ sheet('<h2>'+AV_T[tipo]+'</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+' · '+esc(fmtF(v.fecha))+' · '+env+' de '+l.length+' enviados</div>',
+  '<div class="ptabs" style="grid-template-columns:repeat(3,1fr);margin-bottom:8px">'+["rec","pago","val"].map(function(t){return '<div class="ptab '+(t===tipo?"on":"")+'" style="font-size:12px;padding:9px 4px" onclick="modalAvisos(\''+vId+'\',\''+t+'\')">'+{rec:"⏰ Salida",pago:"💶 Pago",val:"⭐ Valoración"}[t]+'</div>'}).join("")+'</div>'+
+  '<div class="note" style="margin-bottom:8px">'+{rec:"Envíalo <b>2 días antes</b> del viaje.",pago:"Envíalo <b>el día antes</b>. Solo salen los que tienen algo pendiente.",val:"Envíalo <b>al día siguiente</b> de volver."}[tipo]+' Pulsa <b>Enviar</b>: se abre WhatsApp con el mensaje escrito, le das a enviar y vuelves aquí.</div>'+
+  (l.length?l.map(function(p){var s=avisoEnv(v,tipo,p.id);
+   return '<div class="imp" style="display:flex;align-items:center;gap:8px;'+(s?"opacity:.6":"")+'"><div style="flex:1;min-width:0"><b>'+(s?"✅ ":"")+esc(p.nombre)+'</b><div class="m">'+p.plazas+' plaza(s) · '+esc(recBase(p,v))+(tipo==="pago"?' · debe <b>'+money(restoPax(p))+'</b>':"")+(s?' · enviado '+fmtTs(v.avisos[tipo][p.id]):"")+'</div></div>'+
+    '<button class="mbtn wa" onclick="enviaAviso(\''+vId+'\',\''+tipo+'\',\''+p.id+'\')">'+(s?"Reenviar":"💬 Enviar")+'</button></div>'}).join("")
+   :'<div class="empty">'+(tipo==="pago"?"Nadie tiene pagos pendientes 🎉":"No hay reservas confirmadas con teléfono.")+'</div>')+
+  (l.length?'<label>Así le llega el mensaje</label><div class="note" style="white-space:pre-line;font-size:13px">'+esc(msgAviso(v,l[0],tipo))+'</div>':""),
+  '<button class="btn bp" onclick="cerrar()">Cerrar</button>')}
+function enviaAviso(vId,tipo,pid){var v=DB.viajes[vId],p=v.pasajeros[pid];
+ window.open("https://wa.me/34"+normTel(p.tel)+"?text="+encodeURIComponent(msgAviso(v,p,tipo)),"_blank");
+ if(!v.avisos)v.avisos={};if(!v.avisos[tipo])v.avisos[tipo]={};v.avisos[tipo][pid]=Date.now();
+ REF.child("viajes/"+vId+"/avisos/"+tipo+"/"+pid).set(v.avisos[tipo][pid]).catch(fail);setTimeout(function(){modalAvisos(vId,tipo)},300)}
+/* lista de espera */
+function modalEspera(vId){var v=DB.viajes[vId];if(!v)return;var l=espArr(vId),t=totViaje(v);
+ sheet('<h2>📝 Lista de espera</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+' · '+esc(fmtF(v.fecha))+(t.cap?' · '+Math.max(0,t.libres)+' plaza(s) libre(s)':"")+(v.agotado?" · marcado SOLD OUT":"")+'</div>',
+  (l.length?l.map(function(x,i){var av=x.estado==="avisado";
+   return '<div class="imp" style="display:flex;align-items:center;gap:8px"><div style="flex:1;min-width:0"><b>'+(i+1)+'. '+esc(x.nombre)+'</b><div class="m">'+x.plazas+' plaza(s) · 📞 '+esc(x.tel)+' · apuntado '+fmtTs(x.ts)+(av?' · <b style="color:var(--green)">avisado '+fmtTs(x.tsa)+'</b>':"")+'</div></div>'+
+    '<button class="mbtn wa" onclick="avisaEspera(\''+vId+'\',\''+x.tel+'\')">'+(av?"Reavisar":"💬 Avisar")+'</button><button class="mbtn" onclick="borraEspera(\''+vId+'\',\''+x.tel+'\')">🗑️</button></div>'}).join("")
+   :'<div class="empty">Nadie en lista de espera.</div>')+
+  '<div class="note">Los clientes se apuntan desde la app cuando el viaje está SOLD OUT. Si se libera una plaza (reserva rechazada, anulada o más autobús) y quitas el SOLD OUT, te saldrá un aviso arriba en la lista de viajes. Avisa por orden: se la queda el primero que confirme.</div>',
+  '<button class="btn bp" onclick="cerrar()">Cerrar</button>')}
+function avisaEspera(vId,tel){var v=DB.viajes[vId],x=(ESP[vId]||{})[tel];if(!x)return;var n=(x.nombre||"").split(" ")[0];
+ window.open("https://wa.me/34"+tel+"?text="+encodeURIComponent("¡Hola "+n+"! 🎉 Se ha liberado sitio para *"+v.destino+"* ("+fmtLargoMin(v.fecha)+").\n\nEstabas en nuestra lista de espera para "+x.plazas+" plaza(s). Si la quieres, contéstanos lo antes posible: se la daremos al primero que confirme 🙌\n\nYo Me Voy Excursiones"),"_blank");
+ x.estado="avisado";x.tsa=Date.now();RT.ref("espera/"+vId+"/"+tel).update({estado:"avisado",tsa:x.tsa}).catch(fail);setTimeout(function(){modalEspera(vId)},300)}
+function borraEspera(vId,tel){if(!confirm("¿Quitar de la lista de espera?"))return;RT.ref("espera/"+vId+"/"+tel).remove().then(function(){if(ESP[vId])delete ESP[vId][tel];modalEspera(vId)}).catch(fail)}
+/* liquidación */
+function liqCalc(v,L){L=L||LIQ[v.id]||{};var ing=0,cob=0,pl=0,vend={};
+ paxArr(v).forEach(function(p){ing+=+p.importe||0;cob+=(+p.senal||0)+cobPax(p);var k=canonVend(p.vendedor)||"Sin vendedor",n=plazasDe(p);pl+=n;if(!vend[k])vend[k]={pl:0,imp:0};vend[k].pl+=n;vend[k].imp+=+p.importe||0});
+ var def=+L.comDef||0,com=0,det={};
+ Object.keys(vend).forEach(function(k){var nk=normV(k),r=(L.com&&L.com[nk]!=null)?+L.com[nk]:(nk==="sergio"?0:def);det[k]={pl:vend[k].pl,imp:r2(vend[k].imp),tasa:r,tot:r2(r*vend[k].pl)};com+=r*vend[k].pl});
+ var bus=+L.bus||0,otros=+L.otros||0,ben=r2(ing-bus-otros-com),pm=(+v.precioA||0)-def;
+ return {ing:r2(ing),cob:r2(cob),pend:r2(ing-cob),pl:pl,bus:bus,otros:otros,com:r2(com),det:det,ben:ben,margen:ing?Math.round(ben/ing*100):0,porPl:pl?r2(ben/pl):0,eq:(pm>0&&(bus+otros)>0)?Math.ceil((bus+otros)/pm):0}}
+function modalLiq(vId){var v=DB.viajes[vId];if(!v)return;var L=LIQ[vId]||{},c=liqCalc(v,L);window._lq=vId;
+ var inp=function(id,val,ph){return '<input id="'+id+'" type="number" inputmode="decimal" value="'+(val!=null&&val!==0&&val!==""?val:"")+'" placeholder="'+(ph||"0")+'" oninput="liqPinta()">'};
+ sheet('<h2>📊 Liquidación del viaje</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+' · '+esc(fmtF(v.fecha))+'</div>',
+  '<div class="row2"><div><label>Coste del autobús (€)</label>'+inp("lq-bus",L.bus)+'</div><div><label>Otros gastos (€)</label>'+inp("lq-otros",L.otros)+'</div></div>'+
+  '<label>Comisión de los vendedores (€ por plaza)</label>'+inp("lq-def",L.comDef)+
+  '<label>Comisión de cada vendedor en este viaje</label>'+Object.keys(c.det).map(function(k){var d=c.det[k],nk=normV(k),cus=L.com&&L.com[nk]!=null;
+   return '<div class="cnt"><div class="t"><b>'+esc(k)+'</b><small>'+d.pl+' plaza(s) · vendido '+money(d.imp)+'</small></div><input class="lq-v" data-k="'+esc(nk)+'" type="number" inputmode="decimal" style="width:96px;text-align:center" value="'+(cus?L.com[nk]:"")+'" placeholder="'+(nk==="sergio"?"0":"general")+'" oninput="liqPinta()"></div>'}).join("")+
+  '<div id="lq-res"></div>',
+  '<button class="btn bg2" onclick="cerrar()">Cerrar</button><button class="btn bp" onclick="liqGuarda()">Guardar</button>');liqPinta()}
+function liqLee(){var g=function(i){var e=document.getElementById(i);return e&&e.value!==""?(parseFloat(e.value)||0):0},L={bus:g("lq-bus"),otros:g("lq-otros"),comDef:g("lq-def"),com:{}};
+ [].forEach.call(document.querySelectorAll(".lq-v"),function(e){if(e.value!=="")L.com[e.getAttribute("data-k")]=parseFloat(e.value)||0});return L}
+function liqPinta(){var e=document.getElementById("lq-res");if(!e)return;var v=DB.viajes[window._lq],c=liqCalc(v,liqLee()),R=function(a,b,st){return '<div class="r"'+(st?' style="'+st+'"':"")+'><span>'+a+'</span><b>'+b+'</b></div>'};
+ e.innerHTML='<div class="sumbox">'+R("Ingresos · "+c.pl+" plazas",money(c.ing))+R("&nbsp;&nbsp;Cobrado hasta ahora",money(c.cob),"color:var(--muted)")+R("&nbsp;&nbsp;Pendiente de cobrar",money(c.pend),"color:var(--muted)")+
+  R("− Autobús",money(c.bus))+R("− Otros gastos",money(c.otros))+R("− Comisiones",money(c.com))+
+  '<div class="r big"><span>Beneficio</span><b style="color:'+(c.ben>=0?"var(--green)":"var(--red)")+'">'+money(c.ben)+'</b></div>'+
+  R("Margen",c.margen+" %")+R("Beneficio por plaza",money(c.porPl))+(c.eq?R("Plazas para cubrir gastos","≈ "+c.eq+(c.pl>=c.eq?" ✓":" (faltan "+(c.eq-c.pl)+")")):"")+'</div>'+
+  (Object.keys(c.det).length?'<label>Comisiones a pagar</label><div class="sumbox">'+Object.keys(c.det).map(function(k){var d=c.det[k];return R(esc(k)+" · "+d.pl+" × "+money(d.tasa),money(d.tot))}).join("")+'</div>':"")+
+  '<div class="note">Los ingresos cuentan todas las reservas no rechazadas, también las pendientes de aprobar. Sergio no lleva comisión salvo que le pongas una.</div>'}
+function liqGuarda(){var vId=window._lq,L=liqLee();L.ts=Date.now();L.por=ME.nombre;
+ RT.ref("liquidacion/"+vId).set(L).then(function(){LIQ[vId]=L;toast("✓ Liquidación guardada");cerrar();render()}).catch(fail)}
+/* valoraciones (solo Sergio) */
+function valArr(){return Object.keys(VALS||{}).map(function(k){return Object.assign({id:k},VALS[k])}).sort(function(a,b){return (b.ts||0)-(a.ts||0)})}
+function estrellas(n){n=Math.max(0,Math.min(5,Math.round(+n||0)));return "★★★★★".slice(0,n)+"☆☆☆☆☆".slice(0,5-n)}
+function nomCorto(n){var a=(n||"").trim().split(/\s+/);return a[0]+(a[1]?" "+a[1].charAt(0).toUpperCase()+".":"")}
+function valsHTML(){var a=valArr(),pub=a.filter(function(x){return x.pub}).length,med=a.length?(a.reduce(function(s,x){return s+(+x.estrellas||0)},0)/a.length).toFixed(1).replace(".",","):"–";
+ var h='<div class="big-tot"><div><b>'+a.length+'</b><small>Valoraciones</small></div><div><b>'+med+' ★</b><small>Media</small></div><div><b>'+pub+'</b><small>En la app</small></div></div>';
+ return h+(a.length?a.map(function(x){return '<div class="card sol"><div class="sol-h"><div><b style="color:#F6A623;font-size:19px;letter-spacing:1px">'+estrellas(x.estrellas)+'</b><div class="m">'+esc(x.nombre)+' · 📞 '+esc(x.tel||"")+' · '+esc(x.destino||"")+' · '+fmtTs(x.ts)+'</div></div>'+(x.pub?'<span class="tag ok">En la app</span>':"")+'</div>'+
+  (x.texto?'<div style="margin-top:8px;font-size:14.5px">“'+esc(x.texto)+'”</div>':'<div class="m">(sin comentario)</div>')+
+  '<div class="acts">'+(x.pub?'<button onclick="pubVal(\''+x.id+'\',false)">Quitar de la app</button>':(x.texto?'<button class="bc ok" onclick="pubVal(\''+x.id+'\',true)">✅ Publicar en la app</button>':""))+
+  (x.texto?'<button onclick="copiaVal(\''+x.id+'\')">📋 Copiar para TikTok</button>':"")+((+x.estrellas||0)<=3&&x.tel?'<button onclick="window.open(\'https://wa.me/34'+x.tel+'\',\'_blank\')">💬 Contactar</button>':"")+
+  '<button onclick="borraVal(\''+x.id+'\')">🗑️</button></div></div>'}).join(""):'<div class="empty">Aún no hay valoraciones.<br>Pídelas desde cada viaje terminado: 📲 Avisos por WhatsApp → ⭐ Valoración.</div>')}
+function pubVal(id,on){var x=VALS[id];if(!x)return;
+ Promise.all([RT.ref("valoraciones/"+id+"/pub").set(on),on?RT.ref("web_publica/resenas/"+id).set({nombre:nomCorto(x.nombre),destino:x.destino||"",estrellas:+x.estrellas||5,texto:(x.texto||"").slice(0,400),ts:x.ts||Date.now()}):RT.ref("web_publica/resenas/"+id).remove()])
+  .then(function(){toast(on?"✓ Publicada en la app de clientes":"Quitada de la app")}).catch(fail)}
+function copiaVal(id){var x=VALS[id];if(!x)return;var t="⭐⭐⭐⭐⭐".slice(0,2*(+x.estrellas||5))+"\n“"+(x.texto||"")+"”\n— "+nomCorto(x.nombre)+", viaje a "+(x.destino||"")+"\n\n¡Gracias por viajar con Yo Me Voy Excursiones! 🚌💛";
+ if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast("Copiado: pégalo en TikTok o WhatsApp")},function(){prompt("Copia el texto:",t)});else prompt("Copia el texto:",t)}
+function borraVal(id){if(!confirm("¿Borrar esta valoración?"))return;Promise.all([RT.ref("valoraciones/"+id).remove(),RT.ref("web_publica/resenas/"+id).remove()]).then(function(){toast("Borrada")}).catch(fail)}
 /* ================= Embarque: encargados y caja ================= */
 var CAJA={},EMIS={},_encL={},_encR=null;
 function paraEnc(){Object.keys(_encL).forEach(function(k){_encL[k].forEach(function(r){try{r.off()}catch(e){}})});_encL={};if(_encR){try{_encR.off()}catch(e){}_encR=null}}
@@ -942,8 +1043,9 @@ function renderSolicitudes(){
  var hechas=a.filter(function(x){return x.estado!=="pendiente"}).sort(function(x,y){return (y.tsr||y.ts||0)-(x.tsr||x.ts||0)});
  var h='<h2>📥 Solicitudes de la app</h2><div id="live">'+liveHTML()+'</div>'+
   '<div class="note" style="margin:-4px 0 12px">Reservas que piden los clientes desde la app. Revisa el justificante y pulsa <b>Aprobar</b> para crear la reserva en su viaje.</div>'+
-  '<div class="chips"><div class="chip '+(FSOL==="pendiente"?"on":"")+'" onclick="FSOL=\'pendiente\';render()">⏳ Pendientes ('+pen.length+')</div><div class="chip '+(FSOL==="hechas"?"on":"")+'" onclick="FSOL=\'hechas\';render()">Revisadas ('+hechas.length+')</div><div class="chip '+(FSOL==="reg"?"on":"")+'" onclick="FSOL=\'reg\';render()">👥 Registrados ('+Object.keys(CAPP||{}).length+')</div></div>';
+  '<div class="chips"><div class="chip '+(FSOL==="pendiente"?"on":"")+'" onclick="FSOL=\'pendiente\';render()">⏳ Pendientes ('+pen.length+')</div><div class="chip '+(FSOL==="hechas"?"on":"")+'" onclick="FSOL=\'hechas\';render()">Revisadas ('+hechas.length+')</div><div class="chip '+(FSOL==="reg"?"on":"")+'" onclick="FSOL=\'reg\';render()">👥 Registrados ('+Object.keys(CAPP||{}).length+')</div><div class="chip '+(FSOL==="val"?"on":"")+'" onclick="FSOL=\'val\';render()">⭐ Valoraciones ('+Object.keys(VALS||{}).length+')</div></div>';
  if(FSOL==="reg"){document.getElementById("app").innerHTML=h+registradosHTML();return}
+ if(FSOL==="val"){document.getElementById("app").innerHTML=h+valsHTML();return}
  var l=FSOL==="pendiente"?pen:hechas.slice(0,60);
  h+=l.length?l.map(solCard).join(""):'<div class="empty">'+(FSOL==="pendiente"?"No hay solicitudes pendientes. 🎉<br>Comparte la app con tus clientes desde Admin.":"Aún no hay solicitudes revisadas.")+'</div>';
  document.getElementById("app").innerHTML=h}
@@ -1387,7 +1489,7 @@ function renderLista(){
  var vs=Object.keys(DB.viajes).map(function(k){return DB.viajes[k]});
  var prox=vs.filter(function(v){return !viajePasado(v)}).sort(cmpProx);
  var venc=vs.filter(viajePasado).sort(function(a,b){return cmpProx(b,a)});
- var h=resumenHTML(prox)+(esAdmin()?'<div class="acc"><button class="btn bg2" onclick="modalImport()">\ud83d\udce5 Importar listado (Excel · PDF)</button></div>':'<div class="note" style="margin-bottom:12px">👋 Entra en un viaje para <b>añadir reservas</b> y adjuntar el justificante. Solo ves tus propias reservas.</div>');
+ var h=resumenHTML(prox)+(esAdmin()?tareasHTML():"")+(esAdmin()?'<div class="acc"><button class="btn bg2" onclick="modalImport()">\ud83d\udce5 Importar listado (Excel · PDF)</button></div>':'<div class="note" style="margin-bottom:12px">👋 Entra en un viaje para <b>añadir reservas</b> y adjuntar el justificante. Solo ves tus propias reservas.</div>');
  if(!vs.length)h+='<div class="empty">Aún no hay viajes.<br>Pulsa <b>+ Nuevo viaje</b>.</div>';
  else{
   h+='<div class="sec">Próximos viajes ('+prox.length+')</div>';
@@ -1421,7 +1523,7 @@ function renderDetalle(){
    '<div class="bl">'+esc(busNames(v))+(t.bebes?" · "+t.bebes+" bebé(s) sin plaza":"")+'</div>'
   :'<b style="font-size:13px">⚠️ Sin autobús asignado</b><div class="bl">No se pueden controlar las plazas libres.</div>')+
   (esAdmin()?'<button class="btn bg2" style="margin-top:9px;padding:10px;font-size:13.5px" onclick="modalBuses(\''+v.id+'\')">🚌 '+(t.cap?"Cambiar / añadir autobuses":"Elegir autobuses")+'</button>':"")+'</div>'+(esVend()?'<div class="sec">Mis reservas en este viaje</div>':"");
- if(esAdmin())h+=cajaCardHTML(v)+'<button class="btn bp" style="margin-bottom:10px;background:var(--green)" onclick="modalScan()">📷 Escanear QR de embarque</button>';
+ if(esAdmin())h+=avisosCardHTML(v)+cajaCardHTML(v)+'<button class="btn bp" style="margin-bottom:10px;background:var(--green)" onclick="modalScan()">📷 Escanear QR de embarque</button>';
  h+='<div class="search"><input id="q" placeholder="🔍 Nombre, acompañante, teléfono o localizador" value="'+esc(Q)+'" oninput="Q=this.value;renderDetalle();var e=document.getElementById(\'q\');e.focus();e.setSelectionRange(e.value.length,e.value.length)"></div>';
  h+='<div class="chips"><div class="chip '+(FPT==="__all"?"on":"")+'" onclick="FPT=\'__all\';renderDetalle()">Todos ('+(t.misPlazas!=null?t.misPlazas:t.plazas)+')</div>';
  pts.forEach(function(r){h+='<div class="chip '+(FPT===r?"on":"")+'" onclick="FPT=\''+jsq(r)+'\';renderDetalle()">'+esc(r)+' ('+plazasPunto(v,r)+')</div>'});
