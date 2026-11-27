@@ -695,14 +695,27 @@ var AV_T={rec:"⏰ Recordatorio de salida",pago:"💶 Recordatorio de pago",val:
 function avisoEnv(v,tipo,pid){return !!(v.avisos&&v.avisos[tipo]&&v.avisos[tipo][pid])}
 function listaAviso(v,tipo){var l=paxArr(v).filter(function(p){return estPax(p)!=="pendiente"&&normTel(p.tel).length===9});if(tipo==="pago")l=l.filter(function(p){return restoPax(p)>0});return l}
 function horaPunto(v,pt){return (v.salidas&&v.salidas[pt])||v.hora||""}
-function msgAviso(v,p,tipo){var n=((p.nombre||"").trim().split(/\s+/)[0])||"",pt=recBase(p,v),h=horaPunto(v,pt),f=fmtLargoMin(v.fecha);
- if(tipo==="rec")return "Hola "+n+" 👋 Te recordamos tu viaje a *"+v.destino+"* el "+f+".\n\n📍 Recogida: *"+pt+"*"+(h?" a las *"+h+"*":"")+"\n⏰ Llega 10 minutos antes, el autobús sale puntual.\n"+(p.localizador?"🎟️ Tu localizador: "+p.localizador+"\n":"")+"\n¡Nos vemos! Yo Me Voy Excursiones 🚌";
- if(tipo==="pago")return "Hola "+n+" 👋 ¡Ya casi nos vamos a *"+v.destino+"*! 🎉\n\nTe quedan por pagar *"+money(restoPax(p))+"*, que se abonan en el autobús en efectivo o por Bizum. Llévalo preparado, por favor 🙏\n\n📍 "+pt+(h?" · "+h:"")+"\n¡Gracias! Yo Me Voy Excursiones";
+function esMadrugada(h){var m=(""+(h||"")).match(/(\d{1,2})\s*[:.h]/);return !!m&&+m[1]<6}
+function offSalida(v){var n=diasHasta(v.fecha);return n===null?null:n-(esMadrugada(v.hora)?1:0)}
+function menos10(h){var m=(""+h).match(/(\d{1,2})\s*[:.h]\s*(\d{2})/);if(!m)return"";var t=((+m[1])*60+(+m[2])-10+1440)%1440,q=function(x){return (x<10?"0":"")+x};return q(Math.floor(t/60))+":"+q(t%60)}
+function hTxt(h){h=(""+(h||"")).trim();return h?(/h$/i.test(h)?h:h+" h"):""}
+function nocheTxt(v){var n=diasHasta(v.fecha);if(n===null)return"";var D=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"],M=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+ var d=new Date(v.fecha+"T12:00:00"),a=new Date(d);a.setDate(d.getDate()-1);
+ if(esMadrugada(v.hora)){var nd=n-1,l="la noche del "+D[a.getDay()]+" "+a.getDate()+" al "+D[d.getDay()]+" "+d.getDate()+" de "+M[d.getMonth()];
+  return nd===0?"*esta noche* ("+l+")":nd===1?"*mañana por la noche* ("+l+")":l}
+ var f=D[d.getDay()]+" "+d.getDate()+" de "+M[d.getMonth()];return n===0?"*hoy* ("+f+")":n===1?"*mañana* ("+f+")":"el "+f}
+function puntosPax(p,v){var g={},o=[];viajeros(p).forEach(function(x,i){if(x.tipo==="bebe")return;var pt=recDe(p,x,v);if(!g[pt]){g[pt]=[];o.push(pt)}g[pt].push((x.nombre||"").trim().split(/\s+/)[0]||("acompañante "+i))});return o.map(function(pt){return {pt:pt,h:horaPunto(v,pt),nom:g[pt]}})}
+function msgAviso(v,p,tipo){var n=((p.nombre||"").trim().split(/\s+/)[0])||"",pp=puntosPax(p,v),pl=plazasDe(p);
+ var lin=function(o){return "📍 *"+o.pt+"*"+(o.h?" · salida a las *"+hTxt(o.h)+"*":"")+(o.h&&menos10(o.h)?"\n⏰ Estad allí *a las "+menos10(o.h)+" h como muy tarde* (10 minutos antes)":"")};
+ var pts=pp.length===1?lin(pp[0]):pp.map(function(o){return "👥 "+o.nom.join(", ")+":\n"+lin(o)}).join("\n\n");
+ if(tipo==="rec")return "Hola "+n+" 👋 Te recordamos que el autobús a *"+v.destino+"* sale "+nocheTxt(v)+".\n\n"+(pp.length===1?"Tu punto de recogida"+(pl>1?" ("+pl+" plazas)":"")+":\n":"Puntos de recogida de tu reserva:\n\n")+pts+
+  "\n\n🚌 El autobús sale puntual y no puede esperar.\n"+(p.localizador?"🎟️ Localizador: "+p.localizador+"\n":"")+"\n¡Nos vemos! Yo Me Voy Excursiones 🚌";
+ if(tipo==="pago")return "Hola "+n+" 👋 ¡Ya casi nos vamos a *"+v.destino+"*! 🎉 El autobús sale "+nocheTxt(v)+".\n\nTe quedan por pagar *"+money(restoPax(p))+"*, que se abonan en el autobús en efectivo o por Bizum. Llévalo preparado, por favor 🙏\n\n"+pts+"\n\n¡Gracias! Yo Me Voy Excursiones";
  return "Hola "+n+" 😊 ¿Qué tal el viaje a *"+v.destino+"*? Tu opinión nos ayuda muchísimo y solo te llevará 1 minuto ⭐\n👉 "+URL_CLI.replace(/\/?$/,"/")+"#valorar-"+v.id+"\n\n¡Gracias por viajar con Yo Me Voy! 💛"}
 function espArr(vid){var o=ESP[vid]||{};return Object.keys(o).map(function(k){return Object.assign({tel:k},o[k])}).sort(function(a,b){return (a.ts||0)-(b.ts||0)})}
 function tareas(){var t=[];Object.keys(DB.viajes||{}).forEach(function(k){var v=DB.viajes[k],n=diasHasta(v.fecha);if(n===null)return;
   var add=function(tipo){var l=listaAviso(v,tipo),f=l.filter(function(p){return !avisoEnv(v,tipo,p.id)}).length;if(f)t.push({v:v,tipo:tipo,n:f,o:n})};
-  if(n>=1&&n<=2)add("rec");if(n>=0&&n<=1)add("pago");if(n<=-1&&n>=-7)add("val");
+  var nd=offSalida(v);if(nd>=0&&nd<=1){add("rec");add("pago")}if(n<=-1&&n>=-7)add("val");
   var e=espArr(k).filter(function(x){return x.estado!=="avisado"}).length,lib=totViaje(v).libres;
   if(e&&n>=0&&!v.agotado&&lib>0)t.push({v:v,tipo:"esp",n:e,lib:lib,o:-99})});
  return t.sort(function(a,b){return a.o-b.o})}
@@ -711,13 +724,13 @@ function tareasHTML(){var t=tareas();if(!t.length)return"";
   return '<div class="cb" style="display:flex;align-items:center;gap:10px"><div style="flex:1;min-width:0"><b>'+esc(x.v.destino)+'</b> · '+esc(fmtF(x.v.fecha))+'<div class="m">'+lbl+'</div></div><button class="mbtn" style="font-size:13px;font-weight:800" onclick="'+(x.tipo==="esp"?"modalEspera(\'"+x.v.id+"\')":"modalAvisos(\'"+x.v.id+"\',\'"+x.tipo+"\')")+'">Abrir</button></div>'}).join("")+'</div>'}
 function avisosCardHTML(v){var n=diasHasta(v.fecha),e=espArr(v.id),L=LIQ[v.id];
  return '<div class="card" style="padding:12px"><b>📲 Clientes y cuentas</b><div class="acc" style="margin-top:8px;flex-wrap:wrap;margin-bottom:0">'+
-  '<button class="btn bg2" onclick="modalAvisos(\''+v.id+'\',\''+(n!==null&&n<0?"val":(n!==null&&n<=1?"pago":"rec"))+'\')">💬 Avisos por WhatsApp</button>'+
+  '<button class="btn bg2" onclick="modalAvisos(\''+v.id+'\',\''+(n!==null&&n<0?"val":"rec")+'\')">💬 Avisos por WhatsApp</button>'+
   '<button class="btn bg2" onclick="modalEspera(\''+v.id+'\')">📝 Lista de espera ('+e.length+')</button>'+
   '<button class="btn bg2" onclick="modalLiq(\''+v.id+'\')">📊 Liquidación'+(L?' · beneficio '+money(liqCalc(v,L).ben):"")+'</button></div></div>'}
 function modalAvisos(vId,tipo){var v=DB.viajes[vId];if(!v)return;var l=listaAviso(v,tipo),env=l.filter(function(p){return avisoEnv(v,tipo,p.id)}).length;
  sheet('<h2>'+AV_T[tipo]+'</h2><div style="font-size:12.5px;color:var(--muted)">'+esc(v.destino)+' · '+esc(fmtF(v.fecha))+' · '+env+' de '+l.length+' enviados</div>',
   '<div class="ptabs" style="grid-template-columns:repeat(3,1fr);margin-bottom:8px">'+["rec","pago","val"].map(function(t){return '<div class="ptab '+(t===tipo?"on":"")+'" style="font-size:12px;padding:9px 4px" onclick="modalAvisos(\''+vId+'\',\''+t+'\')">'+{rec:"⏰ Salida",pago:"💶 Pago",val:"⭐ Valoración"}[t]+'</div>'}).join("")+'</div>'+
-  '<div class="note" style="margin-bottom:8px">'+{rec:"Envíalo <b>2 días antes</b> del viaje.",pago:"Envíalo <b>el día antes</b>. Solo salen los que tienen algo pendiente.",val:"Envíalo <b>al día siguiente</b> de volver."}[tipo]+' Pulsa <b>Enviar</b>: se abre WhatsApp con el mensaje escrito, le das a enviar y vuelves aquí.</div>'+
+  '<div class="note" style="margin-bottom:8px">'+{rec:"Envíalo <b>el día de la salida</b> (o el anterior).",pago:"Envíalo <b>el día de la salida</b>. Solo salen los que tienen algo pendiente.",val:"Envíalo <b>al día siguiente</b> de volver."}[tipo]+' Pulsa <b>Enviar</b>: se abre WhatsApp con el mensaje escrito, le das a enviar y vuelves aquí.</div>'+
   (l.length?l.map(function(p){var s=avisoEnv(v,tipo,p.id);
    return '<div class="imp" style="display:flex;align-items:center;gap:8px;'+(s?"opacity:.6":"")+'"><div style="flex:1;min-width:0"><b>'+(s?"✅ ":"")+esc(p.nombre)+'</b><div class="m">'+p.plazas+' plaza(s) · '+esc(recBase(p,v))+(tipo==="pago"?' · debe <b>'+money(restoPax(p))+'</b>':"")+(s?' · enviado '+fmtTs(v.avisos[tipo][p.id]):"")+'</div></div>'+
     '<button class="mbtn wa" onclick="enviaAviso(\''+vId+'\',\''+tipo+'\',\''+p.id+'\')">'+(s?"Reenviar":"💬 Enviar")+'</button></div>'}).join("")
